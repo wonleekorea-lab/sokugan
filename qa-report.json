@@ -1,0 +1,10 @@
+{
+ "date": "2026-08-22",
+ "status": "pass",
+ "checked_at": "2026-08-21T11:33:53.493Z",
+ "passed": 124,
+ "total": 124,
+ "failures": [],
+ "notes": "QA監督(Fable): 観点A 15/15自力正答・書換3問(市場Q1/Q2・経営Q2) / 観点B 翻訳調・漢数字なし、一次情報で事実誤り2件是正(総合CPI 1.9%→2.0%、Pew『若い側が最も警戒』→65歳以上59%が最高のため表現是正) / 観点B-2 clarity-audit avg=4.74 全問>=4.0 pass / 観点C AI中心1本・非AI4本、5系統重複なし・差し替え不要 / 観点D keyTerms plain 2件磨き直し(ポイント・動機)、takeaway 5本は全て雑談で使える / 申し送り: チャンカーが複合語を割る事例2件(『押し|下げる』『ことに|ついて』)。A9は通過するが理想は1チャンク。index.htmlは未改変。",
+ "audited_by": "sokugan-qa-monitor-fable"
+}

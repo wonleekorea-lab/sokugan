@@ -1,0 +1,12 @@
+# 全て無視し、アプリ配信に必要なものだけ許可
+/*
+!/.gitignore
+!/index.html
+!/daily-content.json
+!/clarity-audit.json
+!/qa-report.json
+!/manifest.json
+!/sw.js
+!/icons
+!/qa
+!/README.md

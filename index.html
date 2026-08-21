@@ -1,0 +1,1980 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sokugan 3.0 — Reading Fluency Lab</title>
+<meta name="theme-color" content="#f6f7f9">
+<link rel="manifest" href="./manifest.json">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="速眼">
+<link rel="apple-touch-icon" href="./icons/icon-180.png">
+<style>
+:root{
+  --bg:#f6f7f9; --card:#ffffff; --card2:#f0f2f5; --border:#e5e8ec; --border2:#d3d8df;
+  --ink:#1b2430; --ink2:#57636f; --ink3:#8b95a1;
+  --coral:#e0492f; --coral-dim:rgba(224,73,47,.10);
+  --green:#1a7f37; --green-dim:rgba(26,127,55,.10);
+  --gold:#9a6700; --gold-dim:rgba(154,103,0,.10);
+  --blue:#0969da; --blue-dim:rgba(9,105,218,.08);
+  --purple:#8250df;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Noto Sans JP",sans-serif;font-size:15px;line-height:1.7;-webkit-font-smoothing:antialiased}
+#app{max-width:760px;margin:0 auto;padding:18px 16px 80px}
+a{color:var(--blue)}
+.header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.logo{font-size:19px;font-weight:800;letter-spacing:.02em}
+.logo small{font-size:11px;color:var(--coral);font-weight:700;margin-left:6px;vertical-align:2px}
+.header-stats{display:flex;gap:14px;font-size:12px;color:var(--ink2)}
+.header-stats b{color:var(--ink);font-size:14px}
+.nav{display:flex;gap:6px;margin-bottom:16px}
+.nav button{flex:1;background:var(--card);border:1px solid var(--border);color:var(--ink2);padding:8px 0;border-radius:8px;font-size:13px;cursor:pointer;font-family:inherit}
+.nav button.active{background:var(--card2);color:var(--ink);border-color:var(--border2);font-weight:700}
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:18px;margin-bottom:14px;box-shadow:0 1px 3px rgba(27,36,48,.05)}
+.card-title{font-size:15px;font-weight:800;margin-bottom:2px}
+.card-subtitle{font-size:11px;color:var(--ink3);letter-spacing:.08em;margin-bottom:12px}
+.banner{padding:10px 14px;border-radius:10px;font-size:13px;margin-bottom:14px;border:1px solid var(--border2)}
+.banner.info{background:var(--blue-dim);border-color:rgba(88,166,255,.3)}
+.banner.warn{background:var(--gold-dim);border-color:rgba(210,153,34,.35)}
+.banner.ok{background:var(--green-dim);border-color:rgba(63,185,80,.3)}
+.btn{display:inline-block;background:var(--coral);color:#fff;border:none;border-radius:10px;padding:13px 22px;font-size:15px;font-weight:800;cursor:pointer;font-family:inherit;width:100%;text-align:center}
+.btn:active{transform:scale(.985)}
+.btn.secondary{background:var(--card2);color:var(--ink);border:1px solid var(--border2)}
+.btn.small{width:auto;padding:8px 16px;font-size:13px;font-weight:700}
+.btn.ghost{background:none;border:1px dashed var(--border2);color:var(--ink2)}
+.target-hero{display:flex;align-items:baseline;gap:10px;margin:6px 0 2px}
+.target-hero .num{font-size:44px;font-weight:900;letter-spacing:-.02em;color:var(--coral)}
+.target-hero .unit{font-size:14px;color:var(--ink2)}
+.delta-chip{display:inline-block;font-size:12px;font-weight:700;padding:2px 9px;border-radius:99px}
+.delta-chip.up{background:var(--green-dim);color:var(--green)}
+.delta-chip.down{background:var(--coral-dim);color:var(--coral)}
+.delta-chip.flat{background:var(--card2);color:var(--ink2)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.stat-box{background:var(--card2);border-radius:10px;padding:12px;text-align:center}
+.stat-box .v{font-size:22px;font-weight:900}
+.stat-box .l{font-size:11px;color:var(--ink2);margin-top:2px}
+.win-item{display:flex;gap:10px;align-items:flex-start;padding:9px 0;border-bottom:1px solid var(--border);font-size:13px}
+.win-item:last-child{border-bottom:none}
+.win-item .ico{font-size:16px;line-height:1.4}
+.win-item .d{color:var(--ink3);font-size:11px}
+.reading-text{font-size:19px;line-height:2.15;letter-spacing:.01em;padding:6px 2px;text-align:justify}
+.reading-text.hidden-text{filter:blur(7px);user-select:none}
+.chunk{border-radius:4px;padding:1px 1px;transition:background .12s}
+.chunk.lit{background:var(--coral-dim);box-shadow:inset 0 -2px 0 var(--coral)}
+.chunk.past{color:var(--ink3)}
+.timerbar{height:8px;background:var(--card2);border-radius:99px;overflow:hidden;margin:10px 0}
+.timerbar .fill{height:100%;background:var(--green);border-radius:99px;transition:width .25s linear}
+.timerbar .fill.warning{background:var(--gold)}
+.timerbar .fill.over{background:var(--coral);animation:pulse 1s infinite}
+@keyframes pulse{50%{opacity:.55}}
+.bigtime{font-variant-numeric:tabular-nums;font-size:30px;font-weight:900;text-align:center;margin:4px 0}
+.opt{display:block;width:100%;text-align:left;background:var(--card2);border:1px solid var(--border2);color:var(--ink);border-radius:10px;padding:12px 14px;font-size:14px;line-height:1.6;cursor:pointer;margin-bottom:8px;font-family:inherit}
+.opt:hover{border-color:var(--ink3)}
+.opt.correct{border-color:var(--green);background:var(--green-dim)}
+.opt.wrong{border-color:var(--coral);background:var(--coral-dim)}
+.opt:disabled{cursor:default;opacity:.85}
+.rationale{background:var(--blue-dim);border:1px solid rgba(88,166,255,.3);border-radius:10px;padding:10px 13px;font-size:13px;margin:6px 0 12px}
+.phase-dots{display:flex;gap:6px;justify-content:center;margin-bottom:14px}
+.phase-dots span{width:26px;height:5px;border-radius:99px;background:var(--card2)}
+.phase-dots span.done{background:var(--green)}
+.phase-dots span.cur{background:var(--coral)}
+.tag{display:inline-block;font-size:11px;font-weight:700;padding:1px 9px;border-radius:99px;background:var(--card2);color:var(--ink2);margin-right:6px}
+.tag.sci{background:var(--blue-dim);color:var(--blue)}
+.result-verdict{text-align:center;padding:8px 0 4px}
+.result-verdict .big{font-size:52px;font-weight:900;letter-spacing:-.02em}
+.result-verdict .sub{font-size:13px;color:var(--ink2)}
+.compare-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);font-size:14px}
+.compare-row:last-child{border-bottom:none}
+.compare-row .lab{color:var(--ink2)}
+table.hist{width:100%;border-collapse:collapse;font-size:13px}
+table.hist th{text-align:left;color:var(--ink3);font-weight:600;font-size:11px;padding:6px 4px;border-bottom:1px solid var(--border2)}
+table.hist td{padding:7px 4px;border-bottom:1px solid var(--border)}
+.muted{color:var(--ink2);font-size:13px}
+.small{font-size:12px;color:var(--ink3)}
+.celebrate{position:fixed;inset:0;background:rgba(246,247,249,.95);display:flex;align-items:center;justify-content:center;z-index:50;animation:fadein .3s}
+@keyframes fadein{from{opacity:0}}
+.celebrate .inner{text-align:center;padding:30px}
+.celebrate .emoji{font-size:60px;animation:pop .5s}
+@keyframes pop{0%{transform:scale(.3)}70%{transform:scale(1.15)}100%{transform:scale(1)}}
+.celebrate h2{font-size:24px;margin:10px 0 6px}
+.bench-wrap{margin-top:8px}
+.bench-bar{position:relative;height:14px;background:var(--card2);border-radius:99px;overflow:visible}
+.bench-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--coral),var(--gold))}
+.bench-mark{position:absolute;top:-4px;width:2px;height:22px;background:var(--ink2)}
+.bench-labels{display:flex;justify-content:space-between;font-size:10px;color:var(--ink3);margin-top:6px}
+.genre-bar{display:flex;align-items:center;gap:8px;margin-bottom:7px;font-size:12px}
+.genre-bar .gname{width:62px;color:var(--ink2)}
+.genre-bar .gtrack{flex:1;height:9px;background:var(--card2);border-radius:99px;overflow:hidden}
+.genre-bar .gfill{height:100%;border-radius:99px}
+.genre-bar .gval{width:74px;text-align:right;font-variant-numeric:tabular-nums}
+svg text{font-family:inherit}
+.footer-note{text-align:center;font-size:11px;color:var(--ink3);margin-top:24px}
+button{touch-action:manipulation}
+@media (max-width:480px){
+  #app{padding:12px 10px 60px}
+  .reading-text{font-size:17px;line-height:2.0}
+  .header-stats{gap:8px;font-size:11px}
+  .stat-box .v{font-size:18px}
+  .target-hero .num{font-size:36px}
+  .opt{padding:13px 12px}
+}
+.fresh{border-radius:12px;padding:14px 16px;margin-bottom:14px;border:1px solid var(--border2)}
+.fresh.ok{background:var(--green-dim);border-color:rgba(26,127,55,.35)}
+.fresh.stale{background:var(--gold-dim);border-color:rgba(154,103,0,.4)}
+.fresh.err{background:var(--coral-dim);border-color:rgba(224,73,47,.4)}
+.fresh-head{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.fresh-status{font-size:15px;font-weight:800}
+.fresh-sub{font-size:12px;color:var(--ink2);margin-top:3px}
+.fresh-titles{margin-top:10px;border-top:1px dashed var(--border2);padding-top:8px}
+.fresh-titles .ft{display:flex;gap:8px;font-size:12px;padding:3px 0;color:var(--ink2)}
+.fresh-titles .ft b{color:var(--ink);font-weight:600}
+.recheck-btn{background:var(--card);border:1px solid var(--border2);color:var(--ink);border-radius:8px;padding:7px 12px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap}
+.recheck-btn:active{transform:scale(.97)}
+.toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 18px;border-radius:99px;font-size:13px;font-weight:700;z-index:60;box-shadow:0 4px 16px rgba(0,0,0,.25);animation:fadein .2s}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="header"></div>
+  <div id="nav"></div>
+  <div id="banner"></div>
+  <div id="screen"></div>
+  <div class="footer-note">Sokugan 3.0 · evidence-based reading fluency lab · rebuilt with Claude Fable</div>
+</div>
+<script>
+// =============================================================
+// SOKUGAN 3.0 — CONFIG
+// =============================================================
+const KEY = "sokugan_v3";
+const OLD_KEY = "jp_reading_trainer_v2";
+const PASS_COMP = 0.7;          // 理解度ゲート: これ未満の速度記録は無効
+const NATIVE_AVG = 500;         // 日本語母語話者の平均黙読速度(字/分)
+const NATIVE_GOOD = 650;        // 母語話者の上位レンジ目安
+const RATCHET_UP = 1.025;       // 基準クリア時に翌日目標+2.5%
+const RATCHET_RELIEF = 0.97;    // 2日連続未達で-3%の救済
+const REREAD_FACTOR = 1.15;     // 反復読の目標 = 初読の15%増し
+const PACER_STEP = 0.05;        // ペーサー 3-up-1-down の刻み(±5%)
+const GENRES = {
+  // 速報・事業トラック（具体的・速い）
+  "スタートアップ":"concrete","スタートアップ・新規事業":"concrete","新規事業":"concrete",
+  "AI・技術":"concrete","技術":"concrete","新技術":"concrete","テック":"concrete",
+  "市場":"concrete","経済":"concrete","市場・経済":"concrete","市場・経済・地政学":"concrete","地政学":"concrete","資金調達":"concrete",
+  // 論説・洞察トラック（抽象的・難しい）
+  "経営":"deep","組織":"deep","経営・組織":"deep","経営・リーダーシップ":"deep","リーダーシップ":"deep","戦略":"deep",
+  "社会":"deep","社会・価値観":"deep","価値観":"deep","文化":"deep",
+  "未来の兆し":"deep","未来":"deep","兆し":"deep",
+  "規制":"deep","環境":"deep","規制・環境":"deep","政策":"deep","科学":"deep"
+};
+const DEEP_GENRES = new Set(["経営","組織","経営・組織","経営・リーダーシップ","リーダーシップ","戦略","社会","社会・価値観","価値観","文化","未来の兆し","未来","兆し","規制","環境","規制・環境","政策","科学"]);
+
+const DEFAULT_CONTENT = {
+  date: "fallback",
+  passages: [
+    {
+      id: "fb_1", tag: "経営", genre: "経営",
+      title: "標準化が生む自由 — 制約設計の逆説",
+      source: "fallback",
+      text: "組織が成長するほど、自由と統制のバランスは難しくなる。多くの経営者は統制を「自由の対価」と捉えるが、認知科学の知見は逆を示す。人間のワーキングメモリは有限であり、些末な意思決定が増えるほど、本質的な思考に割ける資源は減る。つまり、書式や手順の標準化は自由を奪うのではなく、認知資源を解放することで創造の自由を拡大する装置になり得る。鍵は標準化の対象選定にある。反復的で判断価値の低い領域を固定し、判断価値の高い領域を意図的に未定義のまま残す。この設計を誤り、創造的領域まで手順化した組織は、規律はあるが洞察のない集団になる。逆にすべてを自由にした組織は、調整コストに溺れて何も生み出せない。優れた組織設計とは、どこを固めてどこを解き放つかの境界線を引く知的作業であり、その境界線は事業の成熟度とともに動き続ける。経営者の仕事は一度引いた線を守ることではなく、線を引き直し続けることにある。",
+      questions: [
+        { q: "Take-away: 経営者が認識を改めるべき本質はどれか", opts: ["標準化は認知資源を解放し創造の自由をむしろ広げうる","統制を強化するほど組織の規律と生産性は確実に高まる","自由度を最大化した組織ほど調整コストは自然に下がる","標準化の対象は一度決めたら原則として変えるべきだ"], ans: 0, rationale: "本文の中核は「標準化=自由の対価」という通念の反転。他の選択肢は本文の主張と逆方向か、末尾で明確に否定されている。" },
+        { q: "隠れた前提: この主張が成り立つ暗黙の仮定はどれか", opts: ["節約された認知資源は本質的な思考の方へと向かう","標準化に伴うコストは組織の規模とは無関係である","創造的な仕事に対して手順書は常に有害に作用する","調整コストは統制を強めることによってのみ下がる"], ans: 0, rationale: "節約された認知資源が自動的に創造へ再配分されるという仮定がなければ、標準化→自由の論理は繋がらない。" },
+        { q: "反証論理: この主張を最も鋭く否定するならどれか", opts: ["標準化された環境では問題発見の感度それ自体が鈍る","標準化は文書づくりの手間をいくらか増やしてしまう","自由度の高い組織にも優れた人材は十分に集まりうる","認知資源には個人差が大きく一律には一般化できない"], ans: 0, rationale: "資源解放というメリットの根本を「感度の鈍化」というコストで打ち消す反論が最も構造的。他は枝葉の指摘。" }
+      ]
+    },
+    {
+      id: "fb_2", tag: "AI・技術", genre: "AI・技術",
+      title: "新技術の価値は『性能』でなく『代替する仕事の単価』で決まる",
+      source: "fallback",
+      text: "新しい技術の事業価値を、つい性能指標で測りたくなる。だが市場が支払うのは性能そのものではなく、その技術が肩代わりする人間の仕事の単価である。同じ精度向上でも、置き換える業務が高給の専門職なら価値は大きく、安価な単純作業なら小さい。経営判断の要点は二つに絞られる。第一に、技術が代替する仕事の現在コストはいくらか。第二に、その仕事を技術へ移すスイッチングコスト（教育・統合・信頼の再構築）はいくらか。両者の差が事業としての取り分になる。多くのスタートアップが優れた性能を持ちながら失速するのは、代替対象の単価が低い領域や、スイッチングコストが価値を上回る領域に踏み込むからだ。技術は手段にすぎず、価値は常に「誰のどの仕事を、いくらで、どれだけ滑らかに引き受けるか」で決まる。性能の競争は派手だが、勝敗を分けるのは導入の摩擦をどこまで小さくできるかという地味な設計にある。",
+      questions: [
+        { q: "Take-away: 経営者が認識を改めるべき本質はどれか", opts: ["技術の価値は性能でなく代替する仕事の単価で決まる","性能指標が高い技術ほど必ず大きな事業価値を生み出す","スイッチングコストは事業価値の判断とは関係していない","単純作業の自動化こそが最も収益性の高い領域だといえる"], ans: 0, rationale: "本文の核心は「市場は性能でなく肩代わりする仕事の単価に払う」。他は本文が明確に否定する通念や逆の主張。" },
+        { q: "隠れた前提: この主張が成り立つ暗黙の仮定はどれか", opts: ["代替される仕事の現在コストは把握も比較も可能である","あらゆる技術は人間の仕事を完全に置き換えてしまえる","性能の差は事業としての価値には一切影響を及ぼさない","スイッチングコストは時間が解決するので無視してよい"], ans: 0, rationale: "「代替する仕事の単価」で価値を測る論理は、その単価が測定可能であることを前提にする。他は本文の主張と整合しない。" },
+        { q: "シナリオ応用: この観点を自社の技術投資判断に当てはめるとどうなるか", opts: ["高単価の業務を低い摩擦で代替できる領域を優先して狙う","ベンチマーク性能が最も高い技術をまず無条件に採用する","導入の手間は度外視して精度の改善だけに資源を集中する","代替対象の単価は問わず広く薄く市場全体を取りに行く"], ans: 0, rationale: "本文の含意は高単価×低スイッチングコストの交点が取り分を最大化する。他は性能偏重や摩擦軽視で本文が戒める失速要因。" }
+      ]
+    }
+  ]
+};
+// =============================================================
+// STATE & MIGRATION
+// =============================================================
+function defaultState() {
+  return {
+    version: 3,
+    migratedFromV2: false,
+    migratedSessions: 0,
+    baselineSpeed: null,
+    history: [],          // {date, speed, comprehension, valid, legacy?, genreSpeeds?, targetMet?, target?}
+    wins: [],             // {date, ico, text}
+    streak: 0, maxStreak: 0, lastSessionDate: null,
+    xp: 0,
+    bestSpeed: 0,         // 理解度ゲート通過のみ
+    ratchet: { target: null, missStreak: 0, clearedDates: [] },
+    pacerLevel: null,     // 字/分
+    pacerStreak: 0,
+    spanLevel: 4,         // 瞬間キャッチの視幅(字)
+    spanStreak: 0,
+    todaySession: null,   // {date, count, usedPassageIds}
+    lastWinCheck: null,
+    clarityFlags: [],     // ユーザーが「わかりにくい」と報告した設問 {date, genre, q}
+    goal: null,           // {target, baseline, setAt, why, hit:[]} 週次の具体的困難目標(Locke&Latham)
+    vocabBook: [],        // 語彙道場の習得記録 {term, plain, date, level} level:1=初見,2=曖昧,3=説明できる
+    lastTakeaways: null,  // {date, items:[{hook, detail, genre}]} 今日の持ち帰り
+    anchorHistory: [],    // 週次アンカー転移テスト {date, anchorId, speed, comp, adjustedSpeed, readability}
+    lastAnchorDate: null,
+    anchorIdx: 0,
+  };
+}
+function migrateFromV2() {
+  try {
+    const raw = localStorage.getItem(OLD_KEY);
+    if (!raw) return null;
+    const o = JSON.parse(raw);
+    const s = defaultState();
+    s.migratedFromV2 = true;
+    s.history = (o.history || []).map(h => ({
+      date: h.date,
+      speed: Math.round(h.speed || h.initSpeed || 0),
+      comprehension: (h.comprehension == null ? null : h.comprehension),
+      valid: (h.comprehension || 0) >= PASS_COMP && (h.speed || 0) > 0,
+      legacy: true
+    })).filter(h => h.date && h.date !== "fallback" && h.speed > 0);
+    s.migratedSessions = s.history.length;
+    s.baselineSpeed = o.baselineSpeed || null;
+    s.streak = o.streak || 0;
+    s.maxStreak = o.maxStreak || 0;
+    s.lastSessionDate = o.lastSessionDate || null;
+    s.xp = o.xp || 0;
+    s.bestSpeed = o.bestSpeed || 0;
+    // ラチェット初期値: 直近の有効セッション5件の中央値 × 1.0（初日は確実に届く水準から）
+    const recent = s.history.filter(h => h.valid).slice(-5).map(h => h.speed).sort((a,b)=>a-b);
+    const med = recent.length ? recent[Math.floor(recent.length/2)] : (s.baselineSpeed || 350);
+    s.ratchet.target = Math.round(med);
+    // ペーサー初期値: 読速の110%（強制ペースで少し背伸び）
+    s.pacerLevel = Math.round(med * 1.1);
+    s.spanLevel = Math.min(9, Math.max(3, o.spanLevel || 4));
+    s.wins.push({ date: today(), ico: "📦", text: `Sokugan 1.0 から ${s.migratedSessions} セッション分の記録を引き継ぎ` });
+    return s;
+  } catch (e) { return null; }
+}
+function loadState() {
+  try {
+    const raw = localStorage.getItem(KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed.spanLevel == null) {
+        try { const o = JSON.parse(localStorage.getItem(OLD_KEY) || "{}"); parsed.spanLevel = Math.min(9, Math.max(3, o.spanLevel || 4)); } catch (e) {}
+      }
+      return Object.assign(defaultState(), parsed);
+    }
+  } catch (e) {}
+  const mig = migrateFromV2();
+  if (mig) { localStorage.setItem(KEY, JSON.stringify(mig)); return mig; }
+  return defaultState();
+}
+function saveState() { localStorage.setItem(KEY, JSON.stringify(state)); }
+let state = loadState();
+let content = DEFAULT_CONTENT;
+let contentSource = "fallback";
+let sess = null;
+let qaReport = null;  // QA監視AIの最新レポート（鮮度パネルに表示）
+let clarityAudit = null;  // 設問明快さ監査の記録（鮮度パネルに表示）
+async function loadClarityAudit() {
+  try { const r = await fetch("./clarity-audit.json", { cache: "no-cache" }); if (r.ok) { clarityAudit = await r.json(); return; } } catch (e) {}
+  clarityAudit = null;
+}
+// 週次アンカー転移テスト用の内蔵教材（常緑・難度固定。日次本文とは別。再利用で難度を一定に保つ）
+const ANCHOR_POOL = [
+  {
+    id: "anchor_kawakami", genre: "経営・論説",
+    title: "計画の価値は紙の上でなく、捨てる順番にある",
+    text: "計画はしばしば、未来を当てる予言と取り違えられる。だが優れた計画の価値は、予測の精度にはない。むしろ、何を先に諦め、何を最後まで残すかという優先順位の設計にある。資源が有限である以上、すべてを同時には追えない。したがって計画とは、やることの一覧ではなく、やらないことを決める装置である。環境が変われば前提は崩れる。そのとき問われるのは、立てた計画を守り抜く意志ではなく、どの順番で手放すかをあらかじめ決めてあるかどうかだ。捨てる順番を持たない組織は、いざ変化が来たとき、最も惜しいものから慌てて手放す。逆に、撤退の順序を設計してある組織は、傷を最小化しながら軌道を直せる。計画の真価は、平時の精緻さではなく、有事の手放し方に表れる。",
+    questions: [
+      { q: "Take-away: 筆者が言う計画の本質はどれか", opts: ["やらないことと手放す順番を決める優先順位の設計である", "未来を高い精度で予測し的中させるための予言の技術である", "一度立てたら環境が変わっても守り抜くべき約束事である", "やるべき作業を漏れなく列挙した一覧表のことである"], ans: 0, rationale: "本文は計画を「やらないことを決める装置」「撤退の順序の設計」と定義する。他は本文が明確に否定する見方。" },
+      { q: "予測・先読み: 筆者の論理に従うと、撤退順序を持たない組織はどうなるか", opts: ["変化に直面した時、最も惜しいものから慌てて手放すことになる", "環境が変わっても傷を最小化しながら軌道を直せるようになる", "計画の精度が上がり、予測が的中しやすくなっていく", "やることが増え、組織全体の生産性が高まっていく"], ans: 0, rationale: "本文は順序を持たない組織は惜しい順に手放すと述べる。他は順序を持つ組織や別主張の帰結で逆。" },
+      { q: "隠れた前提: この主張が成り立つ暗黙の仮定はどれか", opts: ["資源は有限で、すべてを同時には追えないという制約がある", "未来は十分なデータがあれば正確に予測できるものである", "計画は一度立てれば修正する必要が生じないものである", "組織の意志が強ければ前提が崩れても計画は守れる"], ans: 0, rationale: "「捨てる順番」が要るのは資源有限ゆえ。他は本文の論旨と矛盾する前提。" }
+    ]
+  },
+  {
+    id: "anchor_shinrai", genre: "社会・論説",
+    title: "信頼は速度の前借りである",
+    text: "信頼とは何かを、関係の温かさとして語るのは半分しか正しくない。実務の上では、信頼はもっと冷たく、機能的なものだ。すなわち信頼とは、確認の手間を省いてよいという合意である。相手を信頼していれば、いちいち裏を取らず、契約の細部を詰めず、前提を共有したまま先へ進める。これは時間の前借りにほかならない。信頼が厚いほど、組織や取引は速く動ける。逆に信頼が薄れた瞬間、人はあらゆる工程に確認を差し込み始め、すべてが遅くなる。つまり不信のコストは、対立そのものではなく、対立に備えるための検証作業として静かに積み上がる。だからこそ、信頼は維持費の安い資産ではない。一度損なわれれば、回復には築いた何倍もの時間がかかる。速く動きたいなら、まず確認を省ける関係に投資することだ。",
+    questions: [
+      { q: "Take-away: 筆者が捉える信頼の機能はどれか", opts: ["確認の手間を省いてよいという合意であり、速度を生む資産だ", "関係の温かさそのものであり、効率とは無関係な感情である", "契約の細部を詳細に詰めることで初めて生まれる安心である", "一度築けば維持費がかからず自然に持続していく関係である"], ans: 0, rationale: "本文は信頼を「確認を省ける合意＝時間の前借り」と機能的に定義。他は本文が退ける見方。" },
+      { q: "反証論理: 本文の主張を最も鋭く否定する事実はどれか", opts: ["信頼の薄い相手とでも、検証を増やさず常に高速に取引できている", "信頼が損なわれると確認工程が増え、全体が遅くなっていた", "信頼の回復には築いた時よりも長い時間がかかっていた", "信頼が厚い組織ほど契約の細部を省いて先へ進めていた"], ans: 0, rationale: "信頼=速度の前借りを覆すには、不信でも速い反例が要る。他は本文の主張を裏づける。" },
+      { q: "シナリオ応用: この観点を自社の取引に当てはめるとどうなるか", opts: ["確認を省ける関係づくりに先に投資し、動く速度を上げる", "全ての取引で検証工程を最大化し、確認を厚くしていく", "信頼は感情の問題と割り切り、業務設計には反映しない", "細部の契約を増やすことで関係の温かさを高めていく"], ans: 0, rationale: "本文の含意は確認を省ける関係への投資。他は不信コストを増やすか本文の定義を否定する。" }
+    ]
+  },
+  {
+    id: "anchor_kahei", genre: "市場・論説",
+    title: "価格は情報であり、安さは合図ではない",
+    text: "安い価格を見ると、人は得をした気分になる。だが市場において価格は、第一に情報である。ある財が安いのは、供給が潤沢か、需要が弱いか、あるいは品質や将来性に市場が懸念を抱いているかのいずれかだ。したがって安さは、買い手にとって常に朗報とは限らない。むしろ、なぜその値段なのかを問うことが、価格を読むということだ。とりわけ事業の意思決定では、目先の安さに飛びつくほど、その裏にある理由を見落としやすい。安く仕入れられた資源が、実は陳腐化の入口にあることもある。逆に、割高に見える価格が、希少性や信頼の対価として正当なこともある。価格をコストとしてだけ見る者は、価格が運ぶ情報を捨てている。賢い買い手は、値札の数字ではなく、その数字が示す市場の判断を読む。",
+    questions: [
+      { q: "Take-away: 筆者が言う価格の本質はどれか", opts: ["供給や需要や懸念を映す情報であり、理由を読むべきものだ", "安いほど買い手に有利な、得失だけを示す数字である", "売り手が自由に決められる、市場とは無関係な設定値だ", "高いほど品質が保証される、信頼の絶対的な指標である"], ans: 0, rationale: "本文は価格を「市場の判断を運ぶ情報」と定義し理由を問えと説く。他は本文が否定する単純化。" },
+      { q: "著者の意図: 筆者がこの論を展開した狙いは何か", opts: ["安さの裏の理由を問う、価格を読む目を持たせること", "とにかく安く仕入れることが事業で最も重要だと説くこと", "高い価格は常に不当であり避けるべきだと警告すること", "価格は気分の問題にすぎないと結論づけて退けること"], ans: 0, rationale: "末尾で「数字が示す市場の判断を読め」と促す。他は本文の主張と逆か矮小化。" },
+      { q: "類比・アナロジー: 本文の価格観に最も近い見方はどれか", opts: ["体温計の数値のように、背後の状態を示す兆候として読む", "くじの当たり外れのように、運で決まる結果として受け取る", "定規の目盛りのように、固定不変の基準として信頼する", "飾りのように、意味を持たない表面的な装飾として扱う"], ans: 0, rationale: "価格=背後の状態を映す情報は、体温計が体内状態を映す関係と同型。他は構造が一致しない。" }
+    ]
+  }
+];
+async function loadQaReport() {
+  try {
+    const res = await fetch("./qa-report.json", { cache: "no-cache" });
+    if (res.ok) { qaReport = await res.json(); return; }
+  } catch (e) {}
+  qaReport = null;
+}
+
+// =============================================================
+// HELPERS
+// =============================================================
+function today() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+}
+function daysAgoStr(n) {
+  const d = new Date(); d.setDate(d.getDate() - n);
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+}
+// 2つのYYYY-MM-DD間の日数差（d2 - d1）。ローカル時刻基準。
+function daysBetween(d1, d2) {
+  const a = new Date(d1 + "T00:00:00"), b = new Date(d2 + "T00:00:00");
+  if (isNaN(a) || isNaN(b)) return 0;
+  return Math.round((b - a) / 86400000);
+}
+function fmtTime(s) { return `${String(Math.floor(s/60)).padStart(2,"0")}:${String(Math.floor(s%60)).padStart(2,"0")}`; }
+function charCount(t) { return (t || "").replace(/\s/g, "").length; }
+function screen() { return document.getElementById("screen"); }
+function esc(t) { return String(t).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+function ensureTodaySession() {
+  const t = today();
+  if (!state.todaySession || state.todaySession.date !== t) {
+    state.todaySession = { date: t, count: 0, usedPassageIds: [] };
+  }
+  return state.todaySession;
+}
+function totalTrainingDays() {
+  return new Set(state.history.map(h => h.date)).size;
+}
+function dayBest(date) {
+  const v = state.history.filter(h => h.date === date && h.valid).map(h => h.speed);
+  return v.length ? Math.max(...v) : null;
+}
+function lastTrainedDayBefore(date) {
+  const ds = [...new Set(state.history.filter(h => h.valid && h.date < date).map(h => h.date))].sort();
+  return ds.length ? ds[ds.length - 1] : null;
+}
+function movingAvg(days) {
+  // 直近days日間の有効セッション平均
+  const cutoff = daysAgoStr(days);
+  const v = state.history.filter(h => h.valid && h.date >= cutoff).map(h => h.speed);
+  return v.length ? Math.round(v.reduce((a,b)=>a+b,0) / v.length) : null;
+}
+function adjMovingAvg(days) {
+  // 難度補正速度の移動平均（プラトー期の実質成長を拾う）
+  const cutoff = daysAgoStr(days);
+  const v = state.history.filter(h => h.valid && h.adjustedSpeed && h.date >= cutoff).map(h => h.adjustedSpeed);
+  return v.length ? Math.round(v.reduce((a,b)=>a+b,0) / v.length) : null;
+}
+function isDeep(p) { return DEEP_GENRES.has(p.genre) || /経営|組織|戦略|規制|環境|政策|社会|価値|文化|リーダー|未来|兆し|論説|分析|思想|科学|研究/.test((p.genre || "") + (p.tag || "")); }
+function genreOf(p) { return p.genre || p.tag || "その他"; }
+
+/*__CHUNKER_START__ ここから getChunks までは index.html / qa/harness.js / qa/repair-chunks.js で共有する唯一のチャンカー実装。Node側はこのブロックをsentinelで切り出してevalする。 */
+// =============================================================
+// 文節チャンカー v3（決定論・単一の真実）
+// 設計: 文字種で「アトム(語片)」に分割し、アトム内部では絶対に切らない。
+//   ・ひらがな(助詞/送り仮名)と句読点は左のチャンクに吸着する
+//   ・チャンクは必ず「内容語(漢字/カタカナ/英数)」または文頭ひらがなで始まる
+//     → 助詞が行頭に残る/語の途中で切れる事故を構造的に排除
+//   ・連続する内容語アトムは複合語として長さ上限まで連結
+//   LLMが生成したchunksは使わない（信頼性のため常にこの関数で再生成）
+// =============================================================
+var SKG_PARTICLE_HEAD = /^[はがをにへとものやかねよわぞ]/; // チャンク先頭に来てはいけない格助詞
+function skgClass(ch) {
+  if (/[ぁ-ゖゝゞ]/.test(ch)) return "hira";
+  if (/[ァ-ヺーヽヾㇰ-ㇿｦ-ﾟ]/.test(ch)) return "kata";
+  if (/[々〆〇㐀-䶿一-鿿豈-﫿]/.test(ch)) return "kanji";
+  if (/[0-9A-Za-z０-９Ａ-Ｚａ-ｚ]/.test(ch)) return "latin";
+  if (/[%％.・\-＆&/／'’]/.test(ch)) return "latin"; // 数値・英字に付随する記号は内容語側へ
+  return "punct";
+}
+function skgIsContent(cl) { return cl === "kanji" || cl === "kata" || cl === "latin"; }
+// 直前のひらがな連が「文節を閉じる助詞/活用語尾」で終わるか。
+//   true  → 次の内容語との間が文節境界（例: 水の|希少、AIを|起点）
+//   false → 送り仮名の途中で複合語が続く（例: 走り+続ける、据え+置いた、後ろ+倒し）→ 連結する
+function skgEndsBoundary(h) {
+  return /(?:から|まで|より|など|だけ|ほど|くらい|ぐらい|なら|ので|のに|けれど|けど|でも|ても|つつ|ながら|たり|という|ことが|ことを|ように|ては|では|には|とは|へは|をも|にも|です|ます|ません|だった|である|らしい|そう|べき|まい|[はがをにへとのもやかねよわぞ]|た|だ|て|で|ない|なく|ず|ぬ|る|う|い|し)$/.test(h);
+}
+// 長すぎる(=10字以上)チャンクを助詞の直後で分割。仮名/語の途中では切らない。
+function skgSplitLong(c) {
+  const chars = [...c];
+  if (chars.length <= 9) return [c];
+  const BREAK = new Set(["を", "に", "は", "が", "へ", "と", "も", "で", "や", "か", "、"]);
+  const pieces = [];
+  let buf = "";
+  for (let i = 0; i < chars.length; i++) {
+    buf += chars[i];
+    const next = chars[i + 1] || "";
+    if (BREAK.has(chars[i]) && [...buf].length >= 4 && next && !SKG_PARTICLE_HEAD.test(next) && !/[、。！？」』）・]/.test(next)) { pieces.push(buf); buf = ""; }
+  }
+  if (buf) pieces.push(buf);
+  // 端数(1字以下)は前へ吸収
+  const res = [];
+  for (const p of pieces) { const pr = res[res.length - 1]; if (pr && [...p].length <= 1) res[res.length - 1] = pr + p; else res.push(p); }
+  return res.length ? res : [c];
+}
+function chunkText(text) {
+  const s = (text || "").replace(/\s/g, "");
+  if (!s) return [];
+  const chars = [...s];
+  // 1) 文字種アトムへ分割（同種は連結、句読点は1文字ずつ）
+  const atoms = [];
+  for (const ch of chars) {
+    const cl = skgClass(ch);
+    const last = atoms[atoms.length - 1];
+    if (cl !== "punct" && last && last.cl === cl) last.s += ch;
+    else atoms.push({ s: ch, cl });
+  }
+  // 2) アトムをチャンクへ。内容語の前で分節境界、長さ上限8（単独アトムは無制限=語中で切らない）
+  const MAXC = 8;
+  const chunks = [];
+  let cur = "", lastCl = null, lastHira = "";
+  const push = () => { if (cur) { chunks.push(cur); cur = ""; } };
+  for (const a of atoms) {
+    if (a.cl === "punct") {
+      if (/[「『（〔【〈《“]/.test(a.s)) { push(); cur = a.s; lastCl = "open"; }      // 開き括弧は次の語へ
+      else { cur += a.s; lastCl = "punct"; if (/[。！？]/.test(a.s)) push(); }          // 読点/閉じ括弧は左へ吸着・文末で閉じる
+      continue;
+    }
+    if (a.cl === "hira") { cur += a.s; lastCl = "hira"; lastHira = a.s; continue; }       // 送り仮名/助詞は左へ吸着
+    // 内容語アトム
+    if (!cur) { cur = a.s; lastCl = a.cl; continue; }
+    if (lastCl === "open") { cur += a.s; lastCl = a.cl; continue; }                      // 開き括弧直後は連結
+    if (lastCl === "punct") { push(); cur = a.s; lastCl = a.cl; continue; }              // 読点/文末の後＝境界
+    if (lastCl === "hira") {
+      // 直前の仮名が助詞/活用語尾で文節を閉じる、または上限超なら境界。
+      // そうでなければ送り仮名の途中＝複合語として連結（走り続ける/据え置いた）。
+      if (skgEndsBoundary(lastHira) || cur.length + a.s.length > MAXC) { push(); cur = a.s; lastCl = a.cl; }
+      else { cur += a.s; lastCl = a.cl; }
+      continue;
+    }
+    // 内容語が連続（間に仮名なし）＝複合語。上限まで連結
+    if (cur.length + a.s.length <= MAXC) { cur += a.s; lastCl = a.cl; }
+    else { push(); cur = a.s; lastCl = a.cl; }
+  }
+  push();
+  // 3) 長すぎるチャンク（主にひらがな連続の述部）を助詞境界で分割。語中は切らない。
+  const split = [];
+  for (const c of chunks) for (const piece of skgSplitLong(c)) split.push(piece);
+  chunks.length = 0;
+  for (const c of split) chunks.push(c);
+  // 4) 意味単位の結合: 「Xの」で終わる短いチャンクは次と結合（水の+希少が→水の希少が、6字以内）
+  const merged2 = [];
+  for (const c of chunks) {
+    const prev = merged2[merged2.length - 1];
+    if (prev && prev.endsWith("の") && !/[、。]/.test(prev) && (prev.length + c.length) <= 6) merged2[merged2.length - 1] = prev + c;
+    else merged2.push(c);
+  }
+  chunks.length = 0; for (const c of merged2) chunks.push(c);
+  // 5) 後処理: 1文字の孤立チャンクは前へ吸収（合計9字まで）。先頭助詞は保険で前へ。
+  const out = [];
+  for (const c of chunks) {
+    const prev = out[out.length - 1];
+    if (prev && c.length === 1 && /[々〆〇㐀-鿿ァ-ヿ]/.test(c) && (prev.length + 1) <= 9) {
+      out[out.length - 1] = prev + c;                       // 孤立した1字の漢字/カナを前語に吸収（例: 考え+方）
+    } else if (prev && SKG_PARTICLE_HEAD.test(c) && (prev.length + c.length) <= 10) {
+      out[out.length - 1] = prev + c;                       // 万一の行頭助詞を前へ
+    } else out.push(c);
+  }
+  return out;
+}
+// QAレポート用の妥当性判定（アプリ表示はこの結果に依存しない＝常にchunkTextを使用）
+function validChunks(p) {
+  if (!p || !Array.isArray(p.chunks) || !p.chunks.length) return false;
+  if (p.chunks.join("").replace(/\s/g, "") !== (p.text || "").replace(/\s/g, "")) return false;
+  if (p.chunks.some(c => SKG_PARTICLE_HEAD.test(c) || /^[、。」』）！？・]/.test(c))) return false;
+  return true;
+}
+// アプリ・QAが実際に使うチャンク：常に決定論チャンカーで生成（LLMのchunksは無視）
+function getChunks(p) { return chunkText((p && p.text) || ""); }
+/*__CHUNKER_END__*/
+
+// =============================================================
+// 解析エンジン（ChatGPTリサーチ反映）: 難度スコア / 難度補正速度 / Deep Cloze
+// 設計思想: 速く読ませる訓練を足すのでなく、速度を「難度補正・理解品質・転移」で測り直す
+// =============================================================
+const DIFF_REF = 0.50; // 参照難度（adjustedSpeedの基準）。この難度の文章を1.0倍とする
+const ABSTRACT_RE = /(性|化|的|論|観|構造|前提|要因|含意|傾向|概念|本質|戦略|制度|文脈|機能|価値|認識|範囲|主体|転換|差別|秩序|蓋然|趨勢|乖離|逆説)/g;
+// 本文の難易度統計（単一HTML内で完結する軽量版。MeCab不要）
+function textStats(text) {
+  const s = (text || "").replace(/\s/g, "");
+  const chars = [...s];
+  const n = chars.length || 1;
+  let kanji = 0;
+  for (const c of chars) if (skgClass(c) === "kanji") kanji++;
+  const kanjiRate = kanji / n;
+  const sents = s.split(/[。！？]/).filter(x => x.length > 0);
+  const sentLenMean = sents.length ? n / sents.length : n;
+  const abstractRate = ((s.match(ABSTRACT_RE) || []).length) / n;
+  // 各指標を「日本語ビジネス文の現実的なレンジ」に正規化（飽和を避け差をつける）
+  const clamp = x => Math.max(0, Math.min(1, x));
+  const kanjiNorm = clamp((kanjiRate - 0.30) / 0.18);    // 0.30→0, 0.48→1
+  const sentNorm = clamp((sentLenMean - 18) / 32);        // 18字→0, 50字→1
+  const abstractNorm = clamp(abstractRate / 0.040);       // 抽象語密度4%で上限
+  // 論説系の難しさは「文の長さ・抽象度」に強く出るため、文長と抽象語を重く
+  let r = 0.28 * kanjiNorm + 0.40 * sentNorm + 0.32 * abstractNorm;
+  r = clamp(r);
+  const bucket = r < 0.30 ? 1 : r < 0.43 ? 2 : r < 0.56 ? 3 : r < 0.70 ? 4 : 5;
+  return { chars: n, kanjiRate: +kanjiRate.toFixed(3), sentLenMean: +sentLenMean.toFixed(1), abstractRate: +abstractRate.toFixed(4), readability: +r.toFixed(3), bucket };
+}
+// 難度補正速度: 参照難度に正規化。難しい文を同速度で読めれば「実質的に速い」と評価
+function adjustSpeed(rawSpeed, readability) {
+  if (!rawSpeed) return rawSpeed;
+  const factor = (0.7 + (readability == null ? DIFF_REF : readability)) / (0.7 + DIFF_REF);
+  return Math.round(rawSpeed * factor);
+}
+function shuffleArr(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+// =============================================================
+// 漢数字→算用数字の正規化（「六千三百ドル」→「6,300ドル」「二〇二四年」→「2024年」）
+// 表示前に必ず通すことで、生成側のブレに依存せず一般的な数字表記に統一する。
+// 誤変換防止: 数字始まり(〇一二…九)・長さ2以上の連のみ変換（万一・千万・十分・一つ等は対象外）
+// =============================================================
+const KNUM = { "〇": 0, "一": 1, "二": 2, "三": 3, "四": 4, "五": 5, "六": 6, "七": 7, "八": 8, "九": 9 };
+const KUNIT_S = { "十": 10, "百": 100, "千": 1000 };
+const KUNIT_B = { "万": 10000, "億": 100000000, "兆": 1000000000000 };
+// 1万未満の漢数字を整数化（十百千の単位表記 or 位取り表記の両対応）
+function parseSub(s) {
+  const arr = [...s];
+  if (!arr.some(c => c in KUNIT_S)) { let r = ""; for (const c of arr) { if (!(c in KNUM)) return null; r += KNUM[c]; } return r === "" ? null : parseInt(r, 10); }
+  let section = 0, num = 0, seen = false;
+  for (const c of arr) {
+    if (c in KNUM) { num = num * 10 + KNUM[c]; seen = true; }
+    else if (c in KUNIT_S) { section += (num || 1) * KUNIT_S[c]; num = 0; seen = true; }
+    else return null;
+  }
+  return seen ? section + num : null;
+}
+// 全体を整数化（年号・序数の比較用）
+function parseKanjiNum(s) {
+  let total = 0, rest = s;
+  for (const [u, v] of [["兆", 1e12], ["億", 1e8], ["万", 1e4]]) {
+    const i = rest.indexOf(u);
+    if (i >= 0) { const sub = i ? parseSub(rest.slice(0, i)) : 1; if (sub == null) return null; total += sub * v; rest = rest.slice(i + 1); }
+  }
+  if (rest) { const r = parseSub(rest); if (r == null) return null; total += r; }
+  return total;
+}
+// 漢数字連を日本式の算用数字へ。億/兆/万は単位として残す（三百億→300億、一万二千→1万2,000、六千三百→6,300）
+function formatKanjiRun(m) {
+  const comma = n => n >= 1000 ? n.toLocaleString("en-US") : String(n);
+  let out = "", rest = m;
+  for (const u of ["兆", "億", "万"]) {
+    const i = rest.indexOf(u);
+    if (i >= 0) { const sub = i ? parseSub(rest.slice(0, i)) : 1; if (sub == null) return null; out += comma(sub) + u; rest = rest.slice(i + 1); }
+  }
+  if (rest) { const r = parseSub(rest); if (r == null) return null; if (r > 0 || out === "") out += comma(r); }
+  return out || null;
+}
+function normalizeNumerals(text) {
+  if (!text) return text;
+  return text.replace(/[〇一二三四五六七八九十百千万億兆]{2,}/g, (m, idx, full) => {
+    // 数字・十・百・千 始まりを変換（万/億/兆 始まりは「万一」等の誤変換になるため除外）
+    if (!/^[〇一二三四五六七八九十百千]/.test(m)) return m;
+    if (["千万", "百千", "万万", "十二分", "十八番"].includes(m)) return m;  // 慣用句ガード
+    const after = full[idx + m.length] || "";
+    if ("年月日時番期位回条章".includes(after)) { const n = parseKanjiNum(m); return n == null ? m : String(n); } // 年号・序数はカンマ無し・単位展開なし
+    const f = formatKanjiRun(m);
+    return f == null ? m : f;
+  });
+}
+// パッセージ群（本文・タイトル・設問）の数字を一括正規化
+function normalizeContentNumerals(c) {
+  if (!c || !c.passages) return c;
+  for (const p of c.passages) {
+    if (p.title) p.title = normalizeNumerals(p.title);
+    if (p.text) p.text = normalizeNumerals(p.text);
+    if (p.source) p.source = normalizeNumerals(p.source);
+    if (Array.isArray(p.questions)) for (const q of p.questions) {
+      if (q.q) q.q = normalizeNumerals(q.q);
+      if (Array.isArray(q.opts)) q.opts = q.opts.map(o => normalizeNumerals(o));
+      if (q.rationale) q.rationale = normalizeNumerals(q.rationale);
+    }
+  }
+  return c;
+}
+// =============================================================
+// SOKUGAN 3.0 エンジン
+// 根拠: 交互配置g=0.42(Brunmair2019) / 具体的困難目標d=0.42-0.80+近接目標が内発的興味を生む(Locke&Latham; Bandura&Schunk1981)
+//       自己説明g=0.55(Bisra2018) / 教えるつもりg=0.50(Kobayashi2019) / 語彙の深さ=読解分散59%(Qian2002)
+// =============================================================
+// ---- 曜日メニュー（変化で飽きを防ぎ、木曜は弱点集中） ----
+const MENUS = {
+  1: { id: "speed",    label: "⚡ 速度ストレッチの日", desc: "ペーサー+10%・反復読は+20%に挑戦" },
+  2: { id: "depth",    label: "🔍 深読みの日",       desc: "深層読解を本文①②の両方で実施" },
+  3: { id: "vocab",    label: "📚 語彙強化の日",      desc: "語彙道場が6語に増量（学校語彙を深く）" },
+  4: { id: "weak",     label: "🎯 弱点集中の日",      desc: "" },
+  5: { id: "transfer", label: "🛰 転移チェックの日",   desc: "週次アンカー測定に最適・総合バランス" },
+  6: { id: "light",    label: "🌿 軽めの日",         desc: "通常メニューを気楽に" },
+  0: { id: "free",     label: "🧭 自由の日",         desc: "通常メニュー" }
+};
+const SKILL_LABELS = { speed: "読速", comp: "理解度", deep: "論理のつなぎ(深層読解)", vocab: "語彙の深さ", catch: "語形キャッチ" };
+function weakestSkill() {
+  const cut = daysAgoStr(14);
+  const hs = state.history.filter(x => x.date >= cut);
+  const s = {};
+  const compv = hs.map(x => x.comprehension).filter(v => v != null);
+  s.comp = compv.length ? compv.reduce((a,b)=>a+b,0)/compv.length : 1;
+  const dc = hs.map(x => x.deepCloze).filter(Boolean);
+  s.deep = dc.length >= 2 ? dc.filter(d=>d.correct).length/dc.length : 1;
+  const sp = hs.map(x => x.spanScore).filter(v => v != null);
+  s.catch = sp.length ? sp.reduce((a,b)=>a+b,0)/sp.length : 1;
+  const vb = (state.vocabBook||[]).filter(v => v.date >= cut);
+  s.vocab = vb.length >= 3 ? vb.filter(v=>v.level>=3).length/vb.length : 1;
+  const a7 = adjMovingAvg(7), a30 = adjMovingAvg(30);
+  s.speed = (a7 && a30) ? Math.min(1, a7/a30) : 1;
+  let worst = "speed", val = 2;
+  for (const k of Object.keys(s)) if (s[k] < val) { val = s[k]; worst = k; }
+  return { id: worst, label: SKILL_LABELS[worst], score: val };
+}
+function todayMenu() {
+  let m = { ...MENUS[new Date().getDay()] };
+  if (m.id === "weak") { const w = weakestSkill(); m.desc = "直近14日の最弱スキル「" + w.label + "」を重点強化"; m.weak = w.id; }
+  return m;
+}
+// ---- 一目量（1固視あたりの推定文字数 = 難度補正速度 ÷ 240固視/分）----
+function gazeSpan(adjSpd) { return adjSpd ? +(adjSpd / 240).toFixed(1) : null; }
+// ---- 週次目標（具体的・困難・近接） ----
+function goalProgress() {
+  const g = state.goal; if (!g) return null;
+  const cur = adjMovingAvg(7) || movingAvg(7) || g.baseline;
+  const span = Math.max(1, g.target - g.baseline);
+  const pct = Math.max(0, Math.min(100, Math.round((cur - g.baseline) / span * 100)));
+  return { g, cur, pct };
+}
+function setGoal(target) {
+  const base = adjMovingAvg(7) || movingAvg(7) || state.bestSpeed || 350;
+  const whys = { 550: "会議資料を読む時間が今より2割縮む水準", 600: "母語話者平均超え。長文レポートを一往復で掴める", 650: "母語話者の上位帯。会議中に資料を読み切って先に問える" };
+  state.goal = { target, baseline: Math.min(base, target - 30), setAt: today(), why: whys[target] || "難度補正速度で" + target + "字/分", hit: [] };
+  saveState(); showToast("🎯 目標を設定: " + target + "字/分（難度補正）"); renderHome();
+}
+function clearGoal() { if (confirm("目標をリセットしますか？")) { state.goal = null; saveState(); renderHome(); } }
+// ---- 持ち帰り（教えるつもり効果 g=0.50） ----
+function passageTakeaway(p) {
+  if (p.takeaway && p.takeaway.hook) return { hook: p.takeaway.hook, detail: p.takeaway.detail || "", genre: genreOf(p) };
+  const r = ((p.questions || [])[0] || {}).rationale || "";
+  return { hook: p.title, detail: r, genre: genreOf(p) };
+}
+async function copyTakeaways() {
+  const t = state.lastTakeaways; if (!t) return;
+  const txt = t.items.map(i => "・" + i.hook + (i.detail ? " — " + i.detail : "")).join("\n");
+  try { await navigator.clipboard.writeText(txt); showToast("📋 コピーしました。誰かに話そう"); } catch (e) { showToast("コピーできませんでした"); }
+}
+// ---- 語彙道場（学校語彙を12歳の言葉で。深さ優先・自己説明） ----
+function sessionKeyTerms(n) {
+  const seen = new Set(); const out = [];
+  const known = new Set((state.vocabBook || []).filter(v => v.level >= 3).map(v => v.term));
+  const pools = [sess.p1, sess.p2, ...(content.passages || [])];
+  for (const p of pools) for (const t of (p.keyTerms || [])) {
+    if (!t || !t.term || !t.plain || seen.has(t.term)) continue;
+    seen.add(t.term); out.push(t);
+  }
+  out.sort((a, b) => (known.has(a.term) ? 1 : 0) - (known.has(b.term) ? 1 : 0));
+  return out.slice(0, n);
+}
+// Deep Cloze: 接続表現を空所化し、論理関係の理解を測る（状況モデル理解の安価な測定）
+const CONNECTIVES = {
+  "逆接": ["しかし", "一方で", "だが", "ところが", "むしろ", "とはいえ", "それでも"],
+  "因果": ["したがって", "そのため", "だから", "その結果", "ゆえに", "それゆえ"],
+  "換言": ["つまり", "要するに", "すなわち", "言い換えれば"],
+  "添加": ["さらに", "加えて", "そのうえ", "しかも"],
+  "例示": ["たとえば", "具体的には", "事実"]
+};
+function makeDeepCloze(text) {
+  const s = (text || "").replace(/\s/g, "");
+  const sents = s.split(/(?<=[。！？])/).filter(Boolean);
+  for (let i = 1; i < sents.length; i++) {
+    for (const [type, list] of Object.entries(CONNECTIVES)) {
+      for (const c of list) {
+        if (sents[i].startsWith(c)) {
+          const others = Object.entries(CONNECTIVES).filter(([t]) => t !== type).map(([t, l]) => l[Math.floor(Math.random() * l.length)]);
+          shuffleArr(others);
+          const opts = shuffleArr([c, ...others.slice(0, 3)]);
+          const ctx = (sents[i - 1] || "").slice(-40);
+          const blanked = "（　？　）" + sents[i].slice(c.length);
+          return { type, correct: c, prompt: ctx + blanked, opts, ans: opts.indexOf(c) };
+        }
+      }
+    }
+  }
+  return null;
+}
+
+// =============================================================
+// CONTENT LOADING
+// =============================================================
+async function loadContent() {
+  try {
+    const res = await fetch("./daily-content.json", { cache: "no-cache" });
+    if (!res.ok) throw new Error("not ok");
+    const data = await res.json();
+    if (data.passages && data.passages.length > 0) {
+      content = data; contentSource = "json";
+      normalizeContentNumerals(content);   // 漢数字→算用数字に統一
+      randomizeAllQuestionOrders(content);
+      return { ok: true, date: data.date };
+    }
+  } catch (e) {}
+  normalizeContentNumerals(content);        // フォールバック教材も正規化
+  randomizeAllQuestionOrders(content);
+  return { ok: false };
+}
+function randomizeAllQuestionOrders(c) {
+  if (!c || !c.passages) return;
+  for (const p of c.passages) {
+    if (p.questions) p.questions = p.questions.map(q => shuffleQuestionOptions(q));
+  }
+}
+function shuffleQuestionOptions(q) {
+  if (!q || !Array.isArray(q.opts) || q.opts.length < 2) return q;
+  const idx = q.opts.map((_, i) => i);
+  for (let i = idx.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [idx[i], idx[j]] = [idx[j], idx[i]];
+  }
+  return { ...q, opts: idx.map(i => q.opts[i]), ans: idx.indexOf(q.ans) };
+}
+function showBanner(html, type) { document.getElementById("banner").innerHTML = html ? `<div class="banner ${type||"info"}">${html}</div>` : ""; }
+// =============================================================
+// RATCHET（昨日比ラチェット）
+// =============================================================
+function currentTarget() {
+  if (state.ratchet.target) return state.ratchet.target;
+  const ma = movingAvg(7);
+  state.ratchet.target = ma || state.baselineSpeed || 350;
+  return state.ratchet.target;
+}
+function applyRatchet(sessionSpeed, comp) {
+  const t = currentTarget();
+  const cleared = comp >= PASS_COMP && sessionSpeed >= t;
+  const r = state.ratchet;
+  let newTarget = t, msg = "";
+  if (cleared && !r.clearedDates.includes(today())) {
+    r.clearedDates.push(today());
+    newTarget = Math.round(Math.min(t * RATCHET_UP, sessionSpeed * 1.08));
+    newTarget = Math.max(newTarget, t + 5); // 最低+5字/分は上げる
+    r.target = newTarget; r.missStreak = 0;
+    msg = `基準クリア。明日の目標は <b>${newTarget}字/分</b>（+${newTarget - t}）に上がりました`;
+  } else if (!cleared) {
+    // その日の最後の判定はrenderResultで行うため、ここでは未達カウントだけ進めない
+    msg = "";
+  }
+  return { cleared, oldTarget: t, newTarget, msg };
+}
+function relieveRatchetIfNeeded() {
+  // 起動時: 直近2訓練日とも未達なら目標を3%下げる（死のスパイラル防止）
+  const r = state.ratchet;
+  if (!r.target) return;
+  // 2.0で実際に訓練した日のみ対象（1.0レガシー記録は判定外）
+  const days = [...new Set(state.history.filter(h => !h.legacy).map(h => h.date))].sort().slice(-2);
+  if (days.length < 2) return;
+  if (days[1] < daysAgoStr(3)) return; // 休止期間中の目標減衰を防止
+  const bothMissed = days.every(d => !r.clearedDates.includes(d)) && !days.includes(today());
+  if (bothMissed && r.lastRelief !== today()) {
+    const old = r.target;
+    r.target = Math.round(r.target * RATCHET_RELIEF);
+    r.lastRelief = today();
+    if (old !== r.target) {
+      state.wins.push({ date: today(), ico: "🛟", text: `2日連続未達のため目標を ${old}→${r.target}字/分 に調整（再挑戦しやすく）` });
+      saveState();
+    }
+  }
+}
+// =============================================================
+// NAV & HEADER
+// =============================================================
+let view = "home";
+function go(v) { view = v; render(); }
+function render() {
+  renderHeader(); renderNav();
+  if (view === "home") renderHome();
+  else if (view === "history") renderHistory();
+  else if (view === "about") renderAbout();
+  window.scrollTo(0, 0);
+}
+function renderHeader() {
+  const t = today();
+  document.getElementById("header").innerHTML = `
+    <div class="header">
+      <div class="logo">速眼<small>SOKUGAN 3.0</small></div>
+      <div class="header-stats">
+        <div>連続 <b>${state.streak}</b>日</div>
+        <div>累計 <b>${totalTrainingDays()}</b>日</div>
+        <div>PB <b>${state.bestSpeed || "—"}</b><span style="font-size:10px">字/分</span></div>
+      </div>
+    </div>`;
+}
+function renderNav() {
+  if (sess) { document.getElementById("nav").innerHTML = ""; return; }
+  const tabs = [["home","トレーニング"],["history","記録"],["about","メソッド"]];
+  document.getElementById("nav").innerHTML = `
+    <div class="nav">${tabs.map(([k,l]) => `<button class="${view===k?"active":""}" onclick="go('${k}')">${l}</button>`).join("")}</div>`;
+}
+// =============================================================
+// HOME
+// =============================================================
+function renderHome() {
+  const t = currentTarget();
+  const yest = lastTrainedDayBefore(today());
+  const yestBest = yest ? dayBest(yest) : null;
+  const todayBest = dayBest(today());
+  const clearedToday = state.ratchet.clearedDates.includes(today());
+  const todaySess = ensureTodaySession();
+  const deltaVsYest = (todayBest && yestBest) ? todayBest - yestBest : null;
+  const ma7 = movingAvg(7), ma30 = movingAvg(30);
+  const adjMa7 = adjMovingAvg(7), adjMa30 = adjMovingAvg(30);
+  const wins = state.wins.slice(-3).reverse();
+  const deep = genreSpeed("deep"), news = genreSpeed("concrete");
+  const fr = contentStatus();
+  const menu = todayMenu();
+  const gp = goalProgress();
+  const gz = gazeSpan(adjMa7);
+  const tk = (state.lastTakeaways && state.lastTakeaways.date === today()) ? state.lastTakeaways : null;
+
+  screen().innerHTML = `
+    ${renderFreshnessPanel(fr)}
+    ${anchorDue() && totalTrainingDays() >= 1 ? `<div class="fresh" style="background:var(--blue-dim);border-color:rgba(9,105,218,.35)"><div class="fresh-head"><div><div class="fresh-status">🛰 週次アンカー転移テストの時期です</div><div class="fresh-sub">訓練と別枠で、普通の文章を速く読めるようになったか（転移）を約3分で測定。目標やベストには影響しません。</div></div><button class="recheck-btn" onclick="startAnchor()">測定する</button></div></div>` : ""}
+    <div class="card" style="border-color:${clearedToday ? "var(--green)" : "var(--border2)"}">
+      <div style="margin-bottom:8px"><span class="tag" style="background:var(--gold-dim);color:var(--gold);font-size:12px">${menu.label}</span> <span class="small">${esc(menu.desc)}</span></div>
+      <div class="card-title">今日の目標 ${clearedToday ? '<span class="delta-chip up">クリア済</span>' : ""}</div>
+      <div class="card-subtitle">DAILY TARGET · 理解度70%以上での読速 · 今日の一歩が週目標につながる</div>
+      <div class="target-hero"><span class="num">${t}</span><span class="unit">字/分</span>
+        ${yestBest ? `<span class="delta-chip ${t > yestBest ? "up" : "flat"}">昨回実績 ${yestBest} 比 ${t - yestBest >= 0 ? "+" : ""}${t - yestBest}</span>` : ""}
+      </div>
+      ${todayBest ? `<p class="muted" style="margin:4px 0 10px">今日のベスト: <b style="color:var(--ink)">${todayBest}字/分</b>${deltaVsYest != null ? `（昨回比 ${deltaVsYest >= 0 ? "+" : ""}${deltaVsYest}）` : ""}</p>` : `<p class="muted" style="margin:4px 0 10px">クリアすると明日の目標が約2.5%上がります。昨日の自分が今日のライバルです。</p>`}
+      <button class="btn ${fr.isStale ? "secondary" : ""}" onclick="guardedStart()">${todaySess.count > 0 ? `セッション ${todaySess.count + 1} を開始（約12分）` : "今日のセッションを開始（約12分）"}</button>
+      ${fr.isStale ? `<p class="small" style="margin-top:8px;color:var(--gold)">⚠ 表示中のコンテンツは <b>${fr.date}</b> 分です。最新でない可能性があるため、上の「更新を確認」を押すか、開始時に確認します。</p>` : ""}
+      ${gp ? `
+      <div style="margin-top:14px;padding-top:12px;border-top:1px dashed var(--border2)">
+        <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:5px"><span>🎯 <b>${gp.g.target}字/分</b>（難度補正）への道 <span class="small">${esc(gp.g.why)}</span></span><b style="color:var(--coral)">${gp.pct}%</b></div>
+        <div class="timerbar" style="margin:0"><div class="fill" style="width:${gp.pct}%;background:linear-gradient(90deg,var(--coral),var(--gold))"></div></div>
+        <div class="small" style="margin-top:4px">${gp.g.baseline} → 現在 <b>${gp.cur}</b> → ${gp.g.target}字/分 ・ 一目量 ${gz || "—"}字/固視 <a href="javascript:clearGoal()" style="color:var(--ink3);font-size:10px;margin-left:8px">目標を変更</a></div>
+      </div>` : `
+      <div style="margin-top:14px;padding-top:12px;border-top:1px dashed var(--border2)">
+        <div style="font-size:13px;margin-bottom:8px">🎯 <b>目標を設定すると成長が物語になります</b>（具体的で少し難しい目標は成果d=0.42〜0.80）</div>
+        <div style="display:flex;gap:8px">
+          <button class="recheck-btn" onclick="setGoal(550)">550字/分<br><span style="font-weight:400;font-size:10px">資料読みが2割速く</span></button>
+          <button class="recheck-btn" onclick="setGoal(600)">600字/分<br><span style="font-weight:400;font-size:10px">母語話者平均超え</span></button>
+          <button class="recheck-btn" onclick="setGoal(650)">650字/分<br><span style="font-weight:400;font-size:10px">母語話者の上位帯</span></button>
+        </div>
+      </div>`}
+    </div>
+    ${tk ? `<div class="card" style="border-color:var(--gold)"><div class="card-title">🎁 今日の持ち帰り</div><div class="card-subtitle">誰かに「実は…」と話したら定着完了</div>${tk.items.map(t => `<div class="win-item"><span class="ico">💬</span><div><b>${esc(t.hook)}</b></div></div>`).join("")}<button class="btn secondary small" style="margin-top:8px" onclick="copyTakeaways()">📋 コピー</button></div>` : ""}
+
+    <div class="card">
+      <div class="card-title">成長カーブ</div>
+      <div class="card-subtitle">PROGRESS · 直近30日 · 理解度ゲート通過分のみ</div>
+      ${renderSparkline()}
+      <div class="grid3" style="margin-top:12px">
+        <div class="stat-box"><div class="v">${ma7 || "—"}</div><div class="l">7日平均 字/分（生）</div></div>
+        <div class="stat-box"><div class="v" style="color:var(--blue)">${adjMa7 || "—"}</div><div class="l">7日平均（難度補正）</div></div>
+        <div class="stat-box"><div class="v" style="color:var(--green)">${gz || "—"}</div><div class="l">一目量 字/固視</div></div>
+      </div>
+      ${adjMa7 && adjMa30 ? `<p class="small" style="margin-top:8px">難度補正の7日 vs 30日: <b style="color:${adjMa7 >= adjMa30 ? "var(--green)" : "var(--coral)"}">${adjMa7 >= adjMa30 ? "+" : ""}${Math.round((adjMa7 - adjMa30) / adjMa30 * 100)}%</b> — 生速度が横ばいでも、難しい文章を速く読めていれば実質成長です。</p>` : ""}
+      ${renderBenchmark()}
+    </div>
+
+    <div class="card">
+      <div class="card-title">ジャンル別の読速</div>
+      <div class="card-subtitle">BY GENRE · 直近14日平均</div>
+      ${renderGenreBars(news, deep)}
+      <p class="small" style="margin-top:6px">論説・分析系（経営・組織・規制）は速報より遅くて正常。差が縮まること自体が汎用性の成長です。</p>
+    </div>
+    ${renderAnchorCard()}
+
+    <div class="card">
+      <div class="card-title">できるようになったこと</div>
+      <div class="card-subtitle">RECENT WINS</div>
+      ${wins.length ? wins.map(w => `<div class="win-item"><span class="ico">${w.ico}</span><div>${w.text}<div class="d">${w.date}</div></div></div>`).join("") : '<p class="muted">セッションを完了すると、成長の証跡がここに溜まっていきます。</p>'}
+    </div>`;
+}
+function genreSpeed(group) {
+  const cutoff = daysAgoStr(14);
+  const v = [];
+  for (const h of state.history) {
+    if (!h.valid || h.date < cutoff || !h.genreSpeeds) continue;
+    for (const g of h.genreSpeeds) {
+      if ((GENRES[g.genre] || "concrete") === group && g.speed > 0) v.push(g.speed);
+    }
+  }
+  return v.length ? Math.round(v.reduce((a,b)=>a+b,0) / v.length) : null;
+}
+function renderGenreBars(news, deep) {
+  const max = Math.max(news || 0, deep || 0, NATIVE_AVG);
+  const bar = (name, val, color, cls) => `
+    <div class="genre-bar"><div class="gname"><span class="tag ${cls}">${name}</span></div>
+      <div class="gtrack"><div class="gfill" style="width:${val ? Math.round(val / max * 100) : 0}%;background:${color}"></div></div>
+      <div class="gval">${val ? val + " 字/分" : "データなし"}</div></div>`;
+  return bar("速報・事業", news, "var(--coral)", "") + bar("経営・論説", deep, "var(--blue)", "sci");
+}
+function renderAnchorCard() {
+  const valids = (state.anchorHistory || []).filter(h => h.valid);
+  if (!valids.length) {
+    return `<div class="card"><div class="card-title">転移（週次アンカー）</div><div class="card-subtitle">TRANSFER · 訓練が「普通の読み」に効いているかの検査</div><p class="muted">まだ測定がありません。週1回、訓練とは別の難度固定文で「未訓練の文章を速く読めるか」を測ります。${anchorDue() ? "上のカードから測定できます。" : ""}</p></div>`;
+  }
+  const last = valids[valids.length - 1];
+  const trend = valids.slice(-6).map(h => h.adjustedSpeed);
+  const mx = Math.max(...trend);
+  const first = valids[0].adjustedSpeed, delta = last.adjustedSpeed - first;
+  return `<div class="card">
+    <div class="card-title">転移（週次アンカー） <span class="tag sci" style="margin-left:4px">${last.adjustedSpeed}字/分</span></div>
+    <div class="card-subtitle">TRANSFER · 難度補正・未訓練文 · 最新 ${last.date}</div>
+    <div style="display:flex;gap:6px;align-items:flex-end;height:64px;margin:10px 0">${trend.map(v => `<div style="flex:1;text-align:center"><div style="background:var(--blue);border-radius:4px 4px 0 0;height:${Math.round(v / mx * 50) + 4}px"></div><div class="small" style="margin-top:2px">${v}</div></div>`).join("")}</div>
+    <p class="small">初回 ${first} → 最新 ${last.adjustedSpeed}字/分（${delta >= 0 ? "+" : ""}${delta}）。${valids.length < 2 ? "あと数回で転移の傾向が見えます。" : delta > 0 ? "訓練が未訓練の文章にも転移しています。" : "アプリ内の伸びが転移に届いていない可能性。傾向で判断します。"}</p>
+  </div>`;
+}
+function renderBenchmark() {
+  const ma = movingAvg(7) || state.bestSpeed || 0;
+  const pct = Math.min(100, Math.round(ma / NATIVE_GOOD * 100));
+  const avgPos = Math.round(NATIVE_AVG / NATIVE_GOOD * 100);
+  return `
+    <div class="bench-wrap">
+      <div class="bench-bar">
+        <div class="bench-fill" style="width:${pct}%"></div>
+        <div class="bench-mark" style="left:${avgPos}%"></div>
+      </div>
+      <div class="bench-labels"><span>現在 ${ma}字/分</span><span>母語話者平均 ${NATIVE_AVG}</span><span>上位 ${NATIVE_GOOD}+</span></div>
+    </div>`;
+}
+function renderSparkline() {
+  // 直近30日: 日毎の有効ベスト + 7日移動平均線 + 目標線
+  const days = [];
+  for (let i = 29; i >= 0; i--) days.push(daysAgoStr(i));
+  const pts = days.map(d => ({ d, v: dayBest(d) }));
+  const valid = pts.filter(p => p.v);
+  if (valid.length < 2) return '<p class="muted">あと数セッションでグラフが描かれます。</p>';
+  const W = 700, H = 170, PAD = 34;
+  const vs = valid.map(p => p.v);
+  const target = currentTarget();
+  let lo = Math.min(...vs, target) - 30, hi = Math.max(...vs, target, NATIVE_AVG * 0.9) + 30;
+  const x = i => PAD + i * (W - PAD - 10) / 29;
+  const y = v => H - 24 - (v - lo) / (hi - lo) * (H - 44);
+  // 7日移動平均
+  const maPts = [];
+  for (let i = 0; i < 30; i++) {
+    const win = pts.slice(Math.max(0, i - 6), i + 1).filter(p => p.v).map(p => p.v);
+    if (win.length) maPts.push({ i, v: win.reduce((a,b)=>a+b,0) / win.length });
+  }
+  const maPath = maPts.map((p, j) => `${j ? "L" : "M"}${x(p.i).toFixed(1)},${y(p.v).toFixed(1)}`).join("");
+  const dots = pts.map((p, i) => p.v ? `<circle cx="${x(i).toFixed(1)}" cy="${y(p.v).toFixed(1)}" r="3.4" fill="var(--coral)"/>` : "").join("");
+  const ty = y(target);
+  return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto">
+    <line x1="${PAD}" y1="${ty}" x2="${W-10}" y2="${ty}" stroke="var(--gold)" stroke-dasharray="5 4" stroke-width="1.4"/>
+    <text x="${W-12}" y="${ty - 6}" text-anchor="end" font-size="11" fill="var(--gold)">目標 ${target}</text>
+    <path d="${maPath}" fill="none" stroke="var(--green)" stroke-width="2.2" opacity=".9"/>
+    ${dots}
+    <text x="${PAD}" y="${H-6}" font-size="10" fill="var(--ink3)">${days[0].slice(5)}</text>
+    <text x="${W-12}" y="${H-6}" text-anchor="end" font-size="10" fill="var(--ink3)">${days[29].slice(5)}</text>
+    <text x="${PAD}" y="14" font-size="10" fill="var(--green)">— 7日移動平均</text>
+  </svg>`;
+}
+// =============================================================
+// SESSION FLOW
+// 0 ペーサー準備 → 1 ペーサー確認 → 2 本文1初読 → 3 設問1 → 4 本文1反復
+// → 5 本文2初読 → 6 設問2 → 7 結果
+// =============================================================
+const PHASES = ["ペーサー","確認","キャッチ","語彙","本文①","設問①","反復①","本文②","設問②","結果"];
+function phaseIdx(name) { const i = PHASES.indexOf(name); return i < 0 ? 0 : i; }
+function phaseDots(cur) {
+  return `<div class="phase-dots">${PHASES.map((_, i) =>
+    `<span class="${i < cur ? "done" : i === cur ? "cur" : ""}" title="${PHASES[i]}"></span>`).join("")}</div>`;
+}
+function pickSessionPassages() {
+  const ts = ensureTodaySession();
+  const all = content.passages || [];
+  let pool = all.filter(p => !ts.usedPassageIds.includes(p.id));
+  if (pool.length < 3) pool = all;
+  const deep = pool.filter(isDeep);
+  const news = pool.filter(p => !isDeep(p));
+  const p1 = news[(ts.count) % Math.max(1, news.length)] || pool[0];
+  const p2 = deep.find(p => p.id !== p1.id) || pool.find(p => p.id !== p1.id) || pool[0];
+  const rest = pool.filter(p => p.id !== p1.id && p.id !== p2.id);
+  const warm = rest.length ? rest[Math.floor(Math.random() * rest.length)] : (all.find(p => p.id !== p1.id && p.id !== p2.id) || p1);
+  return { p1, p2, warm };
+}
+// =============================================================
+// コンテンツ鮮度ゲート（開始前に「今日の最新か」を確認できる仕組み）
+// =============================================================
+function contentSignature() { return (content.passages || []).map(p => p.id).join("|"); }
+function contentStatus() {
+  const d = content.date;
+  const isToday = d === today();
+  const isAhead = d && d !== "fallback" && d > today();   // 翌日分を先取り生成済み（夕方に開いた場合）
+  const isStale = d && d !== "fallback" && d < today();    // 過去日付のみ「古い」
+  let genTxt = "";
+  if (content.generated_at) {
+    const g = new Date(content.generated_at);
+    if (!isNaN(g)) genTxt = `${g.getFullYear()}/${g.getMonth()+1}/${g.getDate()} ${String(g.getHours()).padStart(2,"0")}:${String(g.getMinutes()).padStart(2,"0")} 生成`;
+  }
+  const trainedToday = (state.history || []).some(h => h.date === today());
+  const titles = (content.passages || []).map(p => ({ genre: genreOf(p), title: p.title }));
+  return { date: d, isToday, isAhead, isStale, source: contentSource, genTxt, trainedToday, titles };
+}
+function renderFreshnessPanel(fr) {
+  let cls, icon, status, sub;
+  if (fr.source === "fallback") {
+    cls = "err"; icon = "⚠"; status = "コンテンツ未読込";
+    sub = "daily-content.json を読み込めず内蔵教材で表示中。<code>start.command</code> から localhost 経由で開いてください。";
+  } else if (fr.isToday) {
+    cls = "ok"; icon = "✅"; status = `今日（${fr.date}）の最新コンテンツ`;
+    sub = `${fr.genTxt ? fr.genTxt + " · " : ""}${fr.trainedToday ? "本日トレーニング済 — 追加セッションも可" : "🆕 本日まだ未トレーニング"}`;
+  } else if (fr.isAhead) {
+    cls = "ok"; icon = "✅"; status = `最新コンテンツ準備済み（${fr.date} 分・先取り生成）`;
+    sub = `${fr.genTxt ? fr.genTxt + " · " : ""}今夜分を前倒しで用意済み。今すぐ練習できます。`;
+  } else if (fr.isStale) {
+    cls = "stale"; icon = "⚠"; status = `表示中は ${fr.date} 分（今日は ${today()}）`;
+    sub = "最新ではありません。「更新を確認」を押す→反映されなければ生成待ち（毎夕18:00自動）。";
+  } else {
+    cls = "stale"; icon = "⚠"; status = "コンテンツ日付が不明";
+    sub = "「更新を確認」を押してください。";
+  }
+  const titleList = (fr.isToday || fr.isAhead || fr.isStale) && fr.titles.length
+    ? `<div class="fresh-titles">${fr.titles.map(t => `<div class="ft"><span class="tag" style="margin:0">${esc(t.genre)}</span><b>${esc(t.title)}</b></div>`).join("")}</div>`
+    : "";
+  // QA監視AIの検査状態（同じ日付のレポートがある時だけ）
+  let qaLine = "";
+  if (qaReport && qaReport.date === fr.date) {
+    qaLine = qaReport.status === "pass"
+      ? `<div class="fresh-sub" style="margin-top:6px">🛡 QA検査済 ✅ ${qaReport.passed}/${qaReport.total}（前夜の自動点検に合格）</div>`
+      : `<div class="fresh-sub" style="margin-top:6px;color:var(--coral)">🛡 <b>QA検査で問題検出</b>（${qaReport.passed}/${qaReport.total}）— 内容に不備の可能性</div>`;
+  }
+  // 設問明快さ監査の状態（LLMが実際に全設問を解いて明快さを採点した記録）
+  let clarityLine = "";
+  if (clarityAudit && clarityAudit.date === fr.date) {
+    clarityLine = clarityAudit.status === "pass"
+      ? `<div class="fresh-sub" style="margin-top:4px">📝 設問明快さ 点検済 ✅ 平均${clarityAudit.avgScore}/5${clarityAudit.rewritten ? `（${clarityAudit.rewritten}問を平易化）` : ""}</div>`
+      : `<div class="fresh-sub" style="margin-top:4px;color:var(--coral)">📝 <b>設問明快さに要改善</b>（平均${clarityAudit.avgScore}/5）</div>`;
+  } else {
+    clarityLine = `<div class="fresh-sub" style="margin-top:4px;color:var(--ink3)">📝 設問明快さ監査は未実施（今夜のQAで点検）</div>`;
+  }
+  return `
+    <div class="fresh ${cls}">
+      <div class="fresh-head">
+        <div>
+          <div class="fresh-status">${icon} ${status}</div>
+          <div class="fresh-sub">${sub}</div>
+        </div>
+        <button class="recheck-btn" id="recheck-btn" onclick="recheckContent()">🔄 更新を確認</button>
+      </div>
+      ${qaLine}
+      ${clarityLine}
+      ${titleList}
+    </div>`;
+}
+function showToast(msg) {
+  const old = document.getElementById("toast"); if (old) old.remove();
+  const t = document.createElement("div"); t.className = "toast"; t.id = "toast"; t.innerHTML = msg;
+  document.body.appendChild(t);
+  setTimeout(() => { if (t.parentNode) t.remove(); }, 3200);
+}
+async function recheckContent() {
+  const btn = document.getElementById("recheck-btn");
+  const prevSig = contentSignature(), prevDate = content.date;
+  if (btn) { btn.textContent = "確認中…"; btn.disabled = true; }
+  await loadContent();
+  await loadQaReport();
+  await loadClarityAudit();
+  const fr = contentStatus();
+  if (content.date !== prevDate || contentSignature() !== prevSig) {
+    if (fr.isToday) showToast(`✅ 最新になりました（${fr.date}）`);
+    else showToast(`コンテンツを更新（${fr.date}）`);
+  } else if (fr.isToday) {
+    showToast(`✅ すでに今日（${fr.date}）の最新です`);
+  } else if (fr.source === "fallback") {
+    showToast(`⚠ まだ読み込めません（内蔵教材）`);
+  } else {
+    showToast(`⚠ まだ ${fr.date} 分のままです（生成待ち）`);
+  }
+  if (view === "home") renderHome();
+}
+function guardedStart() {
+  const fr = contentStatus();
+  if (fr.isStale) {
+    const ok = confirm(`表示中のコンテンツは ${fr.date} 分で、今日（${today()}）の最新ではありません。\n\n先に「更新を確認」を押すのがおすすめです。\nこのまま ${fr.date} 分の内容で練習を始めますか？`);
+    if (!ok) return;
+  }
+  startSession();
+}
+function startSession() {
+  const ts = ensureTodaySession();
+  ts.count += 1;
+  state.lastContentSig = contentSignature();
+  const { p1, p2, warm } = pickSessionPassages();
+  for (const p of [p1, p2]) if (!ts.usedPassageIds.includes(p.id)) ts.usedPassageIds.push(p.id);
+  if (!state.pacerLevel) state.pacerLevel = Math.round((currentTarget() || 350) * 1.1);
+  const wq = warm.questions ? warm.questions[Math.floor(Math.random() * warm.questions.length)] : null;
+  const menu = todayMenu();
+  sess = {
+    num: ts.count, p1, p2, menu,
+    warm, warmChunks: getChunks(warm),
+    warmQ: wq ? shuffleQuestionOptions(wq) : null,
+    pacerResult: null, pacerLeveledUp: false,
+    p1Init: null, p1Re: null, p2Init: null,
+    quizAnswers: [],
+    pacerMul: (menu.id === "speed" || menu.weak === "speed") ? 1.1 : 1,
+    rereadFactor: (menu.id === "speed" || menu.weak === "speed") ? 1.20 : REREAD_FACTOR,
+    clozeBoth: (menu.id === "depth" || menu.weak === "deep" || menu.weak === "comp"),
+    vocabN: (menu.id === "vocab" || menu.weak === "vocab") ? 6 : 3,
+    spanN: (menu.weak === "catch") ? 12 : SPAN_TRIALS,
+  };
+  saveState();
+  renderPacer();
+}
+function abortSession() {
+  if (!confirm("セッションを中断しますか？記録は保存されません。")) return;
+  sess = null; render();
+}
+// ---------- PHASE 0: 文中チャンクペーサー ----------
+let pacerTimer = null;
+function renderPacer() {
+  renderHeader(); renderNav(); showBanner("");
+  const wpm = Math.round(state.pacerLevel * ((sess && sess.pacerMul) || 1));
+  const chunks = sess.warmChunks;
+  screen().innerHTML = `
+    ${phaseDots(phaseIdx("ペーサー"))}
+    <div class="card">
+      <div class="card-title">チャンクペーサー <span class="tag">${wpm}字/分</span></div>
+      <div class="card-subtitle">IN-TEXT CHUNK PACER · 実文の文節ハイライトを目で追う · 連続3成功で+5%</div>
+      <p class="muted" style="margin-bottom:10px">ハイライトの移動に合わせて<b>文節のかたまりごと</b>に読み進めてください。読み終えたら内容確認が1問あります。声に出さず、意味を取りながら。</p>
+      <div class="reading-text" id="pacer-text">${chunks.map((c, i) => `<span class="chunk" id="ck${i}">${esc(c)}</span>`).join("")}</div>
+      <div style="margin-top:14px;display:flex;gap:8px">
+        <button class="btn" id="pacer-start" onclick="runPacer()">スタート</button>
+        <button class="btn secondary small" onclick="abortSession()">中断</button>
+      </div>
+    </div>`;
+}
+function runPacer() {
+  document.getElementById("pacer-start").style.display = "none";
+  const chunks = sess.warmChunks;
+  const wpm = Math.round(state.pacerLevel * ((sess && sess.pacerMul) || 1));
+  let i = -1;
+  const step = () => {
+    if (i >= 0) {
+      const prev = document.getElementById("ck" + i);
+      if (prev) { prev.classList.remove("lit"); prev.classList.add("past"); }
+    }
+    i++;
+    if (i >= chunks.length) { clearInterval(pacerTimer); setTimeout(renderPacerQuiz, 400); return; }
+    const el = document.getElementById("ck" + i);
+    if (el) { el.classList.add("lit"); el.scrollIntoView({ block: "center", behavior: "smooth" }); }
+    clearInterval(pacerTimer);
+    const dur = Math.max(160, chunks[i].length / (wpm / 60) * 1000);
+    pacerTimer = setInterval(step, dur);
+  };
+  step();
+}
+function renderPacerQuiz() {
+  const q = sess.warmQ;
+  if (!q) { sess.pacerResult = true; afterPacer(true); return; }
+  screen().innerHTML = `
+    ${phaseDots(phaseIdx("確認"))}
+    <div class="card">
+      <div class="card-title">ペース内で意味は取れたか</div>
+      <div class="card-subtitle">PACER CHECK · 1問</div>
+      <p style="font-weight:700;margin-bottom:12px">${esc(q.q)}</p>
+      ${q.opts.map((o, i) => `<button class="opt" id="po${i}" onclick="answerPacer(${i})">${esc(o)}</button>`).join("")}
+      <div id="pacer-fb"></div>
+    </div>`;
+}
+function answerPacer(i) {
+  const q = sess.warmQ;
+  const correct = i === q.ans;
+  q.opts.forEach((_, j) => {
+    const el = document.getElementById("po" + j);
+    el.disabled = true;
+    if (j === q.ans) el.classList.add("correct");
+    else if (j === i) el.classList.add("wrong");
+  });
+  sess.pacerResult = correct;
+  // 3-up-1-down ステアケース（正答率約80%に収束）
+  const old = state.pacerLevel;
+  let lvlMsg = "";
+  if (correct) {
+    state.pacerStreak = (state.pacerStreak || 0) + 1;
+    if (state.pacerStreak >= 3) {
+      state.pacerLevel = Math.round(old * (1 + PACER_STEP));
+      state.pacerStreak = 0;
+      sess.pacerLeveledUp = true;
+      state.wins.push({ date: today(), ico: "⚡", text: `ペーサー速度がレベルアップ: ${old} → ${state.pacerLevel}字/分` });
+      lvlMsg = `<div class="banner ok" style="margin-top:10px">3連続成功。ペーサーが <b>${old} → ${state.pacerLevel}字/分</b> に上がりました</div>`;
+    } else {
+      lvlMsg = `<div class="banner info" style="margin-top:10px">成功 ${state.pacerStreak}/3 — あと${3 - state.pacerStreak}回連続成功で速度アップ</div>`;
+    }
+  } else {
+    state.pacerStreak = 0;
+    state.pacerLevel = Math.max(200, Math.round(old * (1 - PACER_STEP)));
+    lvlMsg = `<div class="banner warn" style="margin-top:10px">ペースが速すぎたようです。${old} → ${state.pacerLevel}字/分 に調整（最適負荷は正答率8割）</div>`;
+  }
+  saveState();
+  document.getElementById("pacer-fb").innerHTML = `${q.rationale ? `<div class="rationale" style="margin-top:10px">${esc(q.rationale)}</div>` : ""}${lvlMsg}
+    <button class="btn" style="margin-top:10px" onclick="renderSpanIntro()">瞬間キャッチへ進む</button>`;
+}
+function afterPacer() { renderSpanIntro(); }
+// ---------- PHASE 2: 瞬間キャッチ（フラッシュ視認・視幅漸進拡大） ----------
+const SPAN_TRIALS = 8;
+const SPAN_EXPOSURE = 160;  // ms ≒ 1固視分
+const SPAN_MASK = 130;      // 逆向きマスク呈示時間（残像読みを防ぐ）
+const MASK_CHARS = "▦▧▨▩░▒▓█";
+function maskString(n) { let s = ""; for (let i = 0; i < n; i++) s += MASK_CHARS[Math.floor(Math.random() * MASK_CHARS.length)]; return s; }
+// レベルが上がるほど選択肢を増やす（紛らわしさ↑）
+function spanOptCount(level) { return level >= 8 ? 6 : level >= 6 ? 5 : 4; }
+// 候補と target の類似度（共有文字数×2＋同先頭＋同末尾）。高いほど紛らわしい
+function spanSim(a, target) {
+  let s = 0; const tset = new Set([...target]);
+  for (const ch of new Set([...a])) if (tset.has(ch)) s += 2;
+  if (a[0] === target[0]) s += 3;
+  if (a[a.length - 1] === target[target.length - 1]) s += 3;
+  if (a.length === target.length) s += 1;
+  return s;
+}
+function chunkPool() {
+  const pool = {};
+  for (const p of (content.passages || [])) {
+    const cs = getChunks(p);
+    for (const c of cs) {
+      const t = c.replace(/[、。！？「」『』（）・：；]/g, "");
+      if (t.length < 3 || t.length > 9) continue;
+      (pool[t.length] = pool[t.length] || []).push(t);
+    }
+  }
+  return pool;
+}
+function spanTrialSet(level) {
+  const pool = chunkPool();
+  const distinct = l => new Set(pool[l] || []).size;
+  const need = spanOptCount(level) + 2;
+  let lv = level;
+  while (lv > 3 && distinct(lv) < need) lv--;
+  while (lv < 9 && distinct(lv) < need) lv++;
+  const arr = [...new Set(pool[lv] || [])];
+  if (arr.length < 4) return null;
+  const optN = Math.min(spanOptCount(lv), arr.length);
+  const target = arr[Math.floor(Math.random() * arr.length)];
+  // v3: 「最初の数文字が合えば正解できてしまう」対策。
+  // 選択肢は原則ターゲットと同じ書き出し（先頭1-2字一致）に限定し、違いは語の後半だけに置く。
+  const prefLen = Math.min(2, [...target].length - 1);
+  const pref = [...target].slice(0, prefLen).join("");
+  let lures = arr.filter(c => c !== target && c.startsWith(pref));
+  if (lures.length < optN - 1) lures = lures.concat(arr.filter(c => c !== target && !lures.includes(c) && c[0] === target[0]));
+  // 足りなければ「尾部だけ差し替えた変異体」を合成（先頭は同一のまま、後半1字を別チャンク由来の字に）
+  const tchars = [...target];
+  let guard = 0;
+  while (lures.length < optN - 1 && guard++ < 40) {
+    const pos = Math.max(prefLen, Math.floor(tchars.length / 2)) + Math.floor(Math.random() * Math.max(1, tchars.length - Math.max(prefLen, Math.floor(tchars.length / 2))));
+    const donor = arr[Math.floor(Math.random() * arr.length)] || target;
+    const dch = [...donor][Math.floor(Math.random() * [...donor].length)];
+    if (!dch || dch === tchars[pos]) continue;
+    const v = tchars.slice(0, pos).join("") + dch + tchars.slice(pos + 1).join("");
+    if (v !== target && !lures.includes(v)) lures.push(v);
+  }
+  lures.sort(() => Math.random() - 0.5);
+  const opts = [target, ...lures.slice(0, optN - 1)];
+  for (let i = opts.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [opts[i], opts[j]] = [opts[j], opts[i]]; }
+  return { target, opts, ans: opts.indexOf(target), level: lv };
+}
+function renderSpanIntro() {
+  screen().innerHTML = `
+    ${phaseDots(phaseIdx("キャッチ"))}
+    <div class="card">
+      <div class="card-title">瞬間キャッチ <span class="tag">現在の視幅 ${state.spanLevel}字</span></div>
+      <div class="card-subtitle">FLASH CATCH v3 · ${SPAN_EXPOSURE}ms呈示→マスク · <b>書き出しが同じ語</b>が並ぶ＝語尾まで一目で取る · 3連続正解で視幅+1字</div>
+      <p class="muted" style="margin-bottom:10px">中央の<span style="color:var(--coral)">●</span>を凝視。語が一瞬光りすぐ<b>マスク</b>で隠れます。選択肢は<b>書き出しが同じで語尾だけ違う</b>ため、最初の数文字では当てられません。語全体を一目で取る訓練です（全${(sess && sess.spanN) || SPAN_TRIALS}回）。視幅が上がると字数も選択肢の紛らわしさも増します。</p>
+      <button class="btn" onclick="runSpanTrial(0,0)">スタート</button>
+    </div>`;
+}
+function runSpanTrial(idx, score) {
+  const NT = (sess && sess.spanN) || SPAN_TRIALS;
+  if (idx >= NT) { finishSpan(score); return; }
+  const trial = spanTrialSet(state.spanLevel);
+  if (!trial) { finishSpan(score); return; }
+  sess.spanTrial = trial;
+  screen().innerHTML = `
+    ${phaseDots(phaseIdx("キャッチ"))}
+    <div class="card">
+      <div class="card-title">瞬間キャッチ ${idx + 1}/${(sess && sess.spanN) || SPAN_TRIALS} <span class="tag">${trial.level}字</span></div>
+      <div style="height:130px;display:flex;align-items:center;justify-content:center">
+        <div id="span-stage" style="font-size:30px;font-weight:800;letter-spacing:.04em"><span style="color:var(--coral)">●</span></div>
+      </div>
+      <div id="span-opts"></div>
+    </div>`;
+  setTimeout(() => {
+    const st = document.getElementById("span-stage");
+    if (!st) return;
+    st.textContent = trial.target;                       // ① 語をフラッシュ
+    setTimeout(() => {
+      st.style.color = "var(--ink3)";
+      st.textContent = maskString(trial.target.length);  // ② 逆向きマスク（残像読み防止）
+      setTimeout(() => {
+        st.style.color = "";
+        st.innerHTML = "&nbsp;";
+        const box = document.getElementById("span-opts");
+        if (box) box.innerHTML = `<p class="muted" style="margin-bottom:8px">いま見えた語はどれ？（似た語が並びます）</p>` +
+          trial.opts.map((o, i) => `<button class="opt" id="so${i}" onclick="answerSpan(${idx},${score},${i})">${esc(o)}</button>`).join("");
+      }, SPAN_MASK);                                       // ③ 選択肢呈示
+    }, SPAN_EXPOSURE);
+  }, 700);
+}
+function answerSpan(idx, score, i) {
+  const trial = sess.spanTrial;
+  const correct = i === trial.ans;
+  trial.opts.forEach((_, j) => {
+    const el = document.getElementById("so" + j);
+    if (!el) return;
+    el.disabled = true;
+    if (j === trial.ans) el.classList.add("correct");
+    else if (j === i) el.classList.add("wrong");
+  });
+  if (correct) {
+    state.spanStreak = (state.spanStreak || 0) + 1;
+    if (state.spanStreak >= 3 && state.spanLevel < 9) {
+      const old = state.spanLevel;
+      state.spanLevel += 1; state.spanStreak = 0;
+      state.wins.push({ date: today(), ico: "👁", text: `瞬間キャッチの視幅が拡大: ${old}字 → ${state.spanLevel}字（選択肢 ${spanOptCount(old)}→${spanOptCount(state.spanLevel)}択）` });
+    } else if (state.spanStreak >= 3) {
+      state.spanStreak = 0; // 上限9字では維持
+    }
+  } else {
+    state.spanStreak = 0;
+    if (state.spanLevel > 3) state.spanLevel -= 1;
+  }
+  saveState();
+  setTimeout(() => runSpanTrial(idx + 1, score + (correct ? 1 : 0)), 700);
+}
+function finishSpan(score) {
+  sess.spanResult = { score, total: (sess && sess.spanN) || SPAN_TRIALS };
+  const terms = sessionKeyTerms(sess.vocabN || 3);
+  if (terms.length >= 2) { sess.vocabTerms = terms; renderVocabIntro(); }
+  else renderRead(1);
+}
+// ---------- PHASE 3.5: 語彙道場（学校語彙を12歳の言葉で深く） ----------
+function renderVocabIntro() {
+  screen().innerHTML = `
+    ${phaseDots(phaseIdx("語彙"))}
+    <div class="card">
+      <div class="card-title">語彙道場 <span class="tag">${sess.vocabTerms.length}語</span></div>
+      <div class="card-subtitle">LEXICON DOJO · 今日の本文に出る用語を「12歳にもわかる言葉」で · 深く知る語ほど速く読める</div>
+      <p class="muted" style="margin-bottom:10px">まず<b>自分の言葉で12歳に説明するつもりで</b>頭の中で言ってみてから、最も本質を突いた説明を選んでください。読解分散の約6割は語彙の「深さ」で説明されます。</p>
+      <button class="btn" onclick="runVocabTrial(0,0)">はじめる</button>
+    </div>`;
+}
+function runVocabTrial(idx, score) {
+  if (idx >= sess.vocabTerms.length) { finishVocab(score, sess.vocabTerms.length); return; }
+  const t = sess.vocabTerms[idx];
+  const opts = shuffleArr([{ s: t.plain, ok: true }, ...(t.lures || []).slice(0, 3).map(s => ({ s, ok: false }))]);
+  sess.vocabTrial = { t, opts };
+  screen().innerHTML = `
+    ${phaseDots(phaseIdx("語彙"))}
+    <div class="card">
+      <div class="card-title">語彙道場 ${idx + 1}/${sess.vocabTerms.length}</div>
+      <div class="card-subtitle">頭の中で「12歳への説明」を言ってから選ぶ</div>
+      <div style="text-align:center;font-size:26px;font-weight:900;margin:16px 0">${esc(t.term)}</div>
+      ${opts.map((o, i) => `<button class="opt" id="vo${i}" onclick="answerVocab(${idx},${score},${i})">${esc(o.s)}</button>`).join("")}
+      <div id="vocab-fb"></div>
+    </div>`;
+}
+function answerVocab(idx, score, i) {
+  const { t, opts } = sess.vocabTrial;
+  const correct = opts[i].ok;
+  opts.forEach((o, j) => { const el = document.getElementById("vo" + j); el.disabled = true; if (o.ok) el.classList.add("correct"); else if (j === i) el.classList.add("wrong"); });
+  const book = state.vocabBook = state.vocabBook || [];
+  const prev = book.find(v => v.term === t.term);
+  const level = correct ? 3 : 2;
+  if (prev) { prev.level = Math.max(prev.level, level); prev.date = today(); }
+  else book.push({ term: t.term, plain: t.plain, date: today(), level });
+  saveState();
+  document.getElementById("vocab-fb").innerHTML = `
+    <div class="rationale" style="margin-top:10px"><b>${esc(t.term)}</b> = ${esc(t.plain)}${t.note ? "<br>" + esc(t.note) : ""}</div>
+    <button class="btn" style="margin-top:8px" onclick="runVocabTrial(${idx + 1},${score + (correct ? 1 : 0)})">${idx + 1 >= sess.vocabTerms.length ? "本文①へ" : "次の語"}</button>`;
+}
+function finishVocab(score, total) {
+  sess.vocabResult = { score, total };
+  const mastered = (state.vocabBook || []).filter(v => v.level >= 3).length;
+  if (mastered > 0 && mastered % 25 === 0) state.wins.push({ date: today(), ico: "📚", text: `習得語彙が${mastered}語に到達 — 学校語彙の地層が厚くなっている` });
+  renderRead(1);
+}
+// ---------- 初読（計測） ----------
+let readTimer = null, readStart = 0;
+function renderRead(which) {
+  const p = which === 1 ? sess.p1 : sess.p2;
+  const phase = which === 1 ? phaseIdx("本文①") : phaseIdx("本文②");
+  const n = charCount(p.text);
+  screen().innerHTML = `
+    ${phaseDots(phase)}
+    <div class="card">
+      <div><span class="tag ${isDeep(p) ? "sci" : ""}">${esc(genreOf(p))}</span><span class="small">${esc(p.source || "")}</span></div>
+      <div class="card-title" style="margin-top:6px">${esc(p.title)}</div>
+      <div class="card-subtitle">本文${which === 1 ? "①" : "②"} 初読 · ${n}字 · 読了後に設問3問 · 理解度70%未満は記録無効</div>
+      <div class="bigtime" id="read-clock">00:00</div>
+      <div class="reading-text hidden-text" id="read-text">${esc(p.text)}</div>
+      <div style="margin-top:14px;display:flex;gap:8px">
+        <button class="btn" id="read-btn" onclick="startReading(${which})">表示して計測開始</button>
+        <button class="btn secondary small" onclick="abortSession()">中断</button>
+      </div>
+    </div>`;
+}
+function startReading(which) {
+  const btn = document.getElementById("read-btn");
+  document.getElementById("read-text").classList.remove("hidden-text");
+  readStart = Date.now();
+  clearInterval(readTimer);
+  readTimer = setInterval(() => {
+    document.getElementById("read-clock").textContent = fmtTime((Date.now() - readStart) / 1000);
+  }, 250);
+  btn.textContent = "読了"; btn.onclick = () => finishReading(which);
+}
+function finishReading(which) {
+  clearInterval(readTimer);
+  const p = which === 1 ? sess.p1 : sess.p2;
+  const time = (Date.now() - readStart) / 1000;
+  const n = charCount(p.text);
+  const speed = Math.round(n / time * 60);
+  const rec = { time, speed, chars: n };
+  if (which === 1) sess.p1Init = rec; else sess.p2Init = rec;
+  renderQuiz(which, 0, []);
+}
+// ---------- 設問（3問・即時フィードバック+解説） ----------
+function renderQuiz(which, qi, answers) {
+  const p = which === 1 ? sess.p1 : sess.p2;
+  const phase = which === 1 ? phaseIdx("設問①") : phaseIdx("設問②");
+  const qs = p.questions || [];
+  if (qi >= qs.length) { finishQuiz(which, answers); return; }
+  const q = qs[qi];
+  screen().innerHTML = `
+    ${phaseDots(phase)}
+    <div class="card">
+      <div class="card-title">設問 ${qi + 1} / ${qs.length}</div>
+      <div class="card-subtitle">${esc(p.title)}</div>
+      <p style="font-weight:700;margin-bottom:12px">${esc(q.q)}</p>
+      ${q.opts.map((o, i) => `<button class="opt" id="qo${i}" onclick="answerQuiz(${which},${qi},${i})">${esc(o)}</button>`).join("")}
+      <div id="quiz-fb"></div>
+      <div style="text-align:right;margin-top:6px"><button id="clarity-flag" class="recheck-btn" style="font-size:11px;padding:5px 10px" onclick="flagQuestion(${which},${qi})">⚠ この設問はわかりにくい</button></div>
+    </div>`;
+  window._quizAnswers = answers;
+}
+// ユーザーが「わかりにくい」と感じた設問を記録（明快さ改善のシグナル源）
+function flagQuestion(which, qi) {
+  const p = which === 1 ? sess.p1 : sess.p2;
+  const q = (p.questions || [])[qi];
+  if (!q) return;
+  (state.clarityFlags = state.clarityFlags || []).push({ date: today(), genre: genreOf(p), title: p.title, q: q.q, opts: q.opts });
+  saveState();
+  const btn = document.getElementById("clarity-flag");
+  if (btn) { btn.textContent = "✓ 報告しました（改善に反映）"; btn.disabled = true; }
+  showToast("報告ありがとう。記録タブから書き出してClaudeに渡すと設問が改善されます");
+}
+function answerQuiz(which, qi, i) {
+  const p = which === 1 ? sess.p1 : sess.p2;
+  const q = p.questions[qi];
+  const correct = i === q.ans;
+  q.opts.forEach((_, j) => {
+    const el = document.getElementById("qo" + j);
+    el.disabled = true;
+    if (j === q.ans) el.classList.add("correct");
+    else if (j === i) el.classList.add("wrong");
+  });
+  const answers = window._quizAnswers.concat([correct]);
+  document.getElementById("quiz-fb").innerHTML = `
+    ${q.rationale ? `<div class="rationale" style="margin-top:10px">${esc(q.rationale)}</div>` : ""}
+    <button class="btn" style="margin-top:8px" onclick='renderQuiz(${which},${qi + 1},${JSON.stringify(answers)})'>${qi + 1 >= p.questions.length ? "採点へ" : "次の設問"}</button>`;
+}
+function finishQuiz(which, answers) {
+  const comp = answers.length ? answers.filter(Boolean).length / answers.length : 0;
+  if (which === 1) {
+    sess.p1Init.comp = comp;
+    if (sess.clozeBoth) {
+      const dc1 = makeDeepCloze(sess.p1.text);
+      if (dc1) { sess.deepClozeQ = dc1; sess.deepClozeWhich = 1; renderDeepCloze(); return; }
+    }
+    renderReread();
+  } else {
+    sess.p2Init.comp = comp;
+    // Deep Cloze（深層読解）: 本文②に接続表現があれば1問だけ追加（理解の質を安価に測定）
+    const dc = makeDeepCloze(sess.p2.text);
+    if (dc) { sess.deepClozeQ = dc; renderDeepCloze(); }
+    else renderResult();
+  }
+}
+function proceedAfterCloze1() { sess.deepClozeWhich = null; renderReread(); }
+// ---------- Deep Cloze（接続・論理関係の理解を測る） ----------
+function renderDeepCloze() {
+  const dc = sess.deepClozeQ;
+  screen().innerHTML = `
+    ${phaseDots(phaseIdx("設問②"))}
+    <div class="card">
+      <div class="card-title">深層読解 — 論理のつなぎを読む</div>
+      <div class="card-subtitle">DEEP CLOZE · 空所に入る接続表現は？（速読しても文の論理関係を取れているかの確認）</div>
+      <div class="reading-text" style="font-size:17px;background:var(--card2);border-radius:10px;padding:12px 14px;margin-bottom:12px">${esc(dc.prompt)}</div>
+      ${dc.opts.map((o, i) => `<button class="opt" id="dco${i}" onclick="answerDeepCloze(${i})">${esc(o)}</button>`).join("")}
+      <div id="dc-fb"></div>
+    </div>`;
+}
+function answerDeepCloze(i) {
+  const dc = sess.deepClozeQ;
+  const correct = i === dc.ans;
+  dc.opts.forEach((_, j) => {
+    const el = document.getElementById("dco" + j);
+    el.disabled = true;
+    if (j === dc.ans) el.classList.add("correct");
+    else if (j === i) el.classList.add("wrong");
+  });
+  if (sess.deepClozeWhich === 1) { sess.deepCloze1 = { type: dc.type, correct }; }
+  else sess.deepCloze = { type: dc.type, correct };
+  document.getElementById("dc-fb").innerHTML = `
+    <div class="rationale" style="margin-top:10px">正解は「${esc(dc.correct)}」（${esc(dc.type)}）。${correct ? "論理関係を正しく取れています。" : "速く読んでも、文と文の論理のつなぎ目を取れるかが深い理解の分かれ目です。"}</div>
+    <button class="btn" style="margin-top:8px" onclick="${sess.deepClozeWhich === 1 ? "proceedAfterCloze1()" : "renderResult()"}">${sess.deepClozeWhich === 1 ? "反復読へ" : "結果へ"}</button>`;
+}
+// ---------- 反復読（自分超えチャレンジ） ----------
+function renderReread() {
+  const p = sess.p1;
+  const init = sess.p1Init;
+  const rf = sess.rereadFactor || REREAD_FACTOR;
+  const targetTime = init.time / rf;
+  const targetSpeed = Math.round(init.speed * rf);
+  screen().innerHTML = `
+    ${phaseDots(phaseIdx("反復①"))}
+    <div class="card">
+      <div class="card-title">反復読 — 5分前の自分に勝つ</div>
+      <div class="card-subtitle">REPEATED READING · 同じ文章を初読の${Math.round(((sess.rereadFactor||REREAD_FACTOR)-1)*100)}%増しの速度で · 反復読みは未読文章にも転移します</div>
+      <div class="grid2" style="margin-bottom:10px">
+        <div class="stat-box"><div class="v">${init.speed}</div><div class="l">初読 字/分</div></div>
+        <div class="stat-box"><div class="v" style="color:var(--coral)">${targetSpeed}</div><div class="l">目標 字/分（${fmtTime(targetTime)}以内）</div></div>
+      </div>
+      <div class="timerbar"><div class="fill" id="re-fill" style="width:100%"></div></div>
+      <div class="bigtime" id="re-clock">00:00</div>
+      <div class="reading-text hidden-text" id="re-text">${esc(p.text)}</div>
+      <div style="margin-top:14px"><button class="btn" id="re-btn" onclick="startReread(${targetTime.toFixed(2)})">表示してスタート</button></div>
+    </div>`;
+}
+function startReread(targetTime) {
+  document.getElementById("re-text").classList.remove("hidden-text");
+  readStart = Date.now();
+  clearInterval(readTimer);
+  readTimer = setInterval(() => {
+    const el = (Date.now() - readStart) / 1000;
+    document.getElementById("re-clock").textContent = fmtTime(el);
+    const fill = document.getElementById("re-fill");
+    const remain = Math.max(0, 1 - el / targetTime);
+    fill.style.width = (remain * 100) + "%";
+    fill.className = "fill" + (remain < 0.25 ? " warning" : "") + (remain <= 0 ? " over" : "");
+    if (remain <= 0) fill.style.width = "100%";
+  }, 200);
+  const btn = document.getElementById("re-btn");
+  btn.textContent = "読了"; btn.onclick = () => finishReread(targetTime);
+}
+function finishReread(targetTime) {
+  clearInterval(readTimer);
+  const time = (Date.now() - readStart) / 1000;
+  const speed = Math.round(sess.p1Init.chars / time * 60);
+  const beat = time <= targetTime * 1.02;
+  sess.p1Re = { time, speed, beat };
+  if (beat) state.wins.push({ date: today(), ico: "🔁", text: `反復読で初読比 +${Math.round((speed / sess.p1Init.speed - 1) * 100)}%（${sess.p1Init.speed}→${speed}字/分）` });
+  saveState();
+  renderRead(2);
+}
+// =============================================================
+// RESULT
+// =============================================================
+function updateStreak() {
+  const t = today();
+  if (state.lastSessionDate === t) return;
+  if (state.lastSessionDate === daysAgoStr(1)) state.streak += 1;
+  else state.streak = 1;
+  state.maxStreak = Math.max(state.maxStreak, state.streak);
+  state.lastSessionDate = t;
+}
+function checkWeeklyWin() {
+  if (state.lastWinCheck === today()) return;
+  state.lastWinCheck = today();
+  const last7 = state.history.filter(h => h.valid && h.date >= daysAgoStr(7)).map(h => h.speed);
+  const prev7 = state.history.filter(h => h.valid && h.date >= daysAgoStr(14) && h.date < daysAgoStr(7)).map(h => h.speed);
+  if (last7.length >= 3 && prev7.length >= 3) {
+    const a = last7.reduce((x,y)=>x+y,0) / last7.length;
+    const b = prev7.reduce((x,y)=>x+y,0) / prev7.length;
+    const pct = Math.round((a - b) / b * 100);
+    if (pct >= 3) state.wins.push({ date: today(), ico: "📈", text: `今週の平均読速が先週比 +${pct}%（${Math.round(b)}→${Math.round(a)}字/分）` });
+  }
+}
+function renderResult() {
+  const p1 = sess.p1Init, p2 = sess.p2Init, re = sess.p1Re;
+  const sessSpeed = Math.round((p1.speed + p2.speed) / 2);
+  const comp = (p1.comp + p2.comp) / 2;
+  const valid = comp >= PASS_COMP;
+  const target = currentTarget();
+  // 難度補正速度（ChatGPT提案#3）: 文章の難度で正規化。難しい文を同速で読めれば実質成長
+  const st1 = textStats(sess.p1.text), st2 = textStats(sess.p2.text);
+  const sessReadability = +(((st1.readability + st2.readability) / 2)).toFixed(3);
+  const adjSpeed = adjustSpeed(sessSpeed, sessReadability);
+  const rat = valid ? applyRatchet(sessSpeed, comp) : { cleared: false, oldTarget: target, newTarget: target };
+  // PB
+  const prevPB = state.bestSpeed;
+  let pbUpdated = false;
+  if (valid && sessSpeed > state.bestSpeed) {
+    state.bestSpeed = sessSpeed; pbUpdated = true;
+    state.wins.push({ date: today(), ico: "🏆", text: `自己ベスト更新: ${prevPB || "—"} → ${sessSpeed}字/分（理解度${Math.round(comp*100)}%）` });
+  }
+  if (valid && p1.comp === 1 && p2.comp === 1) state.wins.push({ date: today(), ico: "🎯", text: "全6問正解 — 速度と理解の両立" });
+  if (valid && isDeep(sess.p2)) {
+    const deepPB = Math.max(0, ...state.history.filter(h => h.valid && h.genreSpeeds).flatMap(h => h.genreSpeeds.filter(g => (GENRES[g.genre]||"concrete") === "deep").map(g => g.speed)));
+    if (p2.speed > deepPB && deepPB > 0) state.wins.push({ date: today(), ico: "📑", text: `論説系の自己ベスト: ${deepPB} → ${p2.speed}字/分` });
+  }
+  // 難度補正での自己ベスト（生速度が横ばいでも難しい文で伸びれば成長として検出）
+  const prevAdjBest = Math.max(0, ...state.history.filter(h => h.valid && h.adjustedSpeed).map(h => h.adjustedSpeed));
+  if (valid && adjSpeed > prevAdjBest && prevAdjBest > 0)
+    state.wins.push({ date: today(), ico: "🧗", text: `難度補正の自己ベスト: ${prevAdjBest} → ${adjSpeed}字/分（難しい文章を速く読めた）` });
+  if (valid && sess.deepCloze && sess.deepCloze.correct)
+    state.wins.push({ date: today(), ico: "🔗", text: `深層読解（${sess.deepCloze.type}）正解 — 速度を保って論理のつなぎも取れた` });
+  // 記録
+  state.history.push({
+    date: today(), speed: sessSpeed, comprehension: comp, valid,
+    target, targetMet: rat.cleared,
+    adjustedSpeed: adjSpeed, readability: sessReadability,
+    genreSpeeds: [
+      { genre: genreOf(sess.p1), speed: p1.speed, comp: p1.comp, readability: st1.readability },
+      { genre: genreOf(sess.p2), speed: p2.speed, comp: p2.comp, readability: st2.readability }
+    ],
+    deepCloze: sess.deepCloze || null,
+    reread: re ? { speed: re.speed, beat: re.beat } : null,
+    pacerLevel: state.pacerLevel,
+    spanLevel: state.spanLevel,
+    spanScore: sess.spanResult ? sess.spanResult.score / sess.spanResult.total : null
+  });
+  // 持ち帰り（教えるつもり効果）: 今日の2本のフックを保存
+  state.lastTakeaways = { date: today(), items: [passageTakeaway(sess.p1), passageTakeaway(sess.p2)] };
+  // 目標マイルストーン（25/50/75/100%を跨いだら祝福）
+  const gp0 = goalProgress();
+  if (valid && gp0) {
+    for (const th of [25, 50, 75, 100]) {
+      if (gp0.pct >= th && !(state.goal.hit || []).includes(th)) {
+        (state.goal.hit = state.goal.hit || []).push(th);
+        state.wins.push({ date: today(), ico: th === 100 ? "🏁" : "🚩", text: `目標${state.goal.target}字/分への到達度が${th}%に（現在${gp0.cur}字/分）` });
+      }
+    }
+  }
+  // XP（控えめ・演出より実数値主役）
+  state.xp += 40 + Math.round(comp * 30) + (rat.cleared ? 30 : 0) + (sess.pacerResult ? 10 : 0);
+  updateStreak();
+  checkWeeklyWin();
+  saveState();
+  // 昨日比
+  const yest = lastTrainedDayBefore(today());
+  const yestBest = yest ? dayBest(yest) : null;
+  const ma30 = movingAvg(30);
+  const newWins = state.wins.filter(w => w.date === today()).slice(-4);
+  const compPct = Math.round(comp * 100);
+  const g1 = genreOf(sess.p1), g2 = genreOf(sess.p2);
+  const sp = sess.spanResult;
+  const dcRes = sess.deepCloze;
+  const dc1Res = sess.deepCloze1;
+  const vres = sess.vocabResult;
+  const menuLabel = sess.menu ? sess.menu.label : "";
+  const takeItems = state.lastTakeaways ? state.lastTakeaways.items : [];
+  const adjBest = Math.max(0, ...state.history.filter(h => h.valid && h.adjustedSpeed).map(h => h.adjustedSpeed));
+  const adj30 = (() => { const v = state.history.filter(h => h.valid && h.adjustedSpeed && h.date >= daysAgoStr(30)).map(h => h.adjustedSpeed); return v.length ? Math.round(v.reduce((a, b) => a + b, 0) / v.length) : null; })();
+  sess = null;
+  renderHeader(); renderNav();
+  screen().innerHTML = `
+    ${phaseDots(phaseIdx("結果"))}
+    <div class="card">
+      <div class="result-verdict">
+        <div class="big" style="color:${valid ? (rat.cleared ? "var(--green)" : "var(--ink)") : "var(--ink3)"}">${sessSpeed}<span style="font-size:18px;color:var(--ink2)"> 字/分</span></div>
+        <div class="sub">理解度 ${compPct}% ${valid ? "" : "— 70%未満のため速度は記録対象外（速さより理解の回復を優先）"}</div>
+        ${valid ? (rat.cleared
+          ? `<div class="banner ok" style="margin-top:12px;text-align:left">🎉 目標 ${rat.oldTarget}字/分 をクリア。明日の目標は <b>${rat.newTarget}字/分</b>（+${rat.newTarget - rat.oldTarget}）。昨日の自分をまた一歩引き離しました。</div>`
+          : `<div class="banner warn" style="margin-top:12px;text-align:left">目標 ${target}字/分 まであと <b>${Math.max(0, target - sessSpeed)}字/分</b>。今日中の再挑戦でクリア可能です。</div>`)
+          : `<div class="banner warn" style="margin-top:12px;text-align:left">理解度ゲート未通過。次のセッションでは少しだけ速度を落として、設問を意識しながら読んでみてください。</div>`}
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">今日の中身</div>
+      <div class="card-subtitle">SESSION BREAKDOWN</div>
+      <div class="compare-row"><span class="lab">本文①（${esc(g1)}）初読</span><span><b>${p1.speed}</b> 字/分 · 理解 ${Math.round(p1.comp*100)}%</span></div>
+      <div class="compare-row"><span class="lab">本文① 反復読</span><span>${re ? `<b>${re.speed}</b> 字/分 ${re.beat ? '<span class="delta-chip up">+15%達成</span>' : '<span class="delta-chip flat">目標未達</span>'}` : "—"}</span></div>
+      <div class="compare-row"><span class="lab">本文②（${esc(g2)}）初読</span><span><b>${p2.speed}</b> 字/分 · 理解 ${Math.round(p2.comp*100)}%</span></div>
+      <div class="compare-row" style="background:var(--blue-dim);border-radius:8px;padding-left:8px;padding-right:8px"><span class="lab">難度補正速度 <span class="small">（難度${sessReadability}）</span></span><span><b style="color:var(--blue)">${adjSpeed}</b> 字/分 ${valid && adjSpeed > sessSpeed ? `<span class="delta-chip up">生速度+${adjSpeed - sessSpeed}</span>` : ""}</span></div>
+      <div class="compare-row"><span class="lab">深層読解（接続）</span><span>${[dc1Res, dcRes].filter(Boolean).map(d => `${d.correct ? '<span class="delta-chip up">正解</span>' : '<span class="delta-chip down">不正解</span>'} ${esc(d.type)}`).join(" · ") || "—"}</span></div>
+      <div class="compare-row"><span class="lab">語彙道場</span><span>${vres ? `<b>${vres.score}</b>/${vres.total} 語 · 習得計 ${(state.vocabBook || []).filter(v => v.level >= 3).length}語` : "—"}</span></div>
+      <div class="compare-row" style="background:var(--green-dim);border-radius:8px;padding-left:8px;padding-right:8px"><span class="lab">推定 一目量 <span class="small">（1固視で読める文字数）</span></span><span><b style="color:var(--green)">${gazeSpan(adjSpeed) || "—"}</b> 字/固視</span></div>
+      <div class="compare-row"><span class="lab">ペーサー現在値</span><span><b>${state.pacerLevel}</b> 字/分</span></div>
+      <div class="compare-row"><span class="lab">瞬間キャッチ</span><span>${sp ? `<b>${sp.score}</b>/${sp.total} 正解 · 視幅 ${state.spanLevel}字` : "—"}</span></div>
+      <div class="compare-row"><span class="lab">昨回ベスト比</span><span>${yestBest ? `${yestBest} → <b>${valid ? sessSpeed : "—"}</b> ${valid && sessSpeed - yestBest !== 0 ? `<span class="delta-chip ${sessSpeed >= yestBest ? "up" : "down"}">${sessSpeed >= yestBest ? "+" : ""}${sessSpeed - yestBest}</span>` : ""}` : "初回基準日"}</span></div>
+      <div class="compare-row"><span class="lab">30日平均比</span><span>${ma30 && valid ? `<span class="delta-chip ${sessSpeed >= ma30 ? "up" : "down"}">${sessSpeed >= ma30 ? "+" : ""}${Math.round((sessSpeed - ma30) / ma30 * 100)}%</span>` : "—"}</span></div>
+    </div>
+    ${takeItems.length ? `<div class="card" style="border-color:var(--gold)"><div class="card-title">🎁 今日の持ち帰り — 誰かに話したくなったら合格</div><div class="card-subtitle">TAKEAWAYS · 「実は…」と雑談や会議で使えるネタ · 話すつもりで覚えると記憶に残る(g=0.50)</div>${takeItems.map(t => `<div class="win-item"><span class="ico">💬</span><div><b>${esc(t.hook)}</b>${t.detail ? `<div class="small" style="margin-top:2px">${esc(t.detail)}</div>` : ""}<div class="d">${esc(t.genre)}</div></div></div>`).join("")}<button class="btn secondary small" style="margin-top:10px" onclick="copyTakeaways()">📋 コピーして誰かに話す</button></div>` : ""}
+    ${newWins.length ? `<div class="card"><div class="card-title">今日できるようになったこと</div><div class="card-subtitle">TODAY'S WINS</div>${newWins.map(w => `<div class="win-item"><span class="ico">${w.ico}</span><div>${w.text}</div></div>`).join("")}</div>` : ""}
+    <div style="display:flex;gap:8px">
+      <button class="btn secondary" onclick="go('home')">ホームへ</button>
+      <button class="btn" onclick="startSession()">もう1セッション</button>
+    </div>`;
+  if (pbUpdated || rat.cleared) showCelebrate(pbUpdated, rat);
+}
+function showCelebrate(pb, rat) {
+  const div = document.createElement("div");
+  div.className = "celebrate";
+  div.innerHTML = `<div class="inner">
+    <div class="emoji">${pb ? "🏆" : "🎉"}</div>
+    <h2>${pb ? "自己ベスト更新" : "今日の基準クリア"}</h2>
+    <p class="muted">${pb ? `理解度を保ったままの最高速度です` : `明日の目標は ${rat.newTarget}字/分。階段は確実に上がっています`}</p>
+    <button class="btn small" style="margin-top:18px;width:auto" onclick="this.closest('.celebrate').remove()">閉じる</button>
+  </div>`;
+  document.body.appendChild(div);
+  setTimeout(() => { if (div.parentNode) div.remove(); }, 6000);
+}
+// =============================================================
+// 週次アンカー転移テスト（ChatGPT提案#1）
+// 訓練と別枠。未訓練・難度固定の内蔵本文で「普通の文章を速く読めるか」を検査。
+// ラチェット・bestSpeedには一切影響させない（訓練と測定の分離）。
+// =============================================================
+function anchorDue() {
+  if (!state.lastAnchorDate) return true;
+  return daysBetween(state.lastAnchorDate, today()) >= 7;
+}
+function pickAnchor() { return ANCHOR_POOL[(state.anchorIdx || 0) % ANCHOR_POOL.length]; }
+let anchorState = null;
+function startAnchor() {
+  const base = pickAnchor();
+  // 数字を正規化し、選択肢の並びを毎回シャッフル（内蔵教材は正解が先頭固定のため位置の偏りを排除）
+  const a = {
+    ...base,
+    title: normalizeNumerals(base.title), text: normalizeNumerals(base.text),
+    questions: base.questions.map(q => shuffleQuestionOptions({ ...q, q: normalizeNumerals(q.q), opts: q.opts.map(normalizeNumerals), rationale: normalizeNumerals(q.rationale) }))
+  };
+  anchorState = { a, init: null, answers: [] };
+  renderAnchorIntro();
+}
+function renderAnchorIntro() {
+  const a = anchorState.a;
+  renderHeader();
+  document.getElementById("nav").innerHTML = "";
+  screen().innerHTML = `
+    <div class="card">
+      <div class="card-title">週次アンカー転移テスト</div>
+      <div class="card-subtitle">WEEKLY ANCHOR · 訓練とは別の「実力測定」。難度固定の未訓練文を読みます</div>
+      <p class="muted" style="margin-bottom:10px">これは練習ではなく<b>検査</b>です。毎日の本文と違い、難度を一定に保った文章を読み、<b>普通の読みが本当に速くなっているか（転移）</b>を測ります。結果は目標やベストには影響しません。落ち着いて、いつもの読み方で。</p>
+      <button class="btn" onclick="renderAnchorRead()">測定をはじめる（約3分）</button>
+      <button class="btn secondary small" style="margin-top:8px" onclick="go('home')">今日はあとで</button>
+    </div>`;
+}
+function renderAnchorRead() {
+  const a = anchorState.a;
+  screen().innerHTML = `
+    <div class="card">
+      <div><span class="tag sci">アンカー</span><span class="small">難度固定・未訓練</span></div>
+      <div class="card-title" style="margin-top:6px">${esc(a.title)}</div>
+      <div class="card-subtitle">読了後に設問3問 · これは検査（記録は転移指標として別管理）</div>
+      <div class="bigtime" id="anc-clock">00:00</div>
+      <div class="reading-text hidden-text" id="anc-text">${esc(a.text)}</div>
+      <div style="margin-top:14px"><button class="btn" id="anc-btn" onclick="startAnchorRead()">表示して計測開始</button></div>
+    </div>`;
+}
+function startAnchorRead() {
+  document.getElementById("anc-text").classList.remove("hidden-text");
+  readStart = Date.now();
+  clearInterval(readTimer);
+  readTimer = setInterval(() => { document.getElementById("anc-clock").textContent = fmtTime((Date.now() - readStart) / 1000); }, 250);
+  const btn = document.getElementById("anc-btn");
+  btn.textContent = "読了"; btn.onclick = finishAnchorRead;
+}
+function finishAnchorRead() {
+  clearInterval(readTimer);
+  const a = anchorState.a;
+  const time = (Date.now() - readStart) / 1000;
+  const n = charCount(a.text);
+  anchorState.init = { time, speed: Math.round(n / time * 60) };
+  renderAnchorQuiz(0);
+}
+function renderAnchorQuiz(qi) {
+  const a = anchorState.a;
+  if (qi >= a.questions.length) { finishAnchor(); return; }
+  const q = a.questions[qi];
+  screen().innerHTML = `
+    <div class="card">
+      <div class="card-title">アンカー設問 ${qi + 1} / ${a.questions.length}</div>
+      <p style="font-weight:700;margin-bottom:12px">${esc(q.q)}</p>
+      ${q.opts.map((o, i) => `<button class="opt" id="aqo${i}" onclick="answerAnchor(${qi},${i})">${esc(o)}</button>`).join("")}
+      <div id="anc-fb"></div>
+    </div>`;
+}
+function answerAnchor(qi, i) {
+  const q = anchorState.a.questions[qi];
+  const correct = i === q.ans;
+  q.opts.forEach((_, j) => { const el = document.getElementById("aqo" + j); el.disabled = true; if (j === q.ans) el.classList.add("correct"); else if (j === i) el.classList.add("wrong"); });
+  anchorState.answers.push(correct);
+  document.getElementById("anc-fb").innerHTML = `
+    ${q.rationale ? `<div class="rationale" style="margin-top:10px">${esc(q.rationale)}</div>` : ""}
+    <button class="btn" style="margin-top:8px" onclick="renderAnchorQuiz(${qi + 1})">${qi + 1 >= anchorState.a.questions.length ? "測定結果へ" : "次へ"}</button>`;
+}
+function finishAnchor() {
+  const a = anchorState.a;
+  const comp = anchorState.answers.filter(Boolean).length / anchorState.answers.length;
+  const valid = comp >= PASS_COMP;
+  const st = textStats(a.text);
+  const speed = anchorState.init.speed;
+  const adj = adjustSpeed(speed, st.readability);
+  const rec = { date: today(), anchorId: a.id, speed, comp, valid, adjustedSpeed: adj, readability: st.readability };
+  state.anchorHistory.push(rec);
+  state.lastAnchorDate = today();
+  state.anchorIdx = (state.anchorIdx || 0) + 1;
+  // 転移の伸び: 有効な過去アンカーの平均との比較
+  const prev = state.anchorHistory.slice(0, -1).filter(h => h.valid);
+  const prevAvg = prev.length ? Math.round(prev.reduce((s, h) => s + h.adjustedSpeed, 0) / prev.length) : null;
+  if (valid && prevAvg && adj > prevAvg)
+    state.wins.push({ date: today(), ico: "🛰", text: `転移確認: アンカー速度が過去平均 ${prevAvg} → ${adj}字/分（訓練が普通の読みに効いている）` });
+  saveState();
+  anchorState = null;
+  renderHeader(); renderNav();
+  const valids = state.anchorHistory.filter(h => h.valid);
+  const trend = valids.slice(-6).map(h => h.adjustedSpeed);
+  screen().innerHTML = `
+    <div class="card">
+      <div class="result-verdict">
+        <div class="big" style="color:${valid ? "var(--blue)" : "var(--ink3)"}">${adj}<span style="font-size:18px;color:var(--ink2)"> 字/分</span></div>
+        <div class="sub">転移（難度補正）速度 · 理解度 ${Math.round(comp * 100)}% ${valid ? "" : "— 70%未満のため無効。次回再測定"}</div>
+        ${valid ? (prevAvg ? `<div class="banner ${adj >= prevAvg ? "ok" : "warn"}" style="margin-top:12px;text-align:left">過去のアンカー平均 ${prevAvg}字/分 と比べて <b>${adj - prevAvg >= 0 ? "+" : ""}${adj - prevAvg}字/分</b>。${adj >= prevAvg ? "訓練が未訓練の文章にも転移しています。" : "今週は下振れ。1回では判断せず傾向で見ましょう。"}</div>`
+          : `<div class="banner info" style="margin-top:12px;text-align:left">初回のアンカー基準を記録しました。来週以降、この値からの伸びで「転移」を測ります。</div>`) : ""}
+      </div>
+    </div>
+    ${trend.length >= 2 ? `<div class="card"><div class="card-title">転移トレンド</div><div class="card-subtitle">直近の有効アンカー（難度補正速度）</div><div style="display:flex;gap:6px;align-items:flex-end;height:70px;margin-top:8px">${trend.map(v => { const mx = Math.max(...trend); return `<div style="flex:1;text-align:center"><div style="background:var(--blue);border-radius:4px 4px 0 0;height:${Math.round(v / mx * 56) + 4}px"></div><div class="small" style="margin-top:3px">${v}</div></div>`; }).join("")}</div></div>` : ""}
+    <button class="btn" onclick="go('home')">ホームへ戻る</button>`;
+}
+// =============================================================
+// HISTORY
+// =============================================================
+function renderHistory() {
+  const rows = state.history.slice(-40).reverse();
+  screen().innerHTML = `
+    <div class="card">
+      <div class="card-title">成長カーブ（30日）</div>
+      <div class="card-subtitle">理解度70%以上のセッションのみ表示</div>
+      ${renderSparkline()}
+    </div>
+    <div class="card">
+      <div class="card-title">セッション履歴</div>
+      <div class="card-subtitle">直近40件 ${state.migratedFromV2 ? `· うち1.0から引き継いだ記録を含む` : ""}</div>
+      <table class="hist">
+        <tr><th>日付</th><th>字/分</th><th>理解度</th><th>判定</th></tr>
+        ${rows.map(h => `<tr>
+          <td>${h.date}${h.legacy ? ' <span class="small">1.0</span>' : ""}</td>
+          <td><b>${h.speed}</b></td>
+          <td>${h.comprehension != null ? Math.round(h.comprehension * 100) + "%" : "—"}</td>
+          <td>${h.valid ? (h.targetMet ? '<span class="delta-chip up">クリア</span>' : '<span class="delta-chip flat">有効</span>') : '<span class="delta-chip down">無効</span>'}</td>
+        </tr>`).join("")}
+      </table>
+    </div>
+    <div class="card">
+      <div class="card-title">できるようになったこと（全履歴）</div>
+      ${state.wins.slice(-20).reverse().map(w => `<div class="win-item"><span class="ico">${w.ico}</span><div>${w.text}<div class="d">${w.date}</div></div></div>`).join("") || '<p class="muted">まだありません。</p>'}
+    </div>
+    <div class="card">
+      <div class="card-title">データ管理</div>
+      ${(state.clarityFlags || []).length ? `<p class="small" style="margin:2px 0 8px">⚠ 「わかりにくい」報告: <b>${state.clarityFlags.length}件</b> — バックアップを書き出してClaudeに渡すと、該当設問を平易に直せます。</p>` : ""}
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <button class="btn secondary small" onclick="exportData()">バックアップを書き出し</button>
+        <button class="btn secondary small" onclick="document.getElementById('import-file').click()">バックアップを読み込み</button>
+        <button class="btn ghost small" onclick="confirmReset()">全データ初期化</button>
+      </div>
+      <input type="file" id="import-file" accept=".json,application/json" style="display:none" onchange="handleImportFile(this)">
+      <p class="small" style="margin-top:8px">端末を替えるとき（Mac→スマホ等）は、旧端末で「書き出し」→ 新端末で「読み込み」。進捗・習得語彙・目標がそのまま移ります。</p>
+    </div>`;
+}
+function exportData() {
+  const blob = new Blob([JSON.stringify(state, null, 2)], { type: "application/json" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `sokugan-backup-${today()}.json`;
+  a.click();
+}
+function handleImportFile(input) {
+  const f = input.files && input.files[0];
+  if (!f) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const data = JSON.parse(reader.result);
+      if (!data || !Array.isArray(data.history)) { showToast("⚠ SOKUGANのバックアップではありません"); return; }
+      const days = new Set(data.history.map(x => x.date)).size;
+      if (!confirm(`このバックアップを読み込みますか？\n・記録: ${data.history.length}セッション / ${days}日分\n・習得語彙: ${(data.vocabBook||[]).filter(v=>v.level>=3).length}語\n※ この端末の現在のデータは上書きされます`)) return;
+      localStorage.setItem(KEY, JSON.stringify(data));
+      showToast("✅ 読み込みました。再起動します");
+      setTimeout(() => location.reload(), 800);
+    } catch (e) { showToast("⚠ 読み込みに失敗: " + e.message); }
+  };
+  reader.readAsText(f);
+  input.value = "";
+}
+function confirmReset() {
+  if (confirm("本当に全データを初期化しますか？（1.0のデータは消えません）") && confirm("最終確認: 2.0の記録・成長履歴がすべて消えます。")) {
+    localStorage.removeItem(KEY); location.reload();
+  }
+}
+// =============================================================
+// ABOUT
+// =============================================================
+function renderAbout() {
+  screen().innerHTML = `
+    <div class="card">
+      <div class="card-title">Sokugan 2.0 の設計思想</div>
+      <div class="card-subtitle">EVIDENCE-BASED DESIGN · 2026-06 リサーチ反映</div>
+      <p class="muted" style="margin-bottom:10px">1.0のドリル群は再設計しました。「ページ全体を周辺視で読む」式の視野拡大やサブボーカリゼーション除去には根拠がありませんが（Rayner et al. 2016）、以下は効果が支持されています。</p>
+      <div class="win-item"><span class="ico">①</span><div><b>理解度ゲート付き速度がKPI</b> — 理解70%未満の速度は無効。速度と理解のトレードオフを直視する設計。</div></div>
+      <div class="win-item"><span class="ico">②</span><div><b>昨日比ラチェット</b> — クリアごとに目標+2.5%。Timed reading研究では13週で+25〜40%の向上と未読文章への転移が確認されている（Chang 2010; Tran & Nation 2014）。</div></div>
+      <div class="win-item"><span class="ico">③</span><div><b>反復読（Repeated Reading）</b> — 同一文章の高速再読は確実な成功体験を生み、効果は新しい文章にも転移する。</div></div>
+      <div class="win-item"><span class="ico">④</span><div><b>文中チャンクペーサー</b> — 目的は視野拡大ではなく文節単位の統語処理の自動化。3連続成功で+5%、失敗で-5%（正答率約8割に収束 = 最適学習帯。Wilson et al. 2019の85%ルール）。</div></div>
+      <div class="win-item"><span class="ico">⑤</span><div><b>現実的な北極星</b> — 日本語母語話者の平均黙読速度は約500字/分。「10倍速読」は幻想であり、掲げない。</div></div>
+      <div class="win-item"><span class="ico">⑥</span><div><b>難度勾配と転移</b> — 速報・事業ニュース（具体・速い）と経営・論説（抽象・難しい）の2トラック。論説系への速度転移こそ実力の証。</div></div>
+      <div class="win-item"><span class="ico">⑦</span><div><b>瞬間キャッチ</b> — 160ms呈示の直後に<b>逆向きマスク</b>で隠し、<b>似た語</b>の中から選ぶ語認識訓練。残像で読むズルを封じ、1固視での語形取得を強制する。3連続正解で視幅+1字（上限9字＝母語話者の知覚スパン上限相当）、レベルが上がると選択肢も4→5→6択に増えて紛らわしくなる。</div></div>
+      <div class="win-item"><span class="ico">⑧</span><div><b>難度補正速度</b> — 速度を、文章の難度（漢字率・文長・抽象語密度）で正規化して併記。生速度が横ばいでも、より難しい文章を同じ速度で読めていれば「実質的に伸びた」と検出する。<b>プラトー期に成長を拾う</b>ための指標。</div></div>
+      <div class="win-item"><span class="ico">⑨</span><div><b>深層読解（Deep Cloze）</b> — 本文の接続表現を空所化し、論理関係（逆接/因果/換言…）を取れているかを1問で測る。速く読んでも文と文のつなぎ目を理解できているかを、理解度MCQとは別に可視化する。</div></div>
+      <div class="win-item"><span class="ico">⑩</span><div><b>週次アンカー転移テスト</b> — 訓練とは別枠で、週1回・難度固定の<b>未訓練文</b>を測定。アプリ内の速度向上が「普通の文章を速く読む力」に本当に転移しているかを検証する（目標やベストには影響させない）。</div></div>
+      <div class="win-item"><span class="ico">⑪</span><div><b>語彙道場（3.0）</b> — 本文の「学校語彙」（利回り・系統連系など日本の中高で覚える類の用語）を<b>12歳にわかる言葉</b>で説明できるまで深掘り。語彙の深さは読解分散の約59%を説明し（Qian 2002）、自己説明はg=0.55（Bisra 2018）。後から日本語を習得した学習者が教育あるネイティブを超える主戦場。</div></div>
+      <div class="win-item"><span class="ico">⑫</span><div><b>曜日メニュー（3.0）</b> — 月:速度⚡/火:深読み🔍/水:語彙📚/木:弱点集中🎯/金:転移🛰。交互配置は識別学習でg=0.42（Brunmair 2019）。飽きを防ぎつつ、木曜は直近14日の最弱スキルを自動で重点化。</div></div>
+      <div class="win-item"><span class="ico">⑬</span><div><b>持ち帰り＆教えるつもり（3.0）</b> — 「読了後に誰かへ話す」前提で読む（教える期待でg=0.50、Kobayashi 2019）。毎日の持ち帰りフックをコピーして雑談・会議で使えば定着完了。</div></div>
+      <div class="win-item"><span class="ico">⑭</span><div><b>週次目標と一目量（3.0）</b> — 具体的で少し難しい目標は成果d=0.42〜0.80（Locke & Latham）。近接サブゴールだけが内発的興味を生む（Bandura & Schunk 1981）。一目量（字/固視）は語彙自動化の従属変数として成長を映す。</div></div>
+    </div>
+    <div class="card">
+      <div class="card-title">1日の流れ（約12分）</div>
+      <div class="win-item"><span class="ico">1</span><div><b>チャンクペーサー</b>（約1.5分）— 適応速度で文節ハイライトを追い、1問で確認</div></div>
+      <div class="win-item"><span class="ico">2</span><div><b>瞬間キャッチ</b>（約2分）— 160ms呈示→マスク、似た語から選択。視幅を漸進拡大（8試行）</div></div>
+      <div class="win-item"><span class="ico">3</span><div><b>本文① ニュース初読</b>(約2分）— 計測読み + 設問3問</div></div>
+      <div class="win-item"><span class="ico">4</span><div><b>本文① 反復読</b>（約1.5分）— 初読の15%増しに挑戦</div></div>
+      <div class="win-item"><span class="ico">5</span><div><b>本文② 経営・論説 初読</b>（約2.5分）— 計測読み + 設問3問</div></div>
+      <div class="win-item"><span class="ico">6</span><div><b>結果</b> — 昨日比・目標判定・今日のWins</div></div>
+      <p class="small" style="margin-top:10px">コンテンツは毎夕18時に翌日分が自動生成されます。テーマはCEOが見逃せないトップイシュー: スタートアップ／AI・技術／市場・経済／経営・組織／規制・環境。</p>
+    </div>`;
+}
+// =============================================================
+// INIT
+// =============================================================
+(async function init() {
+  relieveRatchetIfNeeded();
+  await loadContent();
+  await loadQaReport();
+  await loadClarityAudit();
+  // 鮮度とQAはホームの「鮮度ゲート」パネルが常時表示する。
+  // バナーは移行通知（初回のみ）に限定する。
+  if (state.migratedFromV2 && !sessionStorage.getItem("migNoticeShown")) {
+    sessionStorage.setItem("migNoticeShown", "1");
+    showBanner(`📦 Sokugan 1.0 から <b>${state.migratedSessions}セッション</b>分の記録を引き継ぎました。目標・ペーサー速度はあなたの実績から自動設定済みです。`, "info");
+  }
+  render();
+  // PWA: Service Worker登録（GitHub Pages等のhttps配信時。鮮度はネットワーク優先で担保）
+  try {
+    if (typeof navigator !== "undefined" && "serviceWorker" in navigator &&
+        (location.protocol === "https:" || location.hostname === "localhost")) {
+      navigator.serviceWorker.register("./sw.js");
+    }
+  } catch (e) {}
+})();
+</script>
+</body>
+</html>
