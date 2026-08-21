@@ -1,6 +1,9 @@
-# 全て無視し、アプリ配信に必要なものだけ許可
+# 全て無視し、アプリ配信＋Claude Code運用に必要なものだけ許可
 /*
 !/.gitignore
+!/CLAUDE.md
+!/.claude
+!/scripts
 !/index.html
 !/daily-content.json
 !/clarity-audit.json
@@ -10,3 +13,5 @@
 !/icons
 !/qa
 !/README.md
+# .claude配下のローカル専用設定は除外
+.claude/settings.local.json
