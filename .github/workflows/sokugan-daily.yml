@@ -1,0 +1,33 @@
+name: SOKUGAN daily content
+# 毎日 18:00 JST（09:00 UTC）に翌日分の教材を生成し、QA全PASS後にpushする
+on:
+  schedule:
+    - cron: "0 9 * * *"
+  workflow_dispatch:        # 手動実行も可能
+
+concurrency:
+  group: sokugan-content
+  cancel-in-progress: false
+
+jobs:
+  daily:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+      - uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          prompt: |
+            リポジトリ直下の CLAUDE.md と .claude/commands/daily.md を読み、
+            daily.md の手順1〜7を順番どおりに実行せよ。
+            QAハーネスが全PASS（終了コード0）になるまで完了してはならない。
+            全PASS後に必ず git add -A && git commit && git push origin main まで行うこと。
+          claude_args: |
+            --max-turns 60
+            --allowedTools "Read,Write,Edit,Glob,Grep,WebSearch,WebFetch,Bash"

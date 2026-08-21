@@ -1,0 +1,34 @@
+name: SOKUGAN QA supervisor
+# 毎日 19:00 JST（10:00 UTC）に品質監督（自分で解いて検証・書き直し）を実行
+on:
+  schedule:
+    - cron: "0 10 * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: sokugan-content
+  cancel-in-progress: false
+
+jobs:
+  qa:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+      - uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          prompt: |
+            リポジトリ直下の CLAUDE.md と .claude/commands/qa.md を読み、
+            qa.md の手順1〜6を順番どおりに実行せよ。
+            機械検査だけで終わらせず、手順3の精読監査（全15問を自力で解く／日本語の明快さ／
+            読み応え／keyTerms・takeawayの質）を必ず行い、clarity-audit.json を更新すること。
+            修正した場合のみ git push origin main する。QAがFAILのままpushしてはならない。
+          claude_args: |
+            --max-turns 60
+            --allowedTools "Read,Write,Edit,Glob,Grep,WebSearch,WebFetch,Bash"

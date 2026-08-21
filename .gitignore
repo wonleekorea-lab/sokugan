@@ -3,6 +3,7 @@
 !/.gitignore
 !/CLAUDE.md
 !/.claude
+!/.github
 !/scripts
 !/index.html
 !/daily-content.json
