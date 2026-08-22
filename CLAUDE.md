@@ -48,8 +48,12 @@
 `.claude/hooks/qa-gate.sh` が **`git push` の直前にQAハーネスを実行**し、不合格なら push を**拒否**する（`PreToolUse` フック）。
 絶対ルール1は指示ではなく装置で守られている。壊れた教材が配信されることはない。
 
-## 公開先
-`main` への push が GitHub Pages に反映され、スマホのPWAに届く。**mainは保護しない**（Actionsがpushするため）。
+## 公開先とリモート同期
+- 公開: `main` への push が GitHub Pages に反映され、スマホのPWAに届く（`https://wonleekorea-lab.github.io/sokugan/`）。**mainは保護しない**（Actionsがpushするため）。
+- **毎日18:00/19:00にGitHub Actionsが`main`を更新する**ため、ローカルは放置すると古くなる。
+  `.claude/hooks/sync-check.sh` がセッション開始時に差分を確認し、作業ツリーがきれいなら自動でpullする。
+  ずれの警告が出たら、作業を始める前に整理する（未コミット分をcommit → `git pull --rebase origin main`）。
+- 作業の起点は常に**リモートの最新**。古いローカルの上に実装を重ねない。
 
 ## 設計の根拠（変更時に壊さないこと）
 - 理解度70%ゲート付き速度が唯一の北極星KPI（速度と理解のトレードオフを直視）
