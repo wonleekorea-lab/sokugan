@@ -80,7 +80,7 @@ const _si = global.setInterval;
 global.setInterval = (f, d) => _si(f, Math.max(1, Math.min(d || 0, 5)));
 
 // ---------- アプリ実コードを実行 ----------
-eval(js + "\nglobal.__app = { get state(){return state}, get sess(){return sess}, get content(){return content}, DEFAULT_CONTENT, ANCHOR_POOL, chunkText, getChunks, validChunks, chunkPool, spanTrialSet, pickSessionPassages, startSession, renderHome, contentStatus, renderFreshnessPanel, guardedStart, renderPacer, renderPacerQuiz, answerPacer, renderSpanIntro, answerSpan, finishSpan, renderRead, startReading, finishReading, renderQuiz, finishQuiz, renderReread, startReread, finishReread, renderResult, textStats, adjustSpeed, makeDeepCloze, answerDeepCloze, normalizeNumerals, parseKanjiNum, startAnchor, renderAnchorRead, startAnchorRead, finishAnchorRead, renderAnchorQuiz, answerAnchor, anchorDue, todayMenu, goalProgress, gazeSpan, sessionKeyTerms, passageTakeaway, finishVocab, proceedAfterCloze1, weakestSkill };");
+eval(js + "\nglobal.__app = { get state(){return state}, get sess(){return sess}, get content(){return content}, DEFAULT_CONTENT, ANCHOR_POOL, chunkText, getChunks, validChunks, chunkPool, spanTrialSet, pickSessionPassages, startSession, renderShortIntro, renderShortResult, unseenPassages, passageKey, renderHome, contentStatus, renderFreshnessPanel, guardedStart, renderPacer, renderPacerQuiz, answerPacer, renderSpanIntro, answerSpan, finishSpan, renderRead, startReading, finishReading, renderQuiz, finishQuiz, renderReread, startReread, finishReread, renderResult, textStats, adjustSpeed, makeDeepCloze, answerDeepCloze, normalizeNumerals, parseKanjiNum, startAnchor, renderAnchorRead, startAnchorRead, finishAnchorRead, renderAnchorQuiz, answerAnchor, anchorDue, todayMenu, goalProgress, gazeSpan, sessionKeyTerms, passageTakeaway, finishVocab, proceedAfterCloze1, weakestSkill };");
 
 (async () => {
   await new Promise(r => _st(r, 80)); // init完了待ち
@@ -90,7 +90,7 @@ eval(js + "\nglobal.__app = { get state(){return state}, get sess(){return sess}
   // ========== A. コンテンツ品質検査 ==========
   const todayUTC = new Date().toISOString().slice(0, 10);
   check("A1 日付がstaleでない (date >= 実行日UTC)", daily.date >= todayUTC, `date=${daily.date}`);
-  check("A2 パッセージ5本", (daily.passages || []).length === 5, `n=${(daily.passages || []).length}`);
+  check("A2 パッセージ10本（複数セッション用）", (daily.passages || []).length === 10, `n=${(daily.passages || []).length}`);
   let ansDist = [0, 0, 0, 0];
   for (const p of daily.passages || []) {
     const id = p.genre || p.tag || p.id;
@@ -119,7 +119,7 @@ eval(js + "\nglobal.__app = { get state(){return state}, get sess(){return sess}
     const lens = ch.map(c => c.length);
     const pct27 = lens.filter(l => l >= 2 && l <= 7).length / lens.length;
     check(`A8 [${id}] 2-8字チャンク率>=75%`, lens.filter(l => l >= 2 && l <= 8).length / lens.length >= 0.75, `2-8字 ${Math.round(lens.filter(l => l >= 2 && l <= 8).length / lens.length * 100)}% / 2-7字 ${Math.round(pct27 * 100)}%`);
-    const headParticle = ch.filter(c => /^[はがをにへとものやかねよわぞ]/.test(c));
+    const headParticle = ch.filter(c => /^(?:は|が|を|に|へ|と|も|の|や|か|ね|よ|わ|ぞ)(?:$|[、。！？])/.test(c));
     check(`A9 [${id}] 行頭が格助詞のチャンクなし（語の途中で切れていない証）`, headParticle.length === 0, headParticle.slice(0, 3).join("/"));
     const headPunct = ch.filter(c => /^[、。」』）！？・]/.test(c));
     check(`A9b [${id}] 句読点始まりチャンクなし`, headPunct.length === 0, headPunct.slice(0, 3).join("/"));
@@ -130,7 +130,7 @@ eval(js + "\nglobal.__app = { get state(){return state}, get sess(){return sess}
     const tooLong = ch.filter(c => c.length > 12 && !isSingleAtom(c)).length;
     check(`A10 [${id}] 12字超の複合チャンクなし（長い単一語のみ許容）`, tooLong === 0, `${tooLong}個`);
   }
-  check("A11 ans分布の極端な偏りなし (各<=8)", ansDist.every(n => n <= 8), JSON.stringify(ansDist));
+  check("A11 ans分布の極端な偏りなし (各<=12)", ansDist.every(n => n <= 12), JSON.stringify(ansDist));
 
   // ---------- A4c. 漢数字の数量表記が残っていないか（正規化の回帰防止） ----------
   // 数字始まり・長さ2以上の漢数字連（六千三百/二千二十四 等）は算用数字へ正規化されるべき
@@ -153,9 +153,20 @@ eval(js + "\nglobal.__app = { get state(){return state}, get sess(){return sess}
     return hits >= 4; // 本文でAI語が頻出＝AI中心
   });
   const genres = new Set((daily.passages || []).map(p => p.genre));
-  check("A14 AI中心の記事は2本以下（テーマ多様性）", aiCentric.length <= 2, `AI中心 ${aiCentric.length}/5: ${aiCentric.map(p => p.genre).join(",")}`);
-  check("A14b 非AIテーマが3本以上", (daily.passages || []).length - aiCentric.length >= 3, `非AI ${(daily.passages || []).length - aiCentric.length}本`);
-  check("A14c ジャンルが5系統すべて異なる", genres.size === (daily.passages || []).length, `${genres.size}種`);
+  check("A14 AI中心の記事は2本以下（テーマ多様性）", aiCentric.length <= 2, `AI中心 ${aiCentric.length}/10: ${aiCentric.map(p => p.genre).join(",")}`);
+  check("A14b 非AIテーマが8本以上", (daily.passages || []).length - aiCentric.length >= 8, `非AI ${(daily.passages || []).length - aiCentric.length}本`);
+  const genreCounts = [...genres].map(g => (daily.passages || []).filter(p => p.genre === g).length);
+  check("A14c 5ジャンルを各2本", genres.size === 5 && genreCounts.every(n => n === 2), `${genres.size}種 / ${genreCounts.join(",")}`);
+  // 実際に崩れた表現をfixture化。単語境界と意味の閉じ方の両方を固定する。
+  const semanticFixtures = [
+    ["新たな好奇心の対象が見つかる。", "新たな好奇心の対象が"],
+    ["市場への影響を短い時間で見抜く。", "市場への影響を"],
+    ["前に読んだ内容はもう一度表示されない。", "もう一度"],
+    ["重要なニュースや発見を短い時間で読む。", "短い時間で"]
+  ];
+  check("A10b 意味単位fixture（修飾句・副詞を孤立/誤結合させない）",
+    semanticFixtures.every(([s, expected]) => A.chunkText(s).includes(expected)),
+    semanticFixtures.map(([s]) => A.chunkText(s).join("|")).join(" / "));
 
   // 瞬間キャッチ用プール
   const pool = A.chunkPool();
@@ -177,7 +188,7 @@ eval(js + "\nglobal.__app = { get state(){return state}, get sess(){return sess}
   // ========== B. UI描画検査（実コードのE2E） ==========
   check("B1 コンテンツがJSONからロードされた", A.content && A.content.date === daily.date, A.content && A.content.date);
   A.renderHome();
-  check("B2 ホーム: 目標と開始ボタン描画", screenEl().includes("今日の目標") && screenEl().includes("セッションを開始"));
+  check("B2 ホーム: じっくり版・ショート版の開始ボタン描画", screenEl().includes("今日の目標") && screenEl().includes("じっくり版") && screenEl().includes("ショート版"));
   check("B3 ホーム: 成長カーブ描画", screenEl().includes("成長カーブ"));
   // 鮮度ゲート（開始前に最新かを確認できる仕組み）
   check("B3a ホーム: 鮮度ゲート＋更新確認ボタン描画", screenEl().includes("更新を確認") && /fresh (ok|stale|err)/.test(screenEl()));
@@ -244,6 +255,15 @@ eval(js + "\nglobal.__app = { get state(){return state}, get sess(){return sess}
   const last = A.state.history[A.state.history.length - 1];
   check("B17 履歴記録 (速度・理解度・ジャンル別・視幅)", last && last.speed > 0 && last.comprehension > 0 && (last.genreSpeeds || []).length === 2 && typeof last.spanLevel === "number");
   check("B17b 履歴に難度補正速度・難度を記録", last && typeof last.adjustedSpeed === "number" && typeof last.readability === "number");
+  const seenBeforeShort = new Set(A.state.seenPassageKeys || []);
+  const shortPick = A.pickSessionPassages("short");
+  A.startSession("short");
+  check("B18 ショート版: 3〜5分導入を描画", A.sess && A.sess.mode === "short" && screenEl().includes("約3〜5分"));
+  check("B18b 既読本文を再選択しない", shortPick && !seenBeforeShort.has(A.passageKey(shortPick.p1)), shortPick && shortPick.p1.id);
+  A.renderRead(1); A.startReading(1); await new Promise(r => _st(r, 12)); A.finishReading(1); A.finishQuiz(1, [true, true, true]);
+  const shortLast = A.state.history[A.state.history.length - 1];
+  check("B18c ショート版: 1本文＋3問で結果・履歴まで完走", shortLast && shortLast.mode === "short" && screenEl().includes("SHORT SESSION COMPLETE"));
+  check("B18d 既読キーを端末履歴へ永続化", (A.state.seenPassageKeys || []).length >= 4, `${(A.state.seenPassageKeys || []).length}本`);
 
   // ---------- C. 解析エンジン（難度・Deep Cloze・アンカー） ----------
   const rs = (daily.passages || []).map(p => A.textStats(p.text));
@@ -251,7 +271,7 @@ eval(js + "\nglobal.__app = { get state(){return state}, get sess(){return sess}
   check("C2 難度に差がつく（飽和していない）", (Math.max(...rs.map(s => s.readability)) - Math.min(...rs.map(s => s.readability))) >= 0.05, `range ${(Math.max(...rs.map(s=>s.readability))-Math.min(...rs.map(s=>s.readability))).toFixed(2)}`);
   check("C3 難度補正速度は難度単調（難しい文ほど高い）", A.adjustSpeed(400, 0.7) > A.adjustSpeed(400, 0.4));
   const dcs = (daily.passages || []).map(p => A.makeDeepCloze(p.text)).filter(Boolean);
-  check("C4 Deep Cloze: 生成できた本文では4択・正解整合", dcs.length >= 1 && dcs.every(d => d.opts.length === 4 && d.opts[d.ans] === d.correct), `生成 ${dcs.length}/5本`);
+  check("C4 Deep Cloze: 生成できた本文では4択・正解整合", dcs.length >= 1 && dcs.every(d => d.opts.length === 4 && d.opts[d.ans] === d.correct), `生成 ${dcs.length}/${daily.passages.length}本`);
   check("C5 アンカー教材: 3本以上・各3問4択・rationale付", (A.ANCHOR_POOL || []).length >= 3 && A.ANCHOR_POOL.every(a => a.questions.length === 3 && a.questions.every(q => q.opts.length === 4 && q.ans >= 0 && q.ans <= 3 && (q.rationale || "").length >= 15)));
   check("C5b アンカー genre が科学/論文でない", A.ANCHOR_POOL.every(a => !/科学|研究|論文/.test(a.genre || "")));
   // アンカー転移フローの実描画E2E
@@ -266,9 +286,9 @@ eval(js + "\nglobal.__app = { get state(){return state}, get sess(){return sess}
 
   // ---------- E. SOKUGAN 3.0 (語彙道場/持ち帰り/キャッチv3/メニュー/目標) ----------
   const ktPass = (daily.passages || []).filter(p => (p.keyTerms || []).length >= 2);
-  check("E1 keyTerms: 3本以上に2語以上・各語 plain+lures3", ktPass.length >= 3 && ktPass.every(p => p.keyTerms.every(t => t.term && (t.plain || "").length >= 15 && (t.lures || []).length >= 3)), `${ktPass.length}/5本`);
+  check("E1 keyTerms: 10本すべてに2語以上・各語 plain+lures3", ktPass.length === 10 && ktPass.every(p => p.keyTerms.every(t => t.term && (t.plain || "").length >= 15 && (t.lures || []).length >= 3)), `${ktPass.length}/10本`);
   const tkPass = (daily.passages || []).filter(p => p.takeaway && (p.takeaway.hook || "").length >= 10 && (p.takeaway.hook || "").length <= 70);
-  check("E2 takeaway: 3本以上に10-70字のフック", tkPass.length >= 3, `${tkPass.length}/5本`);
+  check("E2 takeaway: 10本すべてに10-70字のフック", tkPass.length === 10, `${tkPass.length}/10本`);
   // キャッチv3: 選択肢は原則ターゲットと同じ書き出し
   let prefOK = true, prefDetail = [];
   for (const lv of [4, 5, 6]) {

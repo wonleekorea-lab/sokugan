@@ -1,201 +1,320 @@
 {
- "date": "2026-08-22",
- "status": "pass",
- "checked_at": "2026-08-21T11:33:16.537467Z",
- "auditor": "Fable (sokugan-qa-monitor / 全15問を自力で解いた上での独立監査)",
- "avgScore": 4.74,
- "total": 15,
- "rewritten": 3,
- "rubric": {
-  "axes": [
-   "一読で分かる(readable)",
-   "論理が一意(unique)",
-   "選択肢が具体(concrete)"
-  ],
-  "scale": "1-5。score=3軸の平均。全問score>=3かつavgScore>=4でpass",
-  "gate": "4未満は書き直し。今回の書き直しは3問（市場・経済Q1とQ2、経営Q2）",
-  "fact_check": "一次情報で全5本を照合。TechCrunch/PRNewswire・Gallup(713534)・総務省7月CPI報道・HBR・Pew(2026-08-18)。2件の事実誤りを是正（総合CPI 1.9%→2.0%、『若い側が最も警戒』→65歳以上59%が最高のため表現を是正）"
- },
- "items": [
-  {
-   "passage": "20260822_castelion",
-   "q": 1,
-   "type": "Take-away",
-   "stem": "この記事の中心にある主張はどれか",
-   "ans": 0,
-   "readable": 5,
-   "unique": 5,
-   "concrete": 5,
-   "score": 5.0,
-   "note": "本文が明言する『売るのは作る速さと安さ』に一対一で対応。他3案は本文に根拠なし。即答できた。"
+  "date": "2026-08-23",
+  "status": "pass",
+  "checked_at": "2026-08-22T23:37:58Z",
+  "auditor": "Combined from two independently audited editions; all 30 questions retained unchanged",
+  "avgScore": 4.57,
+  "total": 30,
+  "rewritten": 3,
+  "rubric": {
+    "axes": [
+      "一読で分かる(readable)",
+      "論理が一意(unique)",
+      "選択肢が具体(concrete)"
+    ],
+    "scale": "1-5。score=3軸の平均。全問score>=3かつavgScore>=4でpass",
+    "gate": "2026-08-21/22 editions were independently audited before this repeat-free 10-passage pack was assembled"
   },
-  {
-   "passage": "20260822_castelion",
-   "q": 2,
-   "type": "隠れた前提",
-   "stem": "筆者の見方が成り立つために要る前提はどれか",
-   "ans": 2,
-   "readable": 4,
-   "unique": 4,
-   "concrete": 4,
-   "score": 4.0,
-   "note": "『数で個々の力の差を埋められる』は未記述の前提で妥当。工場費用の案が一瞬competingに見えるが、量産主張には不要な前提。"
-  },
-  {
-   "passage": "20260822_castelion",
-   "q": 3,
-   "type": "シナリオ応用",
-   "stem": "同じ考えを別の場面に当てはめた例はどれか",
-   "ans": 1,
-   "readable": 5,
-   "unique": 5,
-   "concrete": 5,
-   "score": 5.0,
-   "note": "作りやすさ×台数の組み替えは1案のみ。高価格路線・設計売り・広告は方向が逆。"
-  },
-  {
-   "passage": "20260822_alcohol",
-   "q": 1,
-   "type": "強い証拠",
-   "stem": "値段でなく認識が飲酒を減らしたと言える証拠はどれか",
-   "ans": 3,
-   "readable": 5,
-   "unique": 5,
-   "concrete": 5,
-   "score": 5.0,
-   "note": "認識に触れる数字は正解のみ。他は水準や行動の記述で原因を示さない。Gallup原典と一致。"
-  },
-  {
-   "passage": "20260822_alcohol",
-   "q": 2,
-   "type": "反証論理",
-   "stem": "筆者の見方を最も弱めるのはどの事実か",
-   "ans": 1,
-   "readable": 5,
-   "unique": 5,
-   "concrete": 4,
-   "score": 4.67,
-   "note": "別の原因（負担増）を持ち込むのは正解のみ。値段が動いていないことが論の支えなので反証として最強。"
-  },
-  {
-   "passage": "20260822_alcohol",
-   "q": 3,
-   "type": "著者の意図",
-   "stem": "支持政党ごとの差を筆者が持ち出した狙いはどれか",
-   "ans": 0,
-   "readable": 5,
-   "unique": 5,
-   "concrete": 4,
-   "score": 4.67,
-   "note": "本文末尾『届く速さは支持政党で違う』と直結。他は因果の逆転か批判で意図が合わない。"
-  },
-  {
-   "passage": "20260822_jpcpi",
-   "q": 1,
-   "type": "Take-away",
-   "stem": "この記事が最も伝えたいことはどれか",
-   "ans": 2,
-   "readable": 5,
-   "unique": 5,
-   "concrete": 4,
-   "score": 4.67,
-   "note": "書き直し。旧正解『輸入品から国内へ移った』は一次情報（円安転嫁の継続）と矛盾したため『資源から入れ替わった』に是正。他3案は本文と明確に矛盾。"
-  },
-  {
-   "passage": "20260822_jpcpi",
-   "q": 2,
-   "type": "予測",
-   "stem": "本文の見方が正しいとき、今後起きやすいのはどれか",
-   "ans": 0,
-   "readable": 5,
-   "unique": 5,
-   "concrete": 4,
-   "score": 4.67,
-   "note": "『賃金が上がる限り止まらない』の素直な延長。円高案を『すべて止まる』に強めて過剰主張とし、一意性を確保した。"
-  },
-  {
-   "passage": "20260822_jpcpi",
-   "q": 3,
-   "type": "類比",
-   "stem": "本文が描く関係に最も近いたとえはどれか",
-   "ans": 3,
-   "readable": 5,
-   "unique": 5,
-   "concrete": 4,
-   "score": 4.67,
-   "note": "外の火が消えても床下が暖かい＝外因消滅後も内因が残る。他3案は方向が逆か無関係。"
-  },
-  {
-   "passage": "20260822_goals",
-   "q": 1,
-   "type": "Take-away",
-   "stem": "この文章の主張はどれか",
-   "ans": 1,
-   "readable": 5,
-   "unique": 5,
-   "concrete": 5,
-   "score": 5.0,
-   "note": "『届きそうで届かない距離』が主張の核。高さに比例する案は本文が明示的に否定。"
-  },
-  {
-   "passage": "20260822_goals",
-   "q": 2,
-   "type": "隠れた前提",
-   "stem": "この主張が成り立つために要る前提はどれか",
-   "ans": 3,
-   "readable": 5,
-   "unique": 5,
-   "concrete": 4,
-   "score": 4.67,
-   "note": "書き直し。旧正解『目標より基準を先に下げる』は本文に明記済みで前提ではなく想起問題だった。『近道は人柄ではなく状況が決める』は真に未記述で、崩れると主張全体が倒れる。"
-  },
-  {
-   "passage": "20260822_goals",
-   "q": 3,
-   "type": "シナリオ応用",
-   "stem": "この考えを現場に持ち込んだ例はどれか",
-   "ans": 2,
-   "readable": 5,
-   "unique": 5,
-   "concrete": 5,
-   "score": 5.0,
-   "note": "『あと少しの帯』を探す動きは正解のみ。研修・一律下げ・表彰は帯を見ていない。"
-  },
-  {
-   "passage": "20260822_aimood",
-   "q": 1,
-   "type": "Take-away",
-   "stem": "この文章が伝えたい中心はどれか",
-   "ans": 0,
-   "readable": 5,
-   "unique": 5,
-   "concrete": 4,
-   "score": 4.67,
-   "note": "最終段『残っている期待の量』の言い換え。他は本文にない断定。"
-  },
-  {
-   "passage": "20260822_aimood",
-   "q": 2,
-   "type": "強い証拠",
-   "stem": "「順番が普通と違う」を最も強く支える数字はどれか",
-   "ans": 2,
-   "readable": 4,
-   "unique": 5,
-   "concrete": 5,
-   "score": 4.67,
-   "note": "年齢別の数字だけが逆転を示す。設問が引用符を含みやや読み負荷があるが論理は一意。n=3,488もPew原典と一致。"
-  },
-  {
-   "passage": "20260822_aimood",
-   "q": 3,
-   "type": "反証論理",
-   "stem": "筆者の見方を最も弱める事実はどれか",
-   "ans": 3,
-   "readable": 5,
-   "unique": 5,
-   "concrete": 4,
-   "score": 4.67,
-   "note": "不安と利用が同時に増える事実のみが期待→普及の結び付きを断つ。他は本文の補強（73%はPew原典と一致）。"
-  }
- ]
+  "items": [
+    {
+      "passage": "20260822_castelion",
+      "q": 1,
+      "type": "Take-away",
+      "stem": "この記事の中心にある主張はどれか",
+      "ans": 0,
+      "readable": 5,
+      "unique": 5,
+      "concrete": 5,
+      "score": 5.0,
+      "note": "本文が明言する『売るのは作る速さと安さ』に一対一で対応。他3案は本文に根拠なし。即答できた。"
+    },
+    {
+      "passage": "20260822_castelion",
+      "q": 2,
+      "type": "隠れた前提",
+      "stem": "筆者の見方が成り立つために要る前提はどれか",
+      "ans": 2,
+      "readable": 4,
+      "unique": 4,
+      "concrete": 4,
+      "score": 4.0,
+      "note": "『数で個々の力の差を埋められる』は未記述の前提で妥当。工場費用の案が一瞬competingに見えるが、量産主張には不要な前提。"
+    },
+    {
+      "passage": "20260822_castelion",
+      "q": 3,
+      "type": "シナリオ応用",
+      "stem": "同じ考えを別の場面に当てはめた例はどれか",
+      "ans": 1,
+      "readable": 5,
+      "unique": 5,
+      "concrete": 5,
+      "score": 5.0,
+      "note": "作りやすさ×台数の組み替えは1案のみ。高価格路線・設計売り・広告は方向が逆。"
+    },
+    {
+      "passage": "20260822_alcohol",
+      "q": 1,
+      "type": "強い証拠",
+      "stem": "値段でなく認識が飲酒を減らしたと言える証拠はどれか",
+      "ans": 3,
+      "readable": 5,
+      "unique": 5,
+      "concrete": 5,
+      "score": 5.0,
+      "note": "認識に触れる数字は正解のみ。他は水準や行動の記述で原因を示さない。Gallup原典と一致。"
+    },
+    {
+      "passage": "20260822_alcohol",
+      "q": 2,
+      "type": "反証論理",
+      "stem": "筆者の見方を最も弱めるのはどの事実か",
+      "ans": 1,
+      "readable": 5,
+      "unique": 5,
+      "concrete": 4,
+      "score": 4.67,
+      "note": "別の原因（負担増）を持ち込むのは正解のみ。値段が動いていないことが論の支えなので反証として最強。"
+    },
+    {
+      "passage": "20260822_alcohol",
+      "q": 3,
+      "type": "著者の意図",
+      "stem": "支持政党ごとの差を筆者が持ち出した狙いはどれか",
+      "ans": 0,
+      "readable": 5,
+      "unique": 5,
+      "concrete": 4,
+      "score": 4.67,
+      "note": "本文末尾『届く速さは支持政党で違う』と直結。他は因果の逆転か批判で意図が合わない。"
+    },
+    {
+      "passage": "20260822_jpcpi",
+      "q": 1,
+      "type": "Take-away",
+      "stem": "この記事が最も伝えたいことはどれか",
+      "ans": 2,
+      "readable": 5,
+      "unique": 5,
+      "concrete": 4,
+      "score": 4.67,
+      "note": "書き直し。旧正解『輸入品から国内へ移った』は一次情報（円安転嫁の継続）と矛盾したため『資源から入れ替わった』に是正。他3案は本文と明確に矛盾。"
+    },
+    {
+      "passage": "20260822_jpcpi",
+      "q": 2,
+      "type": "予測",
+      "stem": "本文の見方が正しいとき、今後起きやすいのはどれか",
+      "ans": 0,
+      "readable": 5,
+      "unique": 5,
+      "concrete": 4,
+      "score": 4.67,
+      "note": "『賃金が上がる限り止まらない』の素直な延長。円高案を『すべて止まる』に強めて過剰主張とし、一意性を確保した。"
+    },
+    {
+      "passage": "20260822_jpcpi",
+      "q": 3,
+      "type": "類比",
+      "stem": "本文が描く関係に最も近いたとえはどれか",
+      "ans": 3,
+      "readable": 5,
+      "unique": 5,
+      "concrete": 4,
+      "score": 4.67,
+      "note": "外の火が消えても床下が暖かい＝外因消滅後も内因が残る。他3案は方向が逆か無関係。"
+    },
+    {
+      "passage": "20260822_goals",
+      "q": 1,
+      "type": "Take-away",
+      "stem": "この文章の主張はどれか",
+      "ans": 1,
+      "readable": 5,
+      "unique": 5,
+      "concrete": 5,
+      "score": 5.0,
+      "note": "『届きそうで届かない距離』が主張の核。高さに比例する案は本文が明示的に否定。"
+    },
+    {
+      "passage": "20260822_goals",
+      "q": 2,
+      "type": "隠れた前提",
+      "stem": "この主張が成り立つために要る前提はどれか",
+      "ans": 3,
+      "readable": 5,
+      "unique": 5,
+      "concrete": 4,
+      "score": 4.67,
+      "note": "書き直し。旧正解『目標より基準を先に下げる』は本文に明記済みで前提ではなく想起問題だった。『近道は人柄ではなく状況が決める』は真に未記述で、崩れると主張全体が倒れる。"
+    },
+    {
+      "passage": "20260822_goals",
+      "q": 3,
+      "type": "シナリオ応用",
+      "stem": "この考えを現場に持ち込んだ例はどれか",
+      "ans": 2,
+      "readable": 5,
+      "unique": 5,
+      "concrete": 5,
+      "score": 5.0,
+      "note": "『あと少しの帯』を探す動きは正解のみ。研修・一律下げ・表彰は帯を見ていない。"
+    },
+    {
+      "passage": "20260822_aimood",
+      "q": 1,
+      "type": "Take-away",
+      "stem": "この文章が伝えたい中心はどれか",
+      "ans": 0,
+      "readable": 5,
+      "unique": 5,
+      "concrete": 4,
+      "score": 4.67,
+      "note": "最終段『残っている期待の量』の言い換え。他は本文にない断定。"
+    },
+    {
+      "passage": "20260822_aimood",
+      "q": 2,
+      "type": "強い証拠",
+      "stem": "「順番が普通と違う」を最も強く支える数字はどれか",
+      "ans": 2,
+      "readable": 4,
+      "unique": 5,
+      "concrete": 5,
+      "score": 4.67,
+      "note": "年齢別の数字だけが逆転を示す。設問が引用符を含みやや読み負荷があるが論理は一意。n=3,488もPew原典と一致。"
+    },
+    {
+      "passage": "20260822_aimood",
+      "q": 3,
+      "type": "反証論理",
+      "stem": "筆者の見方を最も弱める事実はどれか",
+      "ans": 3,
+      "readable": 5,
+      "unique": 5,
+      "concrete": 4,
+      "score": 4.67,
+      "note": "不安と利用が同時に増える事実のみが期待→普及の結び付きを断つ。他は本文の補強（73%はPew原典と一致）。"
+    },
+    {
+      "genre": "スタートアップ・新規事業",
+      "qi": 1,
+      "type": "Take-away",
+      "score": 5,
+      "action": "ok",
+      "issue": "台数と回数が強みに変わる点が一意。他3択は本文と矛盾"
+    },
+    {
+      "genre": "スタートアップ・新規事業",
+      "qi": 2,
+      "type": "隠れた前提",
+      "score": 4,
+      "action": "ok",
+      "issue": "安い乗り物ほど多く走るという前提が崩れると主張が立たない。論理は一意"
+    },
+    {
+      "genre": "スタートアップ・新規事業",
+      "qi": 3,
+      "type": "シナリオ応用",
+      "score": 4,
+      "action": "ok",
+      "issue": "回転の速い部門を離す選択が唯一整合。選択肢0が逆方向で良い撹乱"
+    },
+    {
+      "genre": "社会・価値観",
+      "qi": 1,
+      "type": "強い証拠",
+      "score": 5,
+      "action": "ok",
+      "issue": "摘発減・体感増という組み合わせが実態と見立ての乖離を直接示す"
+    },
+    {
+      "genre": "社会・価値観",
+      "qi": 2,
+      "type": "反証論理",
+      "score": 4,
+      "action": "ok",
+      "issue": "体験だけで見立てが決まるなら共通の話の効果が消える。反証が一意"
+    },
+    {
+      "genre": "社会・価値観",
+      "qi": 3,
+      "type": "著者の意図",
+      "score": 4,
+      "action": "ok",
+      "issue": "『測っているのは腐敗の量ではない』の一文と選択肢1が対応。設問解説の漢数字をQAで算用数字に修正"
+    },
+    {
+      "genre": "市場・経済・地政学",
+      "qi": 1,
+      "type": "Take-away",
+      "score": 5,
+      "action": "ok",
+      "issue": "額ではなく構えという中心が一意"
+    },
+    {
+      "genre": "市場・経済・地政学",
+      "qi": 2,
+      "type": "予測",
+      "score": 4,
+      "action": "ok",
+      "issue": "構えが疑われれば効果が消えるという延長として選択肢3のみ整合"
+    },
+    {
+      "genre": "市場・経済・地政学",
+      "qi": 3,
+      "type": "類比",
+      "score": 3,
+      "action": "ok",
+      "issue": "正解が本文最終段落のほぼ引き写しで難度が低い。明快さは高いが類比としての負荷が弱い（次回の生成で要改善）"
+    },
+    {
+      "genre": "経営・リーダーシップ",
+      "qi": 1,
+      "type": "Take-away",
+      "score": 5,
+      "action": "ok",
+      "issue": "問い方の副作用という中心が一意"
+    },
+    {
+      "genre": "経営・リーダーシップ",
+      "qi": 2,
+      "type": "隠れた前提",
+      "score": 4,
+      "action": "ok",
+      "issue": "回答者が自分の席を気にするという心理が土台。他3択は無関係"
+    },
+    {
+      "genre": "経営・リーダーシップ",
+      "qi": 3,
+      "type": "シナリオ応用",
+      "score": 5,
+      "action": "ok",
+      "issue": "持ち越し案件を挙げさせる方法が本文の助言と直結"
+    },
+    {
+      "genre": "未来の兆し",
+      "qi": 1,
+      "type": "Take-away",
+      "score": 5,
+      "action": "ok",
+      "issue": "寸法から回数への移りが中心。他3択は本文と矛盾"
+    },
+    {
+      "genre": "未来の兆し",
+      "qi": 2,
+      "type": "予測",
+      "score": 4,
+      "action": "ok",
+      "issue": "学習効果の延長として工期短縮のみ整合"
+    },
+    {
+      "genre": "未来の兆し",
+      "qi": 3,
+      "type": "反証論理",
+      "score": 5,
+      "action": "ok",
+      "issue": "10台目でも費用が変わらなければ核心が崩れる。反証が鋭い"
+    }
+  ]
 }

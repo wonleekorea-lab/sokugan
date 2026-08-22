@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Sokugan 3.0 — Reading Fluency Lab</title>
+<title>Sokugan 3.1 — Reading Fluency Lab</title>
 <meta name="theme-color" content="#f6f7f9">
 <link rel="manifest" href="./manifest.json">
 <meta name="mobile-web-app-capable" content="yes">
@@ -143,7 +143,7 @@ button{touch-action:manipulation}
   <div id="nav"></div>
   <div id="banner"></div>
   <div id="screen"></div>
-  <div class="footer-note">Sokugan 3.0 · evidence-based reading fluency lab · rebuilt with Claude Fable</div>
+  <div class="footer-note">Sokugan 3.1 · repeat-free mobile reading fluency lab</div>
 </div>
 <script>
 // =============================================================
@@ -218,6 +218,7 @@ function defaultState() {
     spanLevel: 4,         // 瞬間キャッチの視幅(字)
     spanStreak: 0,
     todaySession: null,   // {date, count, usedPassageIds}
+    seenPassageKeys: [],  // 端末で一度でも出題した本文。日付をまたいで再表示しない
     lastWinCheck: null,
     clarityFlags: [],     // ユーザーが「わかりにくい」と報告した設問 {date, genre, q}
     goal: null,           // {target, baseline, setAt, why, hit:[]} 週次の具体的困難目標(Locke&Latham)
@@ -355,6 +356,21 @@ function ensureTodaySession() {
   }
   return state.todaySession;
 }
+function passageKey(p) {
+  if (!p) return "";
+  const title = String(p.title || "").toLowerCase().replace(/[\s\p{P}\p{S}]/gu, "");
+  return title || String(p.id || "");
+}
+function seenPassageSet() { return new Set(state.seenPassageKeys || []); }
+function markPassagesSeen(passages) {
+  const seen = seenPassageSet();
+  for (const p of passages.filter(Boolean)) seen.add(passageKey(p));
+  state.seenPassageKeys = [...seen].slice(-1000);
+}
+function unseenPassages() {
+  const seen = seenPassageSet();
+  return (content.passages || []).filter(p => !seen.has(passageKey(p)));
+}
 function totalTrainingDays() {
   return new Set(state.history.map(h => h.date)).size;
 }
@@ -391,7 +407,8 @@ function genreOf(p) { return p.genre || p.tag || "その他"; }
 //   ・連続する内容語アトムは複合語として長さ上限まで連結
 //   LLMが生成したchunksは使わない（信頼性のため常にこの関数で再生成）
 // =============================================================
-var SKG_PARTICLE_HEAD = /^[はがをにへとものやかねよわぞ]/; // チャンク先頭に来てはいけない格助詞
+// 「もう一度」「ものづくり」まで助詞始まりと誤認しない。単独助詞だけを検出する。
+var SKG_PARTICLE_HEAD = /^(?:は|が|を|に|へ|と|も|の|や|か|ね|よ|わ|ぞ)(?:$|[、。！？])/;
 function skgClass(ch) {
   if (/[ぁ-ゖゝゞ]/.test(ch)) return "hira";
   if (/[ァ-ヺーヽヾㇰ-ㇿｦ-ﾟ]/.test(ch)) return "kata";
@@ -425,9 +442,41 @@ function skgSplitLong(c) {
   for (const p of pieces) { const pr = res[res.length - 1]; if (pr && [...p].length <= 1) res[res.length - 1] = pr + p; else res.push(p); }
   return res.length ? res : [c];
 }
+// 対応ブラウザでは標準の日本語単語境界を使う。文字種だけでは「一度表示」のような
+// 漢字連続を語に戻せないため、Intl.Segmenterを第一選択にし、下の旧方式をfallbackにする。
+function skgChunkWords(text) {
+  if (typeof Intl === "undefined" || typeof Intl.Segmenter !== "function") return null;
+  const tokens = [...new Intl.Segmenter("ja", { granularity: "word" }).segment(text)].map(x => x.segment).filter(x => !/^\s+$/.test(x));
+  const ATTACH = new Set(["は","が","を","に","へ","と","も","の","や","か","な","ね","よ","ぞ","で","から","まで","より","など","だけ","ほど","なら","ので","のに","て","た","だ","ん","さ","れ","ない","なく","ず","ぬ","です","ます"]);
+  const ADVERB = /^(?:もう一度|もう|まだ|さらに|すでに|あえて|特に|まず|ほぼ|最も)$/;
+  const raw = [];
+  let cur = "", closed = false;
+  const push = () => { if (cur) raw.push(cur); cur = ""; closed = false; };
+  for (const t of tokens) {
+    if (/^[、。！？）」』】》〉]$/.test(t)) { cur += t; if (/[。！？]/.test(t)) push(); continue; }
+    if (/^[（「『【《〈]$/.test(t)) { push(); cur = t; continue; }
+    if (ATTACH.has(t)) { cur += t; closed = true; continue; }
+    if (!cur) { cur = t; closed = false; continue; }
+    if (closed || ADVERB.test(cur) || [...cur, ...t].length > 8) { push(); cur = t; }
+    else cur += t;
+  }
+  push();
+  const split = raw.flatMap(skgSplitLong);
+  const out = [];
+  for (const c of split) {
+    const prev = out[out.length - 1];
+    const openModifier = prev && /(?:の|な|という|による|における|への|ための)$/.test(prev) && !/[、。！？]/.test(prev);
+    if (openModifier && [...prev, ...c].length <= 12) out[out.length - 1] = prev + c;
+    else if (prev && SKG_PARTICLE_HEAD.test(c) && [...prev, ...c].length <= 12) out[out.length - 1] = prev + c;
+    else out.push(c);
+  }
+  return out;
+}
 function chunkText(text) {
   const s = (text || "").replace(/\s/g, "");
   if (!s) return [];
+  const wordChunks = skgChunkWords(s);
+  if (wordChunks) return wordChunks;
   const chars = [...s];
   // 1) 文字種アトムへ分割（同種は連結、句読点は1文字ずつ）
   const atoms = [];
@@ -470,11 +519,13 @@ function chunkText(text) {
   for (const c of chunks) for (const piece of skgSplitLong(c)) split.push(piece);
   chunks.length = 0;
   for (const c of split) chunks.push(c);
-  // 4) 意味単位の結合: 「Xの」で終わる短いチャンクは次と結合（水の+希少が→水の希少が、6字以内）
+  // 4) 意味単位の結合: 連体修飾だけを孤立させない。
+  // 「新たな|好奇心」「市場への|影響」のように、単独では意味が閉じない修飾部を名詞側へ結ぶ。
   const merged2 = [];
   for (const c of chunks) {
     const prev = merged2[merged2.length - 1];
-    if (prev && prev.endsWith("の") && !/[、。]/.test(prev) && (prev.length + c.length) <= 6) merged2[merged2.length - 1] = prev + c;
+    const openModifier = prev && /(?:の|な|という|による|における|への|ための)$/.test(prev) && !/[、。！？]/.test(prev);
+    if (openModifier && (prev.length + c.length) <= 12) merged2[merged2.length - 1] = prev + c;
     else merged2.push(c);
   }
   chunks.length = 0; for (const c of merged2) chunks.push(c);
@@ -807,7 +858,7 @@ function renderHeader() {
   const t = today();
   document.getElementById("header").innerHTML = `
     <div class="header">
-      <div class="logo">速眼<small>SOKUGAN 3.0</small></div>
+      <div class="logo">速眼<small>SOKUGAN 3.1</small></div>
       <div class="header-stats">
         <div>連続 <b>${state.streak}</b>日</div>
         <div>累計 <b>${totalTrainingDays()}</b>日</div>
@@ -841,6 +892,7 @@ function renderHome() {
   const gp = goalProgress();
   const gz = gazeSpan(adjMa7);
   const tk = (state.lastTakeaways && state.lastTakeaways.date === today()) ? state.lastTakeaways : null;
+  const unseenN = unseenPassages().length;
 
   screen().innerHTML = `
     ${renderFreshnessPanel(fr)}
@@ -853,7 +905,12 @@ function renderHome() {
         ${yestBest ? `<span class="delta-chip ${t > yestBest ? "up" : "flat"}">昨回実績 ${yestBest} 比 ${t - yestBest >= 0 ? "+" : ""}${t - yestBest}</span>` : ""}
       </div>
       ${todayBest ? `<p class="muted" style="margin:4px 0 10px">今日のベスト: <b style="color:var(--ink)">${todayBest}字/分</b>${deltaVsYest != null ? `（昨回比 ${deltaVsYest >= 0 ? "+" : ""}${deltaVsYest}）` : ""}</p>` : `<p class="muted" style="margin:4px 0 10px">クリアすると明日の目標が約2.5%上がります。昨日の自分が今日のライバルです。</p>`}
-      <button class="btn ${fr.isStale ? "secondary" : ""}" onclick="guardedStart()">${todaySess.count > 0 ? `セッション ${todaySess.count + 1} を開始（約12分）` : "今日のセッションを開始（約12分）"}</button>
+      <div class="grid2" style="margin-top:8px">
+        <button class="btn ${fr.isStale ? "secondary" : ""}" onclick="guardedStart('full')" ${unseenN < 3 ? "disabled" : ""}>じっくり版<br><span style="font-size:11px;font-weight:500">約12分 · 3本</span></button>
+        <button class="btn secondary" onclick="guardedStart('short')" ${unseenN < 1 ? "disabled" : ""}>ショート版<br><span style="font-size:11px;font-weight:500">約3〜5分 · 1本</span></button>
+      </div>
+      <p class="small" style="margin-top:7px">未読コンテンツ <b>${unseenN}本</b> / 全${(content.passages || []).length}本 · 一度表示した本文は再出題しません</p>
+      ${unseenN < 1 ? `<div class="banner info" style="margin-top:8px">今日届いている未読分は完走しました。上の「更新を確認」で新着を確認してください。</div>` : unseenN < 3 ? `<div class="banner info" style="margin-top:8px">未読が${unseenN}本のため、ショート版で最後まで重複なく読めます。</div>` : ""}
       ${fr.isStale ? `<p class="small" style="margin-top:8px;color:var(--gold)">⚠ 表示中のコンテンツは <b>${fr.date}</b> 分です。最新でない可能性があるため、上の「更新を確認」を押すか、開始時に確認します。</p>` : ""}
       ${gp ? `
       <div style="margin-top:14px;padding-top:12px;border-top:1px dashed var(--border2)">
@@ -990,17 +1047,17 @@ function phaseDots(cur) {
   return `<div class="phase-dots">${PHASES.map((_, i) =>
     `<span class="${i < cur ? "done" : i === cur ? "cur" : ""}" title="${PHASES[i]}"></span>`).join("")}</div>`;
 }
-function pickSessionPassages() {
-  const ts = ensureTodaySession();
-  const all = content.passages || [];
-  let pool = all.filter(p => !ts.usedPassageIds.includes(p.id));
-  if (pool.length < 3) pool = all;
+function pickSessionPassages(mode = "full") {
+  const pool = unseenPassages();
+  const need = mode === "short" ? 1 : 3;
+  if (pool.length < need) return null; // 重複させて穴埋めしない
   const deep = pool.filter(isDeep);
   const news = pool.filter(p => !isDeep(p));
-  const p1 = news[(ts.count) % Math.max(1, news.length)] || pool[0];
+  const p1 = news[0] || pool[0];
+  if (mode === "short") return { p1, p2: null, warm: null };
   const p2 = deep.find(p => p.id !== p1.id) || pool.find(p => p.id !== p1.id) || pool[0];
   const rest = pool.filter(p => p.id !== p1.id && p.id !== p2.id);
-  const warm = rest.length ? rest[Math.floor(Math.random() * rest.length)] : (all.find(p => p.id !== p1.id && p.id !== p2.id) || p1);
+  const warm = rest[0];
   return { p1, p2, warm };
 }
 // =============================================================
@@ -1098,26 +1155,33 @@ async function recheckContent() {
   }
   if (view === "home") renderHome();
 }
-function guardedStart() {
+function guardedStart(mode = "full") {
   const fr = contentStatus();
   if (fr.isStale) {
     const ok = confirm(`表示中のコンテンツは ${fr.date} 分で、今日（${today()}）の最新ではありません。\n\n先に「更新を確認」を押すのがおすすめです。\nこのまま ${fr.date} 分の内容で練習を始めますか？`);
     if (!ok) return;
   }
-  startSession();
+  startSession(mode);
 }
-function startSession() {
+function startSession(mode = "full") {
+  const picked = pickSessionPassages(mode);
+  if (!picked) {
+    showToast(mode === "full" ? "未読が3本未満です。ショート版か次の更新をお待ちください" : "未読コンテンツを完走しました。次の更新をお待ちください");
+    if (view === "home") renderHome();
+    return;
+  }
   const ts = ensureTodaySession();
   ts.count += 1;
   state.lastContentSig = contentSignature();
-  const { p1, p2, warm } = pickSessionPassages();
-  for (const p of [p1, p2]) if (!ts.usedPassageIds.includes(p.id)) ts.usedPassageIds.push(p.id);
+  const { p1, p2, warm } = picked;
+  markPassagesSeen([p1, p2, warm]);
+  for (const p of [p1, p2, warm].filter(Boolean)) if (!ts.usedPassageIds.includes(p.id)) ts.usedPassageIds.push(p.id);
   if (!state.pacerLevel) state.pacerLevel = Math.round((currentTarget() || 350) * 1.1);
-  const wq = warm.questions ? warm.questions[Math.floor(Math.random() * warm.questions.length)] : null;
+  const wq = warm && warm.questions ? warm.questions[Math.floor(Math.random() * warm.questions.length)] : null;
   const menu = todayMenu();
   sess = {
-    num: ts.count, p1, p2, menu,
-    warm, warmChunks: getChunks(warm),
+    num: ts.count, mode, p1, p2, menu,
+    warm, warmChunks: warm ? getChunks(warm) : [],
     warmQ: wq ? shuffleQuestionOptions(wq) : null,
     pacerResult: null, pacerLeveledUp: false,
     p1Init: null, p1Re: null, p2Init: null,
@@ -1129,7 +1193,20 @@ function startSession() {
     spanN: (menu.weak === "catch") ? 12 : SPAN_TRIALS,
   };
   saveState();
-  renderPacer();
+  if (mode === "short") renderShortIntro();
+  else renderPacer();
+}
+function renderShortIntro() {
+  const p = sess.p1;
+  renderHeader(); renderNav(); showBanner("");
+  screen().innerHTML = `
+    <div class="card" style="border-color:var(--blue)">
+      <div class="card-title">ショート版 <span class="tag sci">約3〜5分</span></div>
+      <div class="card-subtitle">QUICK READ · 初見1本を計測 → 設問3問 → 「実は…」を1つ持ち帰る</div>
+      <p class="muted" style="margin-bottom:10px">隙間時間でも、速度だけでなく理解度70%のゲートはそのままです。今日すでに読んだ本文は出ません。</p>
+      <div class="win-item"><span class="ico">📰</span><div><b>${esc(p.title)}</b><div class="d">${esc(genreOf(p))} · ${charCount(p.text)}字</div></div></div>
+      <div style="display:flex;gap:8px;margin-top:12px"><button class="btn" onclick="renderRead(1)">始める</button><button class="btn secondary small" onclick="abortSession()">中断</button></div>
+    </div>`;
 }
 function abortSession() {
   if (!confirm("セッションを中断しますか？記録は保存されません。")) return;
@@ -1492,6 +1569,7 @@ function finishQuiz(which, answers) {
   const comp = answers.length ? answers.filter(Boolean).length / answers.length : 0;
   if (which === 1) {
     sess.p1Init.comp = comp;
+    if (sess.mode === "short") { renderShortResult(); return; }
     if (sess.clozeBoth) {
       const dc1 = makeDeepCloze(sess.p1.text);
       if (dc1) { sess.deepClozeQ = dc1; sess.deepClozeWhich = 1; renderDeepCloze(); return; }
@@ -1605,6 +1683,50 @@ function checkWeeklyWin() {
     if (pct >= 3) state.wins.push({ date: today(), ico: "📈", text: `今週の平均読速が先週比 +${pct}%（${Math.round(b)}→${Math.round(a)}字/分）` });
   }
 }
+function storeTakeaways(passages) {
+  const previous = state.lastTakeaways && state.lastTakeaways.date === today() ? state.lastTakeaways.items : [];
+  const byHook = new Map(previous.map(x => [x.hook, x]));
+  for (const p of passages.filter(Boolean)) {
+    const item = passageTakeaway(p);
+    if (item && item.hook) byHook.set(item.hook, item);
+  }
+  state.lastTakeaways = { date: today(), items: [...byHook.values()].slice(-12) };
+}
+function renderShortResult() {
+  const p = sess.p1Init;
+  const comp = p.comp;
+  const valid = comp >= PASS_COMP;
+  const target = currentTarget();
+  const stats = textStats(sess.p1.text);
+  const adjustedSpeed = adjustSpeed(p.speed, stats.readability);
+  const rat = valid ? applyRatchet(p.speed, comp) : { cleared: false, oldTarget: target, newTarget: target };
+  if (valid && p.speed > state.bestSpeed) {
+    state.bestSpeed = p.speed;
+    state.wins.push({ date: today(), ico: "⚡", text: `ショート版で自己ベスト: ${p.speed}字/分（理解度${Math.round(comp * 100)}%）` });
+  }
+  state.history.push({
+    date: today(), mode: "short", speed: p.speed, comprehension: comp, valid,
+    target, targetMet: rat.cleared, adjustedSpeed, readability: stats.readability,
+    genreSpeeds: [{ genre: genreOf(sess.p1), speed: p.speed, comp, readability: stats.readability }],
+    deepCloze: null, reread: null, pacerLevel: state.pacerLevel,
+    spanLevel: state.spanLevel, spanScore: null
+  });
+  storeTakeaways([sess.p1]);
+  state.xp += 18 + Math.round(comp * 20) + (rat.cleared ? 12 : 0);
+  updateStreak(); checkWeeklyWin(); saveState();
+  const take = passageTakeaway(sess.p1);
+  const title = sess.p1.title;
+  sess = null;
+  renderHeader(); renderNav();
+  screen().innerHTML = `
+    <div class="card"><div class="result-verdict">
+      <div class="card-subtitle">SHORT SESSION COMPLETE · ${esc(title)}</div>
+      <div class="big" style="color:${valid ? "var(--green)" : "var(--ink3)"}">${p.speed}<span style="font-size:18px;color:var(--ink2)"> 字/分</span></div>
+      <div class="sub">理解度 ${Math.round(comp * 100)}% ${valid ? "✓ 記録対象" : "— 70%未満のため速度は記録対象外"}</div>
+    </div></div>
+    <div class="card" style="border-color:var(--gold)"><div class="card-title">💬 1つ持ち帰る</div><div class="card-subtitle">次の会話で「実は…」から話せる発見</div><div class="win-item"><span class="ico">🎁</span><div><b>${esc(take.hook)}</b>${take.detail ? `<div class="small">${esc(take.detail)}</div>` : ""}</div></div></div>
+    <div style="display:flex;gap:8px"><button class="btn secondary" onclick="go('home')">ホームへ</button><button class="btn" onclick="startSession('short')">もう1本</button></div>`;
+}
 function renderResult() {
   const p1 = sess.p1Init, p2 = sess.p2Init, re = sess.p1Re;
   const sessSpeed = Math.round((p1.speed + p2.speed) / 2);
@@ -1650,7 +1772,7 @@ function renderResult() {
     spanScore: sess.spanResult ? sess.spanResult.score / sess.spanResult.total : null
   });
   // 持ち帰り（教えるつもり効果）: 今日の2本のフックを保存
-  state.lastTakeaways = { date: today(), items: [passageTakeaway(sess.p1), passageTakeaway(sess.p2)] };
+  storeTakeaways([sess.p1, sess.p2]);
   // 目標マイルストーン（25/50/75/100%を跨いだら祝福）
   const gp0 = goalProgress();
   if (valid && gp0) {
@@ -1714,7 +1836,7 @@ function renderResult() {
     ${newWins.length ? `<div class="card"><div class="card-title">今日できるようになったこと</div><div class="card-subtitle">TODAY'S WINS</div>${newWins.map(w => `<div class="win-item"><span class="ico">${w.ico}</span><div>${w.text}</div></div>`).join("")}</div>` : ""}
     <div style="display:flex;gap:8px">
       <button class="btn secondary" onclick="go('home')">ホームへ</button>
-      <button class="btn" onclick="startSession()">もう1セッション</button>
+      <button class="btn" onclick="startSession('full')">もう1セッション</button>
     </div>`;
   if (pbUpdated || rat.cleared) showCelebrate(pbUpdated, rat);
 }

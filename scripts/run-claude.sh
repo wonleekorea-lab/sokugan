@@ -3,7 +3,7 @@
 # 使い方: ./scripts/run-claude.sh daily   /   ./scripts/run-claude.sh qa
 set -euo pipefail
 CMD="${1:-qa}"
-PROJ="$HOME/Documents/reading-trainer"
+PROJ="$(cd "$(dirname "$0")/.." && pwd)"
 LOG="$PROJ/logs"; mkdir -p "$LOG"
 export PATH="/opt/homebrew/bin:/usr/local/bin:$HOME/.local/bin:$PATH"
 cd "$PROJ"

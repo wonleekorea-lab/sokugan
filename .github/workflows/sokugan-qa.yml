@@ -1,8 +1,6 @@
 name: SOKUGAN QA supervisor
-# 毎日 19:00 JST（10:00 UTC）に品質監督（自分で解いて検証・書き直し）を実行
+# Codexローカル自動化へ移行済み。Claude認証を設定した場合の手動fallback。
 on:
-  schedule:
-    - cron: "0 10 * * *"
   workflow_dispatch:
 
 concurrency:
