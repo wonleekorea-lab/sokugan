@@ -490,6 +490,17 @@ function skgIsContent(cl) { return cl === "kanji" || cl === "kata" || cl === "la
 function skgEndsBoundary(h) {
   return /(?:から|まで|より|など|だけ|ほど|くらい|ぐらい|なら|ので|のに|けれど|けど|でも|ても|つつ|ながら|たり|という|ことが|ことを|ように|ては|では|には|とは|へは|をも|にも|です|ます|ません|だった|である|らしい|そう|べき|まい|[はがをにへとのもやかねよわぞ]|た|だ|て|で|ない|なく|ず|ぬ|る|う|い|し)$/.test(h);
 }
+// 促音・撥音・拗音・長音は日本語の語頭に立てない。これで始まるチャンク/トークンは
+// 必ず前へ吸着させる（「上が|った」「減|っていない」の断裂を構造的に排除する）。
+var SKG_BAD_HEAD = /^[っッんンぁぃぅぇぉゃゅょゎァィゥェォャュョヮー]/;
+function skgFixBadHeads(chunks) {
+  const out = [];
+  for (const c of chunks) {
+    if (out.length && SKG_BAD_HEAD.test(c)) out[out.length - 1] += c;
+    else out.push(c);
+  }
+  return out;
+}
 // 長すぎる(=10字以上)チャンクを助詞の直後で分割。仮名/語の途中では切らない。
 function skgSplitLong(c) {
   const chars = [...c];
@@ -500,7 +511,7 @@ function skgSplitLong(c) {
   for (let i = 0; i < chars.length; i++) {
     buf += chars[i];
     const next = chars[i + 1] || "";
-    if (BREAK.has(chars[i]) && [...buf].length >= 4 && next && !SKG_PARTICLE_HEAD.test(next) && !/[、。！？」』）・]/.test(next)) { pieces.push(buf); buf = ""; }
+    if (BREAK.has(chars[i]) && [...buf].length >= 4 && next && !SKG_PARTICLE_HEAD.test(next) && !SKG_BAD_HEAD.test(next) && !/[、。！？」』）・]/.test(next)) { pieces.push(buf); buf = ""; }
   }
   if (buf) pieces.push(buf);
   // 端数(1字以下)は前へ吸収
@@ -513,7 +524,11 @@ function skgSplitLong(c) {
 function skgChunkWords(text) {
   if (typeof Intl === "undefined" || typeof Intl.Segmenter !== "function") return null;
   const tokens = [...new Intl.Segmenter("ja", { granularity: "word" }).segment(text)].map(x => x.segment).filter(x => !/^\s+$/.test(x));
-  const ATTACH = new Set(["は","が","を","に","へ","と","も","の","や","か","な","ね","よ","ぞ","で","から","まで","より","など","だけ","ほど","なら","ので","のに","て","た","だ","ん","さ","れ","ない","なく","ず","ぬ","です","ます"]);
+  // 語頭に立てない文字（促音・撥音・拗音・長音）は必ず左へ吸着させる。
+  // Intl.Segmenterは「上がった」を 上/が/っ/た に割る。「が」で文節が閉じた直後に
+  // 「っ」が来ると新しいチャンクの先頭になり、活用語尾が「上が|った」と割れる（A9dが検査）。
+  const ATTACH = new Set(["は","が","を","に","へ","と","も","の","や","か","な","ね","よ","ぞ","で","から","まで","より","など","だけ","ほど","なら","ので","のに","て","た","だ","ん","さ","れ","ない","なく","ず","ぬ","です","ます",
+    "っ","ッ","ン","ぁ","ぃ","ぅ","ぇ","ぉ","ゃ","ゅ","ょ","ゎ","ァ","ィ","ゥ","ェ","ォ","ャ","ュ","ョ","ヮ","ー"]);
   const ADVERB = /^(?:もう一度|もう|まだ|さらに|すでに|あえて|特に|まず|ほぼ|最も)$/;
   const raw = [];
   let cur = "", closed = false;
@@ -521,6 +536,7 @@ function skgChunkWords(text) {
   for (const t of tokens) {
     if (/^[、。！？）」』】》〉]$/.test(t)) { cur += t; if (/[。！？]/.test(t)) push(); continue; }
     if (/^[（「『【《〈]$/.test(t)) { push(); cur = t; continue; }
+    if (SKG_BAD_HEAD.test(t) && cur) { cur += t; closed = true; continue; }  // 語頭不能文字は常に吸着
     if (ATTACH.has(t)) { cur += t; closed = true; continue; }
     if (!cur) { cur = t; closed = false; continue; }
     if (closed || ADVERB.test(cur) || [...cur, ...t].length > 8) { push(); cur = t; }
@@ -536,7 +552,7 @@ function skgChunkWords(text) {
     else if (prev && SKG_PARTICLE_HEAD.test(c) && [...prev, ...c].length <= 12) out[out.length - 1] = prev + c;
     else out.push(c);
   }
-  return out;
+  return skgFixBadHeads(out);
 }
 function chunkText(text) {
   const s = (text || "").replace(/\s/g, "");
@@ -605,7 +621,7 @@ function chunkText(text) {
       out[out.length - 1] = prev + c;                       // 万一の行頭助詞を前へ
     } else out.push(c);
   }
-  return out;
+  return skgFixBadHeads(out);
 }
 // QAレポート用の妥当性判定（アプリ表示はこの結果に依存しない＝常にchunkTextを使用）
 function validChunks(p) {

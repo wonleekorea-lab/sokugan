@@ -125,6 +125,11 @@ eval(js + "\nglobal.__app = { get state(){return state}, set state(v){state=v}, 
     check(`A9b [${id}] 句読点始まりチャンクなし`, headPunct.length === 0, headPunct.slice(0, 3).join("/"));
     const loneParticle = ch.filter(c => /^[はがをにへとも]$/.test(c) || ["から", "まで", "より", "ので", "のに"].includes(c));
     check(`A9c [${id}] 助詞単独チャンクなし`, loneParticle.length === 0, loneParticle.join("/"));
+    // A9d: 促音・撥音・拗音・長音で始まるチャンクは日本語の語頭になり得ない。
+    // 「上が|った」「だ|った。」のような活用語尾の断裂を検出する（A9では捕まらない）。
+    const badHead = ch.filter(c => /^[っッんンぁぃぅぇぉゃゅょゎァィゥェォャュョヮー]/.test(c));
+    check(`A9d [${id}] 語頭になり得ない文字で始まるチャンクなし（活用語尾の断裂）`,
+      badHead.length === 0, badHead.slice(0, 3).join("/"));
     // 15字超は「分割不能な単一アトム(長いカタカナ語/英数)」のみ許容。
     // 上限が12→15なのは、連体修飾の孤立を解消する結合（A10c）に幅が必要なため。
     // 長いチャンクの乱造を防ぐ密度上限は A10d が担保する。
@@ -196,6 +201,42 @@ eval(js + "\nglobal.__app = { get state(){return state}, set state(v){state=v}, 
   // 上限緩和（12→15字）を悪用して長いチャンクが量産されていないか
   check("A10d 12字超チャンクは全体の2%以下（長文チャンクの乱造防止）",
     over12 / Math.max(allChunkN, 1) <= 0.02, `${over12}/${allChunkN} = ${(over12 / Math.max(allChunkN, 1) * 100).toFixed(1)}%`);
+
+  // ---------- A15. archive直近30日との重複（既報の言い換えを配信しない） ----------
+  // /daily の指示だけに頼ると「同じ出来事の言い換え」がすり抜ける。機械的に照合する。
+  const archDir = path.join(ROOT, "archive");
+  const norm = (t) => String(t || "").toLowerCase().replace(/[\s\p{P}\p{S}]/gu, "");
+  const fp = (t) => { const s = norm(t); let h = 0x811c9dc5;
+    for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 0x01000193) >>> 0; }
+    return s.length + "-" + h.toString(36); };
+  let archTitles = new Map(), archFps = new Map(), archUrls = new Map(), archDays = 0;
+  try {
+    const cut = new Date(Date.parse(daily.date + "T00:00:00Z") - 30 * 86400000).toISOString().slice(0, 10);
+    for (const f of fs.readdirSync(archDir).filter(x => x.endsWith(".json")).sort().reverse()) {
+      const d = f.replace(/\.json$/, "");
+      if (d < cut || d >= daily.date) continue;
+      archDays++;
+      let a = null;
+      try { a = JSON.parse(fs.readFileSync(path.join(archDir, f), "utf8")); } catch (e) { continue; }
+      for (const p of (a.passages || [])) {
+        if (p.title) archTitles.set(norm(p.title), d);
+        if (p.text) archFps.set(fp(p.text), d);
+        const u = String(p.source || "").match(/https?:\/\/[^\s、。）)"']+/);
+        if (u) archUrls.set(u[0].toLowerCase().replace(/[#?].*$/, "").replace(/\/+$/, ""), d);
+      }
+    }
+  } catch (e) {}
+  const dupTitle = [], dupText = [], dupUrl = [];
+  for (const p of (daily.passages || [])) {
+    if (archTitles.has(norm(p.title))) dupTitle.push(`${p.id}=${archTitles.get(norm(p.title))}`);
+    if (archFps.has(fp(p.text))) dupText.push(`${p.id}=${archFps.get(fp(p.text))}`);
+    const u = String(p.source || "").match(/https?:\/\/[^\s、。）)"']+/);
+    if (u) { const k = u[0].toLowerCase().replace(/[#?].*$/, "").replace(/\/+$/, ""); if (archUrls.has(k)) dupUrl.push(`${p.id}=${archUrls.get(k)}`); }
+  }
+  check("A15 archive直近30日と同一タイトルの再配信なし", dupTitle.length === 0, `照合${archDays}日 / ${dupTitle.join(" ")}`);
+  check("A15b archive直近30日と同一本文の再配信なし", dupText.length === 0, dupText.join(" "));
+  check("A15c archive直近30日と同一出典URLの再配信なし", dupUrl.length === 0, dupUrl.join(" "));
+  check("A15d 照合対象のarchiveが十分にある（30日分を参照できている）", archDays >= 20, `${archDays}日分`);
 
   // 瞬間キャッチ用プール
   const pool = A.chunkPool();
@@ -620,6 +661,27 @@ eval(js + "\nglobal.__app = { get state(){return state}, set state(v){state=v}, 
   check("D3 監査が全設問をカバー", ca && Array.isArray(ca.items) && ca.items.length === totalQ, ca ? `${(ca.items || []).length}/${totalQ}` : "");
   check("D4 監査ステータスが合格・平均明快さ4以上", ca && ca.status === "pass" && (ca.avgScore || 0) >= 4, ca ? `${ca.status} avg=${ca.avgScore}` : "");
   check("D5 明快さスコア3未満の設問が残っていない", ca && (ca.items || []).every(i => (i.score || 0) >= 3), ca ? (ca.items || []).filter(i => (i.score || 0) < 3).length + "問" : "");
+  // D3b〜D3d: 件数だけ合っていれば通る抜け道を閉じる。
+  // 実際に「passage未指定の項目15件」で件数だけ合わせ、5本が未監査のまま
+  // D3をPASSしていた（過去editionの監査で代替）。実在IDへの紐づけを必須にする。
+  const paIds = new Set((daily.passages || []).map(p => p.id));
+  const orphan = ((ca && ca.items) || []).filter(i => !i.passage || !paIds.has(i.passage));
+  check("D3b 監査項目すべてが実在する本文IDに紐づく（未指定・架空IDなし）",
+    !!ca && orphan.length === 0, `孤立 ${orphan.length}件`);
+  const perPassage = {};
+  for (const i of ((ca && ca.items) || [])) if (i.passage) perPassage[i.passage] = (perPassage[i.passage] || 0) + 1;
+  const uncovered = (daily.passages || []).filter(p => (perPassage[p.id] || 0) !== (p.questions || []).length);
+  check("D3c 全10本が各3問ずつ監査されている（1本も素通りしていない）",
+    uncovered.length === 0, uncovered.map(p => p.id + ":" + (perPassage[p.id] || 0)).join(" "));
+  // 監査対象が実際にその設問か（stemの実体照合）。IDだけ付け替える偽装を防ぐ
+  const stemMismatch = [];
+  for (const i of ((ca && ca.items) || [])) {
+    const p = (daily.passages || []).find(x => x.id === i.passage);
+    if (!p) continue;
+    const q = (p.questions || [])[(i.q || 1) - 1];
+    if (!q || !String(q.q || "").includes(String(i.stem || " "))) stemMismatch.push(i.passage + "#" + i.q);
+  }
+  check("D3d 監査項目のstemが実際の設問文と一致する", stemMismatch.length === 0, stemMismatch.slice(0, 4).join(" "));
 
   // ========== 結果 ==========
   const status = failed === 0 ? "pass" : "fail";
