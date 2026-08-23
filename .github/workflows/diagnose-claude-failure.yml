@@ -1,74 +1,54 @@
 name: SOKUGAN Claude失敗の診断
 
-# claude-code-action は実行出力を "full output hidden for security" として隠すため、
-# is_error だけが見えて原因が分からない。show_full_output を有効にすると公開リポジトリの
-# ログに本文まで全部出てしまうので採らない。
-# 代わりに、保存済みの実行JSONから「エラーらしい文字列だけ」を抽出して出力する。
-# 記事本文や設問文が漏れないよう、既知のAPIエラーパターンに一致する行に限定する。
+# daily は Preflight / Node を通過したあと claude-code-action 内で is_error:true になる。
+# 実際のエラー文は "full output hidden for security" で隠されるため、原因を切り分ける。
+#
+# 切り分けの構造:
+#   job minimal … 最小構成（Readのみ・1ターン・自明なプロンプト）で認証が生きているかを見る
+#   job asdaily … dailyと同一の claude_args（全ツール・60ターン）＋自明なプロンプト
+# 両方とも本文を生成しないので、show_full_output を有効にしてもログに教材本文は出ない。
+# minimal成功 かつ asdaily失敗 → 設定（.claude/settings.json のhooks等）が原因。
+# 両方失敗 → 認証・サブスクリプション側の問題。
 on:
   workflow_dispatch:
 
 jobs:
-  diagnose:
+  minimal:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
       contents: read
+      id-token: write        # これが無いとOIDCトークンを取れずClaudeに到達しない
     steps:
       - uses: actions/checkout@v6
-      - uses: anthropics/claude-code-action@v1
+      - name: 最小構成でClaudeを起動
+        uses: anthropics/claude-code-action@v1
         continue-on-error: true
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          show_full_output: true
           prompt: |
-            Reply with exactly the two characters: ok
+            Reply with exactly: ok
           claude_args: |
             --max-turns 1
             --allowedTools "Read"
-      - name: 実行JSONからエラー文字列のみ抽出
-        if: always()
-        run: |
-          F="$RUNNER_TEMP/claude-execution-output.json"
-          if [ ! -f "$F" ]; then echo "実行JSONが見つかりません: $F"; ls -la "$RUNNER_TEMP" | head -20; exit 0; fi
-          echo "--- ファイルサイズ: $(wc -c < "$F") bytes ---"
-          node - "$F" <<'JS'
-          const fs = require("fs");
-          const raw = fs.readFileSync(process.argv[2], "utf8");
-          // 既知のAPI/認証エラーのパターンにだけ一致させる。本文流出を避けるため全文は出さない。
-          const PAT = /(401|403|429|invalid|expired|unauthorized|forbidden|rate.?limit|usage.?limit|quota|credit|balance|overloaded|not.?found|refus|denied|authentication|oauth|token|subscription|model)/i;
-          let data; try { data = JSON.parse(raw); } catch (e) { data = null; }
-          const hits = [];
-          const walk = (v, path) => {
-            if (v == null) return;
-            if (typeof v === "string") {
-              // 日本語本文（記事・設問）は出さない。ASCII主体でエラー語を含む短い文字列のみ。
-              const asciiRatio = (v.match(/[\x20-\x7E]/g) || []).length / Math.max(v.length, 1);
-              if (v.length <= 400 && asciiRatio > 0.85 && PAT.test(v)) hits.push(path + " = " + v.slice(0, 400));
-              return;
-            }
-            if (Array.isArray(v)) { v.forEach((x, i) => walk(x, path + "[" + i + "]")); return; }
-            if (typeof v === "object") {
-              for (const k of Object.keys(v)) {
-                if (["result", "content", "text"].includes(k) && typeof v[k] === "string") continue; // 本文候補は無視
-                walk(v[k], path + "." + k);
-              }
-              // resultオブジェクトのスカラーは常に出す（本文を含まない）
-              if (v.type === "result") {
-                for (const k of ["subtype", "is_error", "num_turns", "duration_ms", "total_cost_usd", "permission_denials_count"]) {
-                  if (k in v) hits.push("result." + k + " = " + JSON.stringify(v[k]));
-                }
-              }
-            }
-          };
-          if (data) walk(data, "$");
-          else {
-            for (const line of raw.split("\n")) {
-              const asciiRatio = (line.match(/[\x20-\x7E]/g) || []).length / Math.max(line.length, 1);
-              if (line.length <= 400 && asciiRatio > 0.85 && PAT.test(line)) hits.push(line.trim().slice(0, 400));
-            }
-          }
-          const uniq = [...new Set(hits)];
-          console.log("=== 抽出したエラー関連 " + uniq.length + " 件 ===");
-          uniq.slice(0, 40).forEach(h => console.log("  " + h));
-          if (!uniq.length) console.log("  （エラーらしい文字列は見つかりませんでした）");
-          JS
+
+  asdaily:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v6
+      - name: daily と同一の引数でClaudeを起動（プロンプトのみ自明なものに）
+        uses: anthropics/claude-code-action@v1
+        continue-on-error: true
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          show_full_output: true
+          prompt: |
+            Reply with exactly: ok
+          claude_args: |
+            --max-turns 60
+            --allowedTools "Read,Write,Edit,Glob,Grep,WebSearch,WebFetch,Bash"
