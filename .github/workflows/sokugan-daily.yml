@@ -26,11 +26,25 @@ jobs:
         env:
           TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
         run: |
+          # 値そのものは絶対に出力しない。長さと空白混入だけを報告する。
+          # 「空」と「改行が混入して401」は原因も対処も違うため、ここで切り分ける。
           if [ -z "$TOKEN" ]; then
-            echo "::error title=CLAUDE_CODE_OAUTH_TOKEN が未設定::リポジトリの Settings > Secrets and variables > Actions に CLAUDE_CODE_OAUTH_TOKEN を登録してください（ローカルで claude setup-token を実行して得た値）。"
+            echo "::error title=CLAUDE_CODE_OAUTH_TOKEN が空::Secretが未登録か、空の値で保存されています。gh secret set CLAUDE_CODE_OAUTH_TOKEN --repo <owner>/<repo> を実行し、対話プロンプトに貼り付けてください（claude setup-token の出力値）。"
             exit 1
           fi
-          echo "OAuth token あり。教材生成へ進みます。"
+          LEN=${#TOKEN}
+          TRIMMED=$(printf '%s' "$TOKEN" | tr -d '[:space:]')
+          TLEN=${#TRIMMED}
+          echo "OAuth token あり（長さ ${LEN} 文字 / 空白除去後 ${TLEN} 文字）"
+          if [ "$LEN" -ne "$TLEN" ]; then
+            echo "::error title=トークンに空白・改行が混入::長さ ${LEN} に対し空白除去後は ${TLEN} で、空白か改行が含まれています。これは 401 Invalid bearer token の原因になります。echo でパイプすると末尾に改行が付くため、gh secret set の対話プロンプトに貼り付けてください。"
+            exit 1
+          fi
+          if [ "$LEN" -lt 40 ]; then
+            echo "::error title=トークンが短すぎる::長さ ${LEN} 文字はOAuthトークンとして短すぎます。貼り付けが途中で切れていないか確認してください。"
+            exit 1
+          fi
+          echo "形式チェック通過。教材生成へ進みます。"
       - name: Node のバージョンを固定（QAハーネス実行用）
         uses: actions/setup-node@v4
         with:
