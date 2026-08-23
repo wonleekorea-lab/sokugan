@@ -1,9 +1,9 @@
 {
- "date": "2026-08-23",
+ "date": "2026-08-24",
  "status": "pass",
- "checked_at": "2026-08-23T01:22:00.501Z",
+ "checked_at": "2026-08-23T09:25:55.020Z",
  "passed": 262,
  "total": 262,
  "failures": [],
- "notes": "3.2 final: archive-duplicate passages replaced (5 new), clarity-audit rebuilt with real passage IDs (30/30), chunker bad-head fix"
+ "notes": "daily: 2026-08-23"
 }
