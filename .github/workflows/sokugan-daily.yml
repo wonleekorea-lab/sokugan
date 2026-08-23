@@ -57,6 +57,10 @@ jobs:
             daily.md の手順1〜7を順番どおりに実行せよ。
             QAハーネスが全PASS（終了コード0）になるまで完了してはならない。
             全PASS後に必ず git add -A && git commit && git push origin main まで行うこと。
+          # 運用コスト固定: action側に model/effort の入力は無いため、
+          # CLIへ直接渡る claude_args で指定する（--effort は low/medium/high/xhigh/max）。
           claude_args: |
+            --model claude-sonnet-5
+            --effort medium
             --max-turns 60
             --allowedTools "Read,Write,Edit,Glob,Grep,WebSearch,WebFetch,Bash"

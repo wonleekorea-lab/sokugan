@@ -56,6 +56,10 @@ jobs:
             機械検査だけで終わらせず、手順3の精読監査（全15問を自力で解く／日本語の明快さ／
             読み応え／keyTerms・takeawayの質）を必ず行い、clarity-audit.json を更新すること。
             修正した場合のみ git push origin main する。QAがFAILのままpushしてはならない。
+          # 運用コスト固定: action側に model/effort の入力は無いため、
+          # CLIへ直接渡る claude_args で指定する（--effort は low/medium/high/xhigh/max）。
           claude_args: |
+            --model claude-sonnet-5
+            --effort medium
             --max-turns 60
             --allowedTools "Read,Write,Edit,Glob,Grep,WebSearch,WebFetch,Bash"
