@@ -6,7 +6,12 @@ PROJ="${CLAUDE_PROJECT_DIR:-$(cd "$(dirname "$0")/../.." && pwd)}"
 cd "$PROJ" || exit 0
 git rev-parse --git-dir >/dev/null 2>&1 || exit 0
 
-timeout 20 git fetch --quiet origin main 2>/dev/null || { echo "（GitHubに接続できず同期確認をスキップ）"; exit 0; }
+# macOSには timeout が無い（GNU coreutils未導入）。あれば使い、無ければ素で叩く。
+# ここを timeout 固定にすると常に127で失敗し、同期確認が黙って死ぬ。
+if command -v timeout >/dev/null 2>&1; then TO="timeout 20"
+elif command -v gtimeout >/dev/null 2>&1; then TO="gtimeout 20"
+else TO=""; fi
+$TO git fetch --quiet origin main 2>/dev/null || { echo "（GitHubに接続できず同期確認をスキップ）"; exit 0; }
 
 BEHIND=$(git rev-list --count HEAD..origin/main 2>/dev/null || echo 0)
 AHEAD=$(git rev-list --count origin/main..HEAD 2>/dev/null || echo 0)

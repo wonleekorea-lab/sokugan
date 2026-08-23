@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Sokugan 3.1 — Reading Fluency Lab</title>
+<title>Sokugan 3.2 — Reading Fluency Lab</title>
 <meta name="theme-color" content="#f6f7f9">
 <link rel="manifest" href="./manifest.json">
 <meta name="mobile-web-app-capable" content="yes">
@@ -11,6 +11,8 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="速眼">
 <link rel="apple-touch-icon" href="./icons/icon-180.png">
+<!-- 外部サービス設定（公開して安全な anon key のみ）。未設定でもアプリは動く。 -->
+<script src="./sokugan-config.js"></script>
 <style>
 :root{
   --bg:#f6f7f9; --card:#ffffff; --card2:#f0f2f5; --border:#e5e8ec; --border2:#d3d8df;
@@ -143,7 +145,7 @@ button{touch-action:manipulation}
   <div id="nav"></div>
   <div id="banner"></div>
   <div id="screen"></div>
-  <div class="footer-note">Sokugan 3.1 · repeat-free mobile reading fluency lab</div>
+  <div class="footer-note">Sokugan 3.2 · cross-device synced reading fluency lab</div>
 </div>
 <script>
 // =============================================================
@@ -227,7 +229,27 @@ function defaultState() {
     anchorHistory: [],    // 週次アンカー転移テスト {date, anchorId, speed, comp, adjustedSpeed, readability}
     lastAnchorDate: null,
     anchorIdx: 0,
+    // ---- 端末間同期（3.2）----
+    deviceId: newDeviceId(), // 端末の識別子。sessionIdの前置に使い、同一記録の二重計上を防ぐ
+    updatedAt: null,         // この端末で最後に保存した時刻（ISO）。スカラー項目のマージ基準
+    fieldTs: {},             // フィールド別の最終更新時刻。無い項目は updatedAt にフォールバック
   };
+}
+// 端末IDとセッションID: 同期時に「同じ記録」を機械的に見分けるための識別子。
+// crypto.randomUUIDが無い環境（古いSafari/Nodeスタブ）でも動くfallbackを持つ。
+function newDeviceId() {
+  try { if (typeof crypto !== "undefined" && crypto.randomUUID) return "d-" + crypto.randomUUID().slice(0, 18); } catch (e) {}
+  return "d-" + Math.random().toString(36).slice(2, 10) + Math.random().toString(36).slice(2, 6);
+}
+function newSessionId() {
+  const dev = (state && state.deviceId) || "d-unknown";
+  return dev + ":" + Date.now().toString(36) + ":" + Math.random().toString(36).slice(2, 6);
+}
+// 更新型スカラー項目の「いつ変わったか」を記録する。マージで新しい側を採用するために使う。
+function stampField(name) {
+  if (!state) return;
+  if (!state.fieldTs) state.fieldTs = {};
+  state.fieldTs[name] = new Date().toISOString();
 }
 function migrateFromV2() {
   try {
@@ -269,14 +291,23 @@ function loadState() {
       if (parsed.spanLevel == null) {
         try { const o = JSON.parse(localStorage.getItem(OLD_KEY) || "{}"); parsed.spanLevel = Math.min(9, Math.max(3, o.spanLevel || 4)); } catch (e) {}
       }
-      return Object.assign(defaultState(), parsed);
+      const merged = Object.assign(defaultState(), parsed);
+      // 3.1以前のデータには deviceId が無い。ここで一度だけ発行して固定する
+      // （毎回作り直すと同期のたびに別端末扱いになり、記録が重複する）。
+      if (!parsed.deviceId) { try { localStorage.setItem(KEY, JSON.stringify(merged)); } catch (e) {} }
+      return merged;
     }
   } catch (e) {}
   const mig = migrateFromV2();
   if (mig) { localStorage.setItem(KEY, JSON.stringify(mig)); return mig; }
   return defaultState();
 }
-function saveState() { localStorage.setItem(KEY, JSON.stringify(state)); }
+function saveState() {
+  state.updatedAt = new Date().toISOString();
+  localStorage.setItem(KEY, JSON.stringify(state));
+  // 保存のたびに同期を予約する（デバウンス付き・オフライン時はキューに積むだけ）。
+  try { scheduleSync("save"); } catch (e) {}
+}
 let state = loadState();
 let content = DEFAULT_CONTENT;
 let contentSource = "fallback";
@@ -356,20 +387,55 @@ function ensureTodaySession() {
   }
   return state.todaySession;
 }
+// ---------- 既読判定（3.2）----------
+// 同じ記事が別IDで再配信されても再表示しないため、3系統の鍵で照合する。
+//   1) 正規化タイトル  … 表記ゆれ（記号・空白・大小）を潰した主鍵。3.1からの互換鍵
+//   2) 本文fingerprint … タイトルだけ変えた言い換え配信を捕まえる
+//   3) 出典URL         … source にURLが入っている場合の同一記事判定
+// どれか1つでも既読集合にあれば「読んだ」と扱う。
 function passageKey(p) {
   if (!p) return "";
   const title = String(p.title || "").toLowerCase().replace(/[\s\p{P}\p{S}]/gu, "");
   return title || String(p.id || "");
 }
+// 決定論ハッシュ（FNV-1a 32bit）。本文の内容同一性だけを見るため空白と記号は落とす。
+function textFingerprint(text) {
+  const s = String(text || "").replace(/[\s\p{P}\p{S}]/gu, "");
+  if (!s) return "";
+  let h = 0x811c9dc5;
+  for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 0x01000193) >>> 0; }
+  return "t:" + s.length + "-" + h.toString(36);
+}
+function sourceUrlKey(p) {
+  const m = String((p && p.source) || "").match(/https?:\/\/[^\s、。）)"']+/);
+  if (!m) return "";
+  return "u:" + m[0].toLowerCase().replace(/[#?].*$/, "").replace(/\/+$/, "");
+}
+function passageKeys(p) {
+  if (!p) return [];
+  return [passageKey(p), textFingerprint(p.text), sourceUrlKey(p)].filter(Boolean);
+}
 function seenPassageSet() { return new Set(state.seenPassageKeys || []); }
+function isPassageSeen(p, seen) {
+  const set = seen || seenPassageSet();
+  return passageKeys(p).some(k => set.has(k));
+}
 function markPassagesSeen(passages) {
   const seen = seenPassageSet();
-  for (const p of passages.filter(Boolean)) seen.add(passageKey(p));
-  state.seenPassageKeys = [...seen].slice(-1000);
+  for (const p of (passages || []).filter(Boolean)) for (const k of passageKeys(p)) seen.add(k);
+  state.seenPassageKeys = [...seen].slice(-3000);
+}
+// 本文を「実際に読み終えた」時点で既読にする。開始時に確定させると、
+// 中断した分まで未読在庫から消えてしまう（3.1の不具合）。
+function markPassageRead(p) {
+  if (!p) return;
+  const before = (state.seenPassageKeys || []).length;
+  markPassagesSeen([p]);
+  if ((state.seenPassageKeys || []).length !== before) saveState();
 }
 function unseenPassages() {
   const seen = seenPassageSet();
-  return (content.passages || []).filter(p => !seen.has(passageKey(p)));
+  return (content.passages || []).filter(p => !isPassageSeen(p, seen));
 }
 function totalTrainingDays() {
   return new Set(state.history.map(h => h.date)).size;
@@ -465,8 +531,8 @@ function skgChunkWords(text) {
   const out = [];
   for (const c of split) {
     const prev = out[out.length - 1];
-    const openModifier = prev && /(?:の|な|という|による|における|への|ための)$/.test(prev) && !/[、。！？]/.test(prev);
-    if (openModifier && [...prev, ...c].length <= 12) out[out.length - 1] = prev + c;
+    const openModifier = prev && /(?:の|な|という|による|における|への|ための|といった|に対する|としての)$/.test(prev) && !/[、。！？]$/.test(prev);
+    if (openModifier && [...prev, ...c].length <= 15) out[out.length - 1] = prev + c;
     else if (prev && SKG_PARTICLE_HEAD.test(c) && [...prev, ...c].length <= 12) out[out.length - 1] = prev + c;
     else out.push(c);
   }
@@ -524,8 +590,8 @@ function chunkText(text) {
   const merged2 = [];
   for (const c of chunks) {
     const prev = merged2[merged2.length - 1];
-    const openModifier = prev && /(?:の|な|という|による|における|への|ための)$/.test(prev) && !/[、。！？]/.test(prev);
-    if (openModifier && (prev.length + c.length) <= 12) merged2[merged2.length - 1] = prev + c;
+    const openModifier = prev && /(?:の|な|という|による|における|への|ための|といった|に対する|としての)$/.test(prev) && !/[、。！？]$/.test(prev);
+    if (openModifier && (prev.length + c.length) <= 15) merged2[merged2.length - 1] = prev + c;
     else merged2.push(c);
   }
   chunks.length = 0; for (const c of merged2) chunks.push(c);
@@ -708,9 +774,10 @@ function setGoal(target) {
   const base = adjMovingAvg(7) || movingAvg(7) || state.bestSpeed || 350;
   const whys = { 550: "会議資料を読む時間が今より2割縮む水準", 600: "母語話者平均超え。長文レポートを一往復で掴める", 650: "母語話者の上位帯。会議中に資料を読み切って先に問える" };
   state.goal = { target, baseline: Math.min(base, target - 30), setAt: today(), why: whys[target] || "難度補正速度で" + target + "字/分", hit: [] };
+  stampField("goal");
   saveState(); showToast("🎯 目標を設定: " + target + "字/分（難度補正）"); renderHome();
 }
-function clearGoal() { if (confirm("目標をリセットしますか？")) { state.goal = null; saveState(); renderHome(); } }
+function clearGoal() { if (confirm("目標をリセットしますか？")) { state.goal = null; stampField("goal"); saveState(); renderHome(); } }
 // ---- 持ち帰り（教えるつもり効果 g=0.50） ----
 function passageTakeaway(p) {
   if (p.takeaway && p.takeaway.hook) return { hook: p.takeaway.hook, detail: p.takeaway.detail || "", genre: genreOf(p) };
@@ -803,7 +870,7 @@ function showBanner(html, type) { document.getElementById("banner").innerHTML = 
 function currentTarget() {
   if (state.ratchet.target) return state.ratchet.target;
   const ma = movingAvg(7);
-  state.ratchet.target = ma || state.baselineSpeed || 350;
+  state.ratchet.target = ma || state.baselineSpeed || 350; stampField("ratchet");
   return state.ratchet.target;
 }
 function applyRatchet(sessionSpeed, comp) {
@@ -858,7 +925,7 @@ function renderHeader() {
   const t = today();
   document.getElementById("header").innerHTML = `
     <div class="header">
-      <div class="logo">速眼<small>SOKUGAN 3.1</small></div>
+      <div class="logo">速眼<small>SOKUGAN 3.2</small></div>
       <div class="header-stats">
         <div>連続 <b>${state.streak}</b>日</div>
         <div>累計 <b>${totalTrainingDays()}</b>日</div>
@@ -910,7 +977,7 @@ function renderHome() {
         <button class="btn secondary" onclick="guardedStart('short')" ${unseenN < 1 ? "disabled" : ""}>ショート版<br><span style="font-size:11px;font-weight:500">約3〜5分 · 1本</span></button>
       </div>
       <p class="small" style="margin-top:7px">未読コンテンツ <b>${unseenN}本</b> / 全${(content.passages || []).length}本 · 一度表示した本文は再出題しません</p>
-      ${unseenN < 1 ? `<div class="banner info" style="margin-top:8px">今日届いている未読分は完走しました。上の「更新を確認」で新着を確認してください。</div>` : unseenN < 3 ? `<div class="banner info" style="margin-top:8px">未読が${unseenN}本のため、ショート版で最後まで重複なく読めます。</div>` : ""}
+      ${unseenN < 1 ? `<div class="banner info" style="margin-top:8px">🏁 <b>本日分を完走</b>しました（未読0本）。既読を混ぜての再表示はしません。上の「更新を確認」で新着を待ってください。</div>` : unseenN < 3 ? `<div class="banner info" style="margin-top:8px">未読が${unseenN}本のため、ショート版で最後まで重複なく読めます。</div>` : ""}
       ${fr.isStale ? `<p class="small" style="margin-top:8px;color:var(--gold)">⚠ 表示中のコンテンツは <b>${fr.date}</b> 分です。最新でない可能性があるため、上の「更新を確認」を押すか、開始時に確認します。</p>` : ""}
       ${gp ? `
       <div style="margin-top:14px;padding-top:12px;border-top:1px dashed var(--border2)">
@@ -954,7 +1021,8 @@ function renderHome() {
       <div class="card-title">できるようになったこと</div>
       <div class="card-subtitle">RECENT WINS</div>
       ${wins.length ? wins.map(w => `<div class="win-item"><span class="ico">${w.ico}</span><div>${w.text}<div class="d">${w.date}</div></div></div>`).join("") : '<p class="muted">セッションを完了すると、成長の証跡がここに溜まっていきます。</p>'}
-    </div>`;
+    </div>
+    ${renderSyncLine()}`;
 }
 function genreSpeed(group) {
   const cutoff = daysAgoStr(14);
@@ -1166,7 +1234,7 @@ function guardedStart(mode = "full") {
 function startSession(mode = "full") {
   const picked = pickSessionPassages(mode);
   if (!picked) {
-    showToast(mode === "full" ? "未読が3本未満です。ショート版か次の更新をお待ちください" : "未読コンテンツを完走しました。次の更新をお待ちください");
+    showToast(mode === "full" ? "未読が3本未満です。ショート版か次の更新をお待ちください" : "🏁 本日分を完走しました。次の更新をお待ちください");
     if (view === "home") renderHome();
     return;
   }
@@ -1174,7 +1242,8 @@ function startSession(mode = "full") {
   ts.count += 1;
   state.lastContentSig = contentSignature();
   const { p1, p2, warm } = picked;
-  markPassagesSeen([p1, p2, warm]);
+  // 既読化はここでは行わない。各本文を読み終えた時点で markPassageRead する
+  // （開始時に確定させると中断分まで未読在庫から消える）。
   for (const p of [p1, p2, warm].filter(Boolean)) if (!ts.usedPassageIds.includes(p.id)) ts.usedPassageIds.push(p.id);
   if (!state.pacerLevel) state.pacerLevel = Math.round((currentTarget() || 350) * 1.1);
   const wq = warm && warm.questions ? warm.questions[Math.floor(Math.random() * warm.questions.length)] : null;
@@ -1274,13 +1343,14 @@ function answerPacer(i) {
     else if (j === i) el.classList.add("wrong");
   });
   sess.pacerResult = correct;
+  markPassageRead(sess.warm);   // ペーサーで通読した本文をここで既読化
   // 3-up-1-down ステアケース（正答率約80%に収束）
   const old = state.pacerLevel;
   let lvlMsg = "";
   if (correct) {
     state.pacerStreak = (state.pacerStreak || 0) + 1;
     if (state.pacerStreak >= 3) {
-      state.pacerLevel = Math.round(old * (1 + PACER_STEP));
+      state.pacerLevel = Math.round(old * (1 + PACER_STEP)); stampField("pacerLevel");
       state.pacerStreak = 0;
       sess.pacerLeveledUp = true;
       state.wins.push({ date: today(), ico: "⚡", text: `ペーサー速度がレベルアップ: ${old} → ${state.pacerLevel}字/分` });
@@ -1290,7 +1360,7 @@ function answerPacer(i) {
     }
   } else {
     state.pacerStreak = 0;
-    state.pacerLevel = Math.max(200, Math.round(old * (1 - PACER_STEP)));
+    state.pacerLevel = Math.max(200, Math.round(old * (1 - PACER_STEP))); stampField("pacerLevel");
     lvlMsg = `<div class="banner warn" style="margin-top:10px">ペースが速すぎたようです。${old} → ${state.pacerLevel}字/分 に調整（最適負荷は正答率8割）</div>`;
   }
   saveState();
@@ -1416,14 +1486,14 @@ function answerSpan(idx, score, i) {
     state.spanStreak = (state.spanStreak || 0) + 1;
     if (state.spanStreak >= 3 && state.spanLevel < 9) {
       const old = state.spanLevel;
-      state.spanLevel += 1; state.spanStreak = 0;
+      state.spanLevel += 1; state.spanStreak = 0; stampField("spanLevel");
       state.wins.push({ date: today(), ico: "👁", text: `瞬間キャッチの視幅が拡大: ${old}字 → ${state.spanLevel}字（選択肢 ${spanOptCount(old)}→${spanOptCount(state.spanLevel)}択）` });
     } else if (state.spanStreak >= 3) {
       state.spanStreak = 0; // 上限9字では維持
     }
   } else {
     state.spanStreak = 0;
-    if (state.spanLevel > 3) state.spanLevel -= 1;
+    if (state.spanLevel > 3) { state.spanLevel -= 1; stampField("spanLevel"); }
   }
   saveState();
   setTimeout(() => runSpanTrial(idx + 1, score + (correct ? 1 : 0)), 700);
@@ -1518,6 +1588,7 @@ function finishReading(which) {
   const speed = Math.round(n / time * 60);
   const rec = { time, speed, chars: n };
   if (which === 1) sess.p1Init = rec; else sess.p2Init = rec;
+  markPassageRead(p);   // 本文を通読し終えた時点で既読化（中断分は消費しない）
   renderQuiz(which, 0, []);
 }
 // ---------- 設問（3問・即時フィードバック+解説） ----------
@@ -1705,6 +1776,7 @@ function renderShortResult() {
     state.wins.push({ date: today(), ico: "⚡", text: `ショート版で自己ベスト: ${p.speed}字/分（理解度${Math.round(comp * 100)}%）` });
   }
   state.history.push({
+    sessionId: newSessionId(),
     date: today(), mode: "short", speed: p.speed, comprehension: comp, valid,
     target, targetMet: rat.cleared, adjustedSpeed, readability: stats.readability,
     genreSpeeds: [{ genre: genreOf(sess.p1), speed: p.speed, comp, readability: stats.readability }],
@@ -1758,7 +1830,8 @@ function renderResult() {
     state.wins.push({ date: today(), ico: "🔗", text: `深層読解（${sess.deepCloze.type}）正解 — 速度を保って論理のつなぎも取れた` });
   // 記録
   state.history.push({
-    date: today(), speed: sessSpeed, comprehension: comp, valid,
+    sessionId: newSessionId(),
+    date: today(), mode: "full", speed: sessSpeed, comprehension: comp, valid,
     target, targetMet: rat.cleared,
     adjustedSpeed: adjSpeed, readability: sessReadability,
     genreSpeeds: [
@@ -1997,8 +2070,9 @@ function renderHistory() {
       <div class="card-title">できるようになったこと（全履歴）</div>
       ${state.wins.slice(-20).reverse().map(w => `<div class="win-item"><span class="ico">${w.ico}</span><div>${w.text}<div class="d">${w.date}</div></div></div>`).join("") || '<p class="muted">まだありません。</p>'}
     </div>
+    ${renderSyncCard()}
     <div class="card">
-      <div class="card-title">データ管理</div>
+      <div class="card-title">データ管理（非常用のバックアップ）</div>
       ${(state.clarityFlags || []).length ? `<p class="small" style="margin:2px 0 8px">⚠ 「わかりにくい」報告: <b>${state.clarityFlags.length}件</b> — バックアップを書き出してClaudeに渡すと、該当設問を平易に直せます。</p>` : ""}
       <div style="display:flex;gap:8px;margin-top:8px">
         <button class="btn secondary small" onclick="exportData()">バックアップを書き出し</button>
@@ -2074,6 +2148,358 @@ function renderAbout() {
       <p class="small" style="margin-top:10px">コンテンツは毎夕18時に翌日分が自動生成されます。テーマはCEOが見逃せないトップイシュー: スタートアップ／AI・技術／市場・経済／経営・組織／規制・環境。</p>
     </div>`;
 }
+/*__SYNC_START__ 端末間同期（3.2）。この区間は qa/harness.js がネットワークmockでE2Eテストする。 */
+// =============================================================
+// CLOUD SYNC — ローカルファースト + フィールド別の決定論マージ
+// =============================================================
+// 設計の要点:
+//  ・正本は常にローカル（localStorage）。未設定・未ログイン・オフラインでも全機能が動く。
+//  ・同期は pull → merge → push の1往復。マージはサーバではなくクライアントで行う。
+//  ・衝突を「後から書いた方の勝ち」で解決しない。スマホとPCの両方で増えた記録は
+//    どちらも残す（集合型はunion、記録型はmax、設定型は更新時刻の新しい方）。
+//  ・rev による楽観的排他。pull後に別端末が書いていたらPATCHが0行更新になり、再pullして再試行する。
+const AUTH_KEY = "sokugan_auth";
+const SYNC_TABLE = "sokugan_state";
+const SYNC_DEBOUNCE_MS = 1500;
+// status: off(未設定) / needsAuth(要ログイン) / syncing / ok / offline / error
+let syncState = { status: "off", lastSyncedAt: null, error: null, pending: false, inFlight: false };
+let syncTimer = null;
+
+function syncCfg() {
+  const c = (typeof window !== "undefined" && window.SOKUGAN_CONFIG) || {};
+  if (!c.supabaseUrl || !c.supabaseAnonKey) return null;
+  return { url: String(c.supabaseUrl).replace(/\/+$/, ""), key: String(c.supabaseAnonKey) };
+}
+function syncEnabled() { return !!syncCfg(); }
+function loadAuth() { try { return JSON.parse(localStorage.getItem(AUTH_KEY) || "null"); } catch (e) { return null; } }
+function saveAuth(a) { try { if (a) localStorage.setItem(AUTH_KEY, JSON.stringify(a)); else localStorage.removeItem(AUTH_KEY); } catch (e) {} }
+function signedIn() { const a = loadAuth(); return !!(a && a.access_token && a.user_id); }
+function syncEmail() { const a = loadAuth(); return a ? a.email : null; }
+
+// ---------- マージ（純関数。ここが同期の正しさの核） ----------
+function maxStr(a, b) { const x = String(a || ""), y = String(b || ""); return y > x ? (b || null) : (a || null); }
+function unionBy(a, b, keyFn) {
+  const out = [], seen = new Set();
+  for (const x of [...(a || []), ...(b || [])]) {
+    if (x == null) continue;
+    const k = String(keyFn(x));
+    if (seen.has(k)) continue;
+    seen.add(k); out.push(x);
+  }
+  return out;
+}
+// 履歴の同一性: sessionIdがあればそれ。無い旧データは内容から合成鍵を作る
+// （3.1以前の記録にはsessionIdが無いため、これが無いと同じ日の記録が二重に増える）。
+function histKey(h) {
+  if (h && h.sessionId) return h.sessionId;
+  return [h && h.date, (h && h.mode) || "full", h && h.speed, h && h.comprehension].join("|");
+}
+function mergeStates(local, remote) {
+  if (!remote || typeof remote !== "object") return local;
+  if (!local || typeof local !== "object") return remote;
+  const out = Object.assign({}, local);
+  // フィールドの更新時刻。個別スタンプが無ければ状態全体の updatedAt を使う
+  const ts = (s, f) => String((s.fieldTs && s.fieldTs[f]) || s.updatedAt || "");
+  // 同値ならローカルを維持する（同じ入力なら常に同じ結果＝決定論）
+  const newer = (f) => (ts(remote, f) > ts(local, f) ? remote : local);
+
+  // 1) 集合型: union + 重複排除。どちらの端末で増えた分も失わない
+  out.history = unionBy(local.history, remote.history, histKey)
+    .sort((a, b) => String(a.date || "").localeCompare(String(b.date || "")) || String(histKey(a)).localeCompare(String(histKey(b))));
+  out.wins = unionBy(local.wins, remote.wins, w => [w.date, w.text].join("|"));
+  out.clarityFlags = unionBy(local.clarityFlags, remote.clarityFlags, f => [f.date, f.genre, f.q].join("|"));
+  out.anchorHistory = unionBy(local.anchorHistory, remote.anchorHistory, a => [a.date, a.anchorId].join("|"))
+    .sort((a, b) => String(a.date || "").localeCompare(String(b.date || "")));
+  out.seenPassageKeys = [...new Set([...(local.seenPassageKeys || []), ...(remote.seenPassageKeys || [])])].slice(-3000);
+
+  // 2) 語彙: term単位。習得度が高い方、同値なら記録日が新しい方
+  const vb = new Map();
+  for (const v of [...(local.vocabBook || []), ...(remote.vocabBook || [])]) {
+    if (!v || !v.term) continue;
+    const cur = vb.get(v.term);
+    if (!cur) { vb.set(v.term, v); continue; }
+    const lv = v.level || 0, cl = cur.level || 0;
+    if (lv > cl || (lv === cl && String(v.date || "") > String(cur.date || ""))) vb.set(v.term, v);
+  }
+  out.vocabBook = [...vb.values()].sort((a, b) => String(a.term).localeCompare(String(b.term)));
+
+  // 3) 記録型（自己ベスト等）: max。片方の端末で出したPBが消えない
+  out.bestSpeed = Math.max(local.bestSpeed || 0, remote.bestSpeed || 0);
+  out.maxStreak = Math.max(local.maxStreak || 0, remote.maxStreak || 0);
+  out.xp = Math.max(local.xp || 0, remote.xp || 0);
+  out.anchorIdx = Math.max(local.anchorIdx || 0, remote.anchorIdx || 0);
+  out.migratedSessions = Math.max(local.migratedSessions || 0, remote.migratedSessions || 0);
+  out.migratedFromV2 = !!(local.migratedFromV2 || remote.migratedFromV2);
+  out.version = Math.max(local.version || 3, remote.version || 3);
+  out.baselineSpeed = local.baselineSpeed != null ? local.baselineSpeed
+    : (remote.baselineSpeed != null ? remote.baselineSpeed : null);
+
+  // 4) 日付型: 後の日付。streakは時系列で決まるので lastSessionDate が新しい側の値を採る
+  out.lastSessionDate = maxStr(local.lastSessionDate, remote.lastSessionDate);
+  out.lastAnchorDate = maxStr(local.lastAnchorDate, remote.lastAnchorDate);
+  out.lastWinCheck = maxStr(local.lastWinCheck, remote.lastWinCheck);
+  out.streak = String(remote.lastSessionDate || "") > String(local.lastSessionDate || "")
+    ? (remote.streak || 0) : (local.streak || 0);
+
+  // 5) 設定型: 更新時刻の新しい側
+  for (const f of ["pacerLevel", "pacerStreak", "spanLevel", "spanStreak", "goal"]) out[f] = newer(f)[f];
+  const rNew = newer("ratchet").ratchet || {};
+  const lRat = local.ratchet || {}, rRat = remote.ratchet || {};
+  out.ratchet = {
+    target: rNew.target != null ? rNew.target : null,
+    missStreak: rNew.missStreak || 0,
+    // 達成日は両端末のクリア実績を残す
+    clearedDates: [...new Set([...(lRat.clearedDates || []), ...(rRat.clearedDates || [])])].sort()
+  };
+  // 目標の到達閾値も両端末で踏んだ分を残す
+  if (out.goal) {
+    const lHit = (local.goal && local.goal.hit) || [], rHit = (remote.goal && remote.goal.hit) || [];
+    out.goal = Object.assign({}, out.goal, { hit: [...new Set([...lHit, ...rHit])].sort((a, b) => a - b) });
+  }
+
+  // 6) 当日セッション: 同日ならcountは最大・使用本文はunion。違う日なら新しい日
+  const lt = local.todaySession, rt = remote.todaySession;
+  if (lt && rt && lt.date === rt.date) {
+    out.todaySession = { date: lt.date, count: Math.max(lt.count || 0, rt.count || 0),
+      usedPassageIds: [...new Set([...(lt.usedPassageIds || []), ...(rt.usedPassageIds || [])])] };
+  } else {
+    out.todaySession = String((rt && rt.date) || "") > String((lt && lt.date) || "") ? rt : lt;
+  }
+  out.lastTakeaways = String((remote.lastTakeaways && remote.lastTakeaways.date) || "")
+    > String((local.lastTakeaways && local.lastTakeaways.date) || "") ? remote.lastTakeaways : local.lastTakeaways;
+
+  // deviceId は端末固有。マージ結果は必ず自端末のものを保つ
+  out.deviceId = local.deviceId || remote.deviceId;
+  // fieldTs はフィールドごとに新しい方
+  const ft = {};
+  for (const k of new Set([...Object.keys(local.fieldTs || {}), ...Object.keys(remote.fieldTs || {})])) {
+    ft[k] = maxStr((local.fieldTs || {})[k], (remote.fieldTs || {})[k]);
+  }
+  out.fieldTs = ft;
+  out.updatedAt = maxStr(local.updatedAt, remote.updatedAt);
+  return out;
+}
+
+// ---------- 通信 ----------
+async function sbFetch(path, opts) {
+  const cfg = syncCfg();
+  if (!cfg) throw new Error("同期が未設定です");
+  const o = opts || {};
+  const auth = loadAuth();
+  const headers = Object.assign({ apikey: cfg.key, "Content-Type": "application/json" }, o.headers || {});
+  if (auth && auth.access_token) headers.Authorization = "Bearer " + auth.access_token;
+  return await fetch(cfg.url + path, Object.assign({}, o, { headers }));
+}
+// メールにワンタイムコードを送る（パスワード不要。スマホとPCで同じ手順）
+async function syncSendCode(email) {
+  const res = await sbFetch("/auth/v1/otp", { method: "POST", body: JSON.stringify({ email, create_user: true }) });
+  if (!res.ok) throw new Error("コード送信に失敗しました (" + res.status + ")");
+  return true;
+}
+async function syncVerifyCode(email, code) {
+  const res = await sbFetch("/auth/v1/verify", {
+    method: "POST", body: JSON.stringify({ type: "email", email, token: String(code).trim() })
+  });
+  if (!res.ok) throw new Error("コードが一致しません (" + res.status + ")");
+  const j = await res.json();
+  saveAuth({ access_token: j.access_token, refresh_token: j.refresh_token,
+    user_id: j.user && j.user.id, email: (j.user && j.user.email) || email });
+  return true;
+}
+async function refreshAuth() {
+  const a = loadAuth();
+  if (!a || !a.refresh_token) return false;
+  const res = await sbFetch("/auth/v1/token?grant_type=refresh_token",
+    { method: "POST", body: JSON.stringify({ refresh_token: a.refresh_token }) });
+  if (!res.ok) return false;
+  const j = await res.json();
+  if (!j.access_token) return false;
+  saveAuth(Object.assign({}, a, { access_token: j.access_token, refresh_token: j.refresh_token || a.refresh_token }));
+  return true;
+}
+async function syncSignOut() {
+  saveAuth(null);
+  syncState = { status: syncEnabled() ? "needsAuth" : "off", lastSyncedAt: null, error: null, pending: false, inFlight: false };
+  if (view === "home") renderHome(); else if (view === "history") renderHistory();
+}
+async function pullRemote() {
+  let res = await sbFetch("/rest/v1/" + SYNC_TABLE + "?select=state,rev", { method: "GET" });
+  if (res.status === 401 && await refreshAuth()) {
+    res = await sbFetch("/rest/v1/" + SYNC_TABLE + "?select=state,rev", { method: "GET" });
+  }
+  if (res.status === 401) throw new Error("再ログインが必要です");
+  if (!res.ok) throw new Error("取得に失敗 (" + res.status + ")");
+  const rows = await res.json();
+  return (Array.isArray(rows) && rows[0]) ? rows[0] : null;
+}
+// 戻り値 true=書けた / false=rev衝突（他端末が先に書いた→再pullして再試行）
+async function pushRemote(stateObj, rev) {
+  const auth = loadAuth();
+  const body = { state: stateObj, device_id: stateObj.deviceId || null };
+  if (rev == null) {
+    body.user_id = auth.user_id; body.rev = 1;
+    const res = await sbFetch("/rest/v1/" + SYNC_TABLE,
+      { method: "POST", headers: { Prefer: "return=minimal,resolution=merge-duplicates" }, body: JSON.stringify(body) });
+    if (res.status === 409) return false;
+    if (!res.ok) throw new Error("保存に失敗 (" + res.status + ")");
+    return true;
+  }
+  body.rev = rev + 1;
+  const res = await sbFetch("/rest/v1/" + SYNC_TABLE + "?user_id=eq." + encodeURIComponent(auth.user_id) + "&rev=eq." + rev,
+    { method: "PATCH", headers: { Prefer: "return=representation" }, body: JSON.stringify(body) });
+  if (!res.ok) throw new Error("保存に失敗 (" + res.status + ")");
+  const rows = await res.json();
+  return Array.isArray(rows) && rows.length > 0;   // 0件 = rev衝突
+}
+function isOfflineErr(e) {
+  if (typeof navigator !== "undefined" && navigator && navigator.onLine === false) return true;
+  return /Failed to fetch|NetworkError|network|offline|ECONN|fetch failed/i.test(String((e && e.message) || e));
+}
+async function syncNow(reason) {
+  if (!syncEnabled()) { syncState.status = "off"; return { ok: false, reason: "off" }; }
+  if (!signedIn()) { syncState.status = "needsAuth"; return { ok: false, reason: "needsAuth" }; }
+  if (syncState.inFlight) { syncState.pending = true; return { ok: false, reason: "inFlight" }; }
+  syncState.inFlight = true; syncState.status = "syncing"; syncState.error = null; renderSyncStatus();
+  let result = { ok: false, reason: "unknown" };
+  try {
+    let migrated = false, conflicts = 0;
+    for (let attempt = 0; attempt < 3; attempt++) {
+      const row = await pullRemote();
+      const remoteState = row && row.state && Object.keys(row.state).length ? row.state : null;
+      if (!remoteState) migrated = true;          // クラウドが空 = 初回。ローカルを移行する（消さない）
+      const merged = remoteState ? mergeStates(state, remoteState) : state;
+      state = merged;
+      try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {}
+      if (await pushRemote(state, row ? row.rev : null)) {
+        syncState.status = "ok"; syncState.lastSyncedAt = new Date().toISOString();
+        syncState.pending = false;
+        result = { ok: true, migrated, conflicts, reason: reason || "manual" };
+        break;
+      }
+      conflicts++;                                 // rev衝突 → 再pullして再マージ
+      result = { ok: false, reason: "conflict", conflicts };
+    }
+    if (!result.ok && result.reason === "conflict") { syncState.status = "error"; syncState.error = "他端末と競合中。もう一度お試しください"; syncState.pending = true; }
+  } catch (e) {
+    if (isOfflineErr(e)) { syncState.status = "offline"; syncState.pending = true; result = { ok: false, reason: "offline" }; }
+    else { syncState.status = "error"; syncState.error = String((e && e.message) || e); result = { ok: false, reason: "error", error: syncState.error }; }
+  } finally {
+    syncState.inFlight = false;
+    renderSyncStatus();
+    if (view === "home") renderHome(); else if (view === "history") renderHistory();
+  }
+  return result;
+}
+function scheduleSync(reason) {
+  if (!syncEnabled() || !signedIn()) return;
+  syncState.pending = true;
+  if (syncTimer) clearTimeout(syncTimer);
+  syncTimer = setTimeout(() => { syncTimer = null; syncNow(reason); }, SYNC_DEBOUNCE_MS);
+}
+// オフライン中に積まれた変更を、復帰・起動・フォーカス時に送る
+function flushSyncQueue(reason) {
+  if (!syncEnabled() || !signedIn()) return;
+  if (syncState.pending || syncState.status === "offline" || syncState.status === "error") return syncNow(reason);
+}
+function syncStatusText() {
+  if (!syncEnabled()) return { ico: "○", label: "同期未設定", cls: "muted", sub: "この端末内だけに保存されています" };
+  if (!signedIn()) return { ico: "🔑", label: "要ログイン", cls: "gold", sub: "メールでログインするとスマホとPCの記録が1つになります" };
+  if (syncState.status === "syncing") return { ico: "⟳", label: "同期中…", cls: "blue", sub: "" };
+  if (syncState.status === "offline") return { ico: "⚠", label: "オフライン（未送信あり）", cls: "gold", sub: "オンライン復帰時に自動送信します" };
+  if (syncState.status === "error") return { ico: "⚠", label: "同期エラー", cls: "coral", sub: syncState.error || "" };
+  if (syncState.lastSyncedAt) {
+    const d = new Date(syncState.lastSyncedAt);
+    const hh = String(d.getHours()).padStart(2, "0"), mm = String(d.getMinutes()).padStart(2, "0");
+    return { ico: "✅", label: "同期済み " + hh + ":" + mm, cls: "green", sub: syncEmail() || "" };
+  }
+  return { ico: "•", label: "同期待ち", cls: "muted", sub: syncEmail() || "" };
+}
+function renderSyncStatus() {
+  const el = document.getElementById("sync-line");
+  if (!el) return;
+  const s = syncStatusText();
+  el.innerHTML = `<span>${s.ico} ${esc(s.label)}</span>` +
+    (syncEnabled() && signedIn() ? ` <button class="recheck-btn" style="padding:2px 8px;font-size:11px" onclick="syncNow('manual')">今すぐ同期</button>` : "");
+}
+// ホーム最下部に出す1行ステータス（詳細と操作はデータ管理タブ）
+function renderSyncLine() {
+  const s = syncStatusText();
+  return `<div class="card" style="padding:10px 14px">
+    <div id="sync-line" style="display:flex;align-items:center;gap:8px;font-size:12px;justify-content:space-between">
+      <span>${s.ico} ${esc(s.label)}</span>
+      ${syncEnabled() && signedIn() ? `<button class="recheck-btn" style="padding:2px 8px;font-size:11px" onclick="syncNow('manual')">今すぐ同期</button>` : `<a href="javascript:go('history')" style="font-size:11px;color:var(--blue)">${syncEnabled() ? "ログインして同期" : "同期の設定"}</a>`}
+    </div>
+    ${s.sub ? `<div class="small" style="margin-top:3px">${esc(s.sub)}</div>` : ""}
+  </div>`;
+}
+// データ管理タブの同期カード（ログイン導線を含む詳細UI）
+function renderSyncCard() {
+  const s = syncStatusText();
+  if (!syncEnabled()) {
+    return `<div class="card">
+      <div class="card-title">端末間同期</div>
+      <div class="card-subtitle">CROSS-DEVICE SYNC · 未設定</div>
+      <p class="muted" style="margin-bottom:8px">現在この端末のブラウザ内（localStorage）だけに保存されています。スマホとPCで記録が分かれるのはこのためです。</p>
+      <p class="small">有効にするには <code>sokugan-config.js</code> に Supabase の URL と anon key を設定してください（手順: <code>supabase/セットアップ手順.md</code>）。設定するまで、下のバックアップ書き出し／読み込みで移行できます。</p>
+    </div>`;
+  }
+  if (!signedIn()) {
+    return `<div class="card" style="border-color:var(--blue)">
+      <div class="card-title">端末間同期</div>
+      <div class="card-subtitle">CROSS-DEVICE SYNC · ログインすると全端末で記録が1つになります</div>
+      <p class="muted" style="margin-bottom:8px">パスワードは使いません。メールに6桁のコードが届きます。スマホでも同じメールでログインすれば、履歴・語彙・目標・既読がまとまります。</p>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
+        <input id="sync-email" type="email" inputmode="email" autocomplete="email" placeholder="you@example.com"
+          style="flex:1;min-width:180px;padding:8px 10px;border:1px solid var(--border2);border-radius:8px;font-size:14px">
+        <button class="btn secondary small" onclick="uiSendCode()">コードを送る</button>
+      </div>
+      <div id="sync-code-row" style="display:none;gap:6px;margin-top:8px;flex-wrap:wrap;align-items:center">
+        <input id="sync-code" type="text" inputmode="numeric" autocomplete="one-time-code" placeholder="6桁コード"
+          style="flex:1;min-width:120px;padding:8px 10px;border:1px solid var(--border2);border-radius:8px;font-size:14px">
+        <button class="btn small" onclick="uiVerifyCode()">ログイン</button>
+      </div>
+      <div id="sync-msg" class="small" style="margin-top:8px"></div>
+    </div>`;
+  }
+  return `<div class="card" style="border-color:var(--green)">
+    <div class="card-title">端末間同期 <span class="tag" style="background:var(--green-dim);color:var(--green)">有効</span></div>
+    <div class="card-subtitle">CROSS-DEVICE SYNC · ${esc(syncEmail() || "")}</div>
+    <div id="sync-line" style="display:flex;align-items:center;gap:8px;font-size:13px;margin-bottom:6px">
+      <span>${s.ico} ${esc(s.label)}</span>
+      <button class="recheck-btn" style="padding:2px 8px;font-size:11px" onclick="syncNow('manual')">今すぐ同期</button>
+    </div>
+    ${s.sub && s.cls !== "green" ? `<p class="small" style="margin-bottom:6px">${esc(s.sub)}</p>` : ""}
+    <p class="small">スマホとPCの両方で進めた分はどちらも残ります（履歴・既読・語彙は結合、自己ベストは最大値、設定は新しい方）。オフラインでも練習でき、復帰時に自動送信します。</p>
+    <button class="btn ghost small" style="margin-top:8px" onclick="syncSignOut()">この端末からログアウト</button>
+  </div>`;
+}
+async function uiSendCode() {
+  const el = document.getElementById("sync-email");
+  const msg = document.getElementById("sync-msg");
+  const email = (el && el.value || "").trim();
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { if (msg) msg.innerHTML = "⚠ メールアドレスの形式を確認してください"; return; }
+  if (msg) msg.innerHTML = "送信中…";
+  try {
+    await syncSendCode(email);
+    const row = document.getElementById("sync-code-row");
+    if (row) row.style.display = "flex";
+    if (msg) msg.innerHTML = `✉️ ${esc(email)} にコードを送りました。届いた6桁を入力してください。`;
+  } catch (e) { if (msg) msg.innerHTML = "⚠ " + esc(String(e.message || e)); }
+}
+async function uiVerifyCode() {
+  const email = (document.getElementById("sync-email") || {}).value || "";
+  const code = (document.getElementById("sync-code") || {}).value || "";
+  const msg = document.getElementById("sync-msg");
+  if (msg) msg.innerHTML = "確認中…";
+  try {
+    await syncVerifyCode(email.trim(), code);
+    if (msg) msg.innerHTML = "✅ ログインしました。同期します…";
+    const r = await syncNow("signin");
+    showToast(r.ok ? (r.migrated ? "✅ この端末の記録をクラウドへ移行しました" : "✅ 同期しました") : "⚠ 同期は後で自動再試行します");
+    render();
+  } catch (e) { if (msg) msg.innerHTML = "⚠ " + esc(String(e.message || e)); }
+}
+/*__SYNC_END__*/
 // =============================================================
 // INIT
 // =============================================================
@@ -2089,6 +2515,22 @@ function renderAbout() {
     showBanner(`📦 Sokugan 1.0 から <b>${state.migratedSessions}セッション</b>分の記録を引き継ぎました。目標・ペーサー速度はあなたの実績から自動設定済みです。`, "info");
   }
   render();
+  // ---- 端末間同期: 起動時に1回、その後は復帰・フォーカス・保存時に走らせる ----
+  if (syncEnabled()) {
+    syncState.status = signedIn() ? "idle" : "needsAuth";
+    if (signedIn()) syncNow("startup");
+    try {
+      if (typeof window !== "undefined" && window.addEventListener) {
+        window.addEventListener("online", () => flushSyncQueue("online"));
+        window.addEventListener("focus", () => flushSyncQueue("focus"));
+        if (typeof document !== "undefined" && document.addEventListener) {
+          document.addEventListener("visibilitychange", () => {
+            if (!document.hidden) flushSyncQueue("visible");
+          });
+        }
+      }
+    } catch (e) {}
+  }
   // PWA: Service Worker登録（GitHub Pages等のhttps配信時。鮮度はネットワーク優先で担保）
   try {
     if (typeof navigator !== "undefined" && "serviceWorker" in navigator &&

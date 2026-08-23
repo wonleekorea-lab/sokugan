@@ -1,6 +1,12 @@
-const CACHE = "sokugan-v3.1";
+const CACHE = "sokugan-v3.2";
 self.addEventListener("install", e => self.skipWaiting());
-self.addEventListener("activate", e => e.waitUntil(clients.claim()));
+// 旧バージョンのキャッシュを破棄してから制御を取る。
+// これが無いと 3.1 のindex.htmlがキャッシュに残り、同期UIが出ない端末が生まれる。
+self.addEventListener("activate", e => e.waitUntil((async () => {
+  const names = await caches.keys();
+  await Promise.all(names.filter(n => n !== CACHE).map(n => caches.delete(n)));
+  await clients.claim();
+})()));
 self.addEventListener("fetch", e => {
   if (e.request.method !== "GET") return;
   e.respondWith(

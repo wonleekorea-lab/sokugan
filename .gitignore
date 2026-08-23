@@ -11,6 +11,8 @@
 !/qa-report.json
 !/manifest.json
 !/sw.js
+!/sokugan-config.js
+!/supabase
 !/icons
 !/qa
 !/README.md
