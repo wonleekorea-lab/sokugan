@@ -1,9 +1,9 @@
 {
  "date": "2026-08-26",
  "status": "pass",
- "checked_at": "2026-08-25T09:30:55.267Z",
- "passed": 262,
- "total": 262,
+ "checked_at": "2026-08-25T23:17:26.714Z",
+ "passed": 266,
+ "total": 266,
  "failures": [],
- "notes": "daily: 2026-08-25"
+ "notes": "fix: chunk quality, natural span choices, feedback, partial sessions"
 }

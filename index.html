@@ -74,8 +74,10 @@ a{color:var(--blue)}
 .timerbar .fill.over{background:var(--coral);animation:pulse 1s infinite}
 @keyframes pulse{50%{opacity:.55}}
 .bigtime{font-variant-numeric:tabular-nums;font-size:30px;font-weight:900;text-align:center;margin:4px 0}
-.opt{display:block;width:100%;text-align:left;background:var(--card2);border:1px solid var(--border2);color:var(--ink);border-radius:10px;padding:12px 14px;font-size:14px;line-height:1.6;cursor:pointer;margin-bottom:8px;font-family:inherit}
+.opt{display:block;width:100%;text-align:left;background:var(--card2);border:1px solid var(--border2);color:var(--ink);border-radius:10px;padding:12px 14px;font-size:14px;line-height:1.6;cursor:pointer;margin-bottom:8px;font-family:inherit;appearance:none}
 .opt:hover{border-color:var(--ink3)}
+.opt:focus{outline:none}
+.opt:focus-visible{outline:2px solid var(--blue);outline-offset:2px;border-color:var(--blue)}
 .opt.correct{border-color:var(--green);background:var(--green-dim)}
 .opt.wrong{border-color:var(--coral);background:var(--coral-dim)}
 .opt:disabled{cursor:default;opacity:.85}
@@ -223,6 +225,7 @@ function defaultState() {
     seenPassageKeys: [],  // 端末で一度でも出題した本文。日付をまたいで再表示しない
     lastWinCheck: null,
     clarityFlags: [],     // ユーザーが「わかりにくい」と報告した設問 {date, genre, q}
+    contentFeedback: [],  // 読後評価 {date, passageId, genre, rating, title}。次回の選定を個人化する材料
     goal: null,           // {target, baseline, setAt, why, hit:[]} 週次の具体的困難目標(Locke&Latham)
     vocabBook: [],        // 語彙道場の習得記録 {term, plain, date, level} level:1=初見,2=曖昧,3=説明できる
     lastTakeaways: null,  // {date, items:[{hook, detail, genre}]} 今日の持ち帰り
@@ -493,6 +496,11 @@ function skgEndsBoundary(h) {
 // 促音・撥音・拗音・長音は日本語の語頭に立てない。これで始まるチャンク/トークンは
 // 必ず前へ吸着させる（「上が|った」「減|っていない」の断裂を構造的に排除する）。
 var SKG_BAD_HEAD = /^[っッんンぁぃぅぇぉゃゅょゎァィゥェォャュョヮー]/;
+// 右側が無ければ意味が閉じない連体・並列の前半。15字以内なら必ず次の語へ結ぶ。
+// 例: 「店や|会社が」→「店や会社が」、「市場への|影響」→「市場への影響」。
+function skgNeedsRight(c) {
+  return /(?:の|な|という|による|における|への|ための|といった|に対する|としての|や|または|および)$/.test(c || "") && !/[、。！？]$/.test(c || "");
+}
 function skgFixBadHeads(chunks) {
   const out = [];
   for (const c of chunks) {
@@ -547,8 +555,9 @@ function skgChunkWords(text) {
   const out = [];
   for (const c of split) {
     const prev = out[out.length - 1];
-    const openModifier = prev && /(?:の|な|という|による|における|への|ための|といった|に対する|としての)$/.test(prev) && !/[、。！？]$/.test(prev);
-    if (openModifier && [...prev, ...c].length <= 15) out[out.length - 1] = prev + c;
+    const openModifier = prev && skgNeedsRight(prev);
+    const limit = /(?:や|または|および)$/.test(prev || "") ? 10 : 15;
+    if (openModifier && [...prev, ...c].length <= limit) out[out.length - 1] = prev + c;
     else if (prev && SKG_PARTICLE_HEAD.test(c) && [...prev, ...c].length <= 12) out[out.length - 1] = prev + c;
     else out.push(c);
   }
@@ -606,8 +615,9 @@ function chunkText(text) {
   const merged2 = [];
   for (const c of chunks) {
     const prev = merged2[merged2.length - 1];
-    const openModifier = prev && /(?:の|な|という|による|における|への|ための|といった|に対する|としての)$/.test(prev) && !/[、。！？]$/.test(prev);
-    if (openModifier && (prev.length + c.length) <= 15) merged2[merged2.length - 1] = prev + c;
+    const openModifier = prev && skgNeedsRight(prev);
+    const limit = /(?:や|または|および)$/.test(prev || "") ? 10 : 15;
+    if (openModifier && (prev.length + c.length) <= limit) merged2[merged2.length - 1] = prev + c;
     else merged2.push(c);
   }
   chunks.length = 0; for (const c of merged2) chunks.push(c);
@@ -1131,8 +1141,16 @@ function phaseDots(cur) {
   return `<div class="phase-dots">${PHASES.map((_, i) =>
     `<span class="${i < cur ? "done" : i === cur ? "cur" : ""}" title="${PHASES[i]}"></span>`).join("")}</div>`;
 }
+function feedbackGenreScore(genre) {
+  const xs = (state.contentFeedback || []).filter(x => x.genre === genre && x.rating >= 1 && x.rating <= 5).slice(-20);
+  return xs.length ? xs.reduce((a, x) => a + x.rating, 0) / xs.length : 3;
+}
+function preferByFeedback(passages) {
+  // 未評価ジャンルを少し優先して探索しつつ、読後評価の高いジャンルを先に出す。
+  return [...passages].sort((a, b) => feedbackGenreScore(genreOf(b)) - feedbackGenreScore(genreOf(a)));
+}
 function pickSessionPassages(mode = "full") {
-  const pool = unseenPassages();
+  const pool = preferByFeedback(unseenPassages());
   const need = mode === "short" ? 1 : 3;
   if (pool.length < need) return null; // 重複させて穴埋めしない
   const deep = pool.filter(isDeep);
@@ -1294,7 +1312,33 @@ function renderShortIntro() {
     </div>`;
 }
 function abortSession() {
-  if (!confirm("セッションを中断しますか？記録は保存されません。")) return;
+  if (!sess) { render(); return; }
+  const completed = [sess.p1Init, sess.p2Init].filter(Boolean);
+  const answered = (window._quizAnswers || []).filter(x => typeof x === "boolean");
+  const hasMeasuredReading = completed.length > 0;
+  const msg = hasMeasuredReading
+    ? `ここまでの測定結果を「中断記録」として保存しますか？\n\n読了: ${completed.length}本 / 設問回答: ${answered.length}問\n中断記録はPB・連続日数・目標には影響しません。`
+    : "セッションを中断しますか？まだ測定済みの本文がないため、記録は残りません。";
+  if (!confirm(msg)) return;
+  clearInterval(readTimer); clearInterval(pacerTimer);
+  if (hasMeasuredReading) {
+    const reads = completed.map((r, i) => ({
+      passage: i === 0 ? sess.p1 : sess.p2,
+      rec: r
+    }));
+    const speed = Math.round(reads.reduce((n, x) => n + x.rec.speed, 0) / reads.length);
+    const knownAnswers = answered.length;
+    const comp = knownAnswers ? answered.filter(Boolean).length / knownAnswers : null;
+    state.history.push({
+      sessionId: newSessionId(), date: today(), mode: "partial", completed: false,
+      speed, comprehension: comp, valid: false, partialReason: "aborted",
+      passagesRead: reads.length, questionsAnswered: knownAnswers,
+      genreSpeeds: reads.map(x => ({ genre: genreOf(x.passage), speed: x.rec.speed, comp: x.rec.comp ?? null, readability: textStats(x.passage.text).readability })),
+      pacerLevel: state.pacerLevel, spanLevel: state.spanLevel,
+      spanScore: sess.spanResult ? sess.spanResult.score / sess.spanResult.total : null
+    });
+    saveState();
+  }
   sess = null; render();
 }
 // ---------- PHASE 0: 文中チャンクペーサー ----------
@@ -1347,6 +1391,7 @@ function renderPacerQuiz() {
       <p style="font-weight:700;margin-bottom:12px">${esc(q.q)}</p>
       ${q.opts.map((o, i) => `<button class="opt" id="po${i}" onclick="answerPacer(${i})">${esc(o)}</button>`).join("")}
       <div id="pacer-fb"></div>
+      <div style="text-align:right;margin-top:8px"><button class="btn ghost small" onclick="abortSession()">中断</button></div>
     </div>`;
 }
 function answerPacer(i) {
@@ -1407,7 +1452,7 @@ function chunkPool() {
     const cs = getChunks(p);
     for (const c of cs) {
       const t = c.replace(/[、。！？「」『』（）・：；]/g, "");
-      if (t.length < 3 || t.length > 9) continue;
+      if (t.length < 3 || t.length > 9 || SKG_PARTICLE_HEAD.test(t) || SKG_BAD_HEAD.test(t)) continue;
       (pool[t.length] = pool[t.length] || []).push(t);
     }
   }
@@ -1424,23 +1469,14 @@ function spanTrialSet(level) {
   if (arr.length < 4) return null;
   const optN = Math.min(spanOptCount(lv), arr.length);
   const target = arr[Math.floor(Math.random() * arr.length)];
-  // v3: 「最初の数文字が合えば正解できてしまう」対策。
-  // 選択肢は原則ターゲットと同じ書き出し（先頭1-2字一致）に限定し、違いは語の後半だけに置く。
+  // 選択肢は必ず本文から切り出した実在チャンクだけを使う。文字を合成すると
+  // 「日本と」のような不自然な語が混じり、語形認識ではなく日本語らしさだけで解けてしまう。
+  // 同じ書き出しの自然な候補があれば優先するが、足りなければ実在する別チャンクを使う。
   const prefLen = Math.min(2, [...target].length - 1);
   const pref = [...target].slice(0, prefLen).join("");
   let lures = arr.filter(c => c !== target && c.startsWith(pref));
   if (lures.length < optN - 1) lures = lures.concat(arr.filter(c => c !== target && !lures.includes(c) && c[0] === target[0]));
-  // 足りなければ「尾部だけ差し替えた変異体」を合成（先頭は同一のまま、後半1字を別チャンク由来の字に）
-  const tchars = [...target];
-  let guard = 0;
-  while (lures.length < optN - 1 && guard++ < 40) {
-    const pos = Math.max(prefLen, Math.floor(tchars.length / 2)) + Math.floor(Math.random() * Math.max(1, tchars.length - Math.max(prefLen, Math.floor(tchars.length / 2))));
-    const donor = arr[Math.floor(Math.random() * arr.length)] || target;
-    const dch = [...donor][Math.floor(Math.random() * [...donor].length)];
-    if (!dch || dch === tchars[pos]) continue;
-    const v = tchars.slice(0, pos).join("") + dch + tchars.slice(pos + 1).join("");
-    if (v !== target && !lures.includes(v)) lures.push(v);
-  }
+  if (lures.length < optN - 1) lures = lures.concat(arr.filter(c => c !== target && !lures.includes(c)).sort((a, b) => spanSim(b, target) - spanSim(a, target)));
   lures.sort(() => Math.random() - 0.5);
   const opts = [target, ...lures.slice(0, optN - 1)];
   for (let i = opts.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [opts[i], opts[j]] = [opts[j], opts[i]]; }
@@ -1470,6 +1506,7 @@ function runSpanTrial(idx, score) {
         <div id="span-stage" style="font-size:30px;font-weight:800;letter-spacing:.04em"><span style="color:var(--coral)">●</span></div>
       </div>
       <div id="span-opts"></div>
+      <div style="text-align:right;margin-top:8px"><button class="btn ghost small" onclick="abortSession()">中断</button></div>
     </div>`;
   setTimeout(() => {
     const st = document.getElementById("span-stage");
@@ -1544,6 +1581,7 @@ function runVocabTrial(idx, score) {
       <div style="text-align:center;font-size:26px;font-weight:900;margin:16px 0">${esc(t.term)}</div>
       ${opts.map((o, i) => `<button class="opt" id="vo${i}" onclick="answerVocab(${idx},${score},${i})">${esc(o.s)}</button>`).join("")}
       <div id="vocab-fb"></div>
+      <div style="text-align:right;margin-top:8px"><button class="btn ghost small" onclick="abortSession()">中断</button></div>
     </div>`;
 }
 function answerVocab(idx, score, i) {
@@ -1623,6 +1661,7 @@ function renderQuiz(which, qi, answers) {
       ${q.opts.map((o, i) => `<button class="opt" id="qo${i}" onclick="answerQuiz(${which},${qi},${i})">${esc(o)}</button>`).join("")}
       <div id="quiz-fb"></div>
       <div style="text-align:right;margin-top:6px"><button id="clarity-flag" class="recheck-btn" style="font-size:11px;padding:5px 10px" onclick="flagQuestion(${which},${qi})">⚠ この設問はわかりにくい</button></div>
+      <div style="text-align:right;margin-top:8px"><button class="btn ghost small" onclick="abortSession()">中断</button></div>
     </div>`;
   window._quizAnswers = answers;
 }
@@ -1682,6 +1721,7 @@ function renderDeepCloze() {
       <div class="reading-text" style="font-size:17px;background:var(--card2);border-radius:10px;padding:12px 14px;margin-bottom:12px">${esc(dc.prompt)}</div>
       ${dc.opts.map((o, i) => `<button class="opt" id="dco${i}" onclick="answerDeepCloze(${i})">${esc(o)}</button>`).join("")}
       <div id="dc-fb"></div>
+      <div style="text-align:right;margin-top:8px"><button class="btn ghost small" onclick="abortSession()">中断</button></div>
     </div>`;
 }
 function answerDeepCloze(i) {
@@ -1718,7 +1758,7 @@ function renderReread() {
       <div class="timerbar"><div class="fill" id="re-fill" style="width:100%"></div></div>
       <div class="bigtime" id="re-clock">00:00</div>
       <div class="reading-text hidden-text" id="re-text">${esc(p.text)}</div>
-      <div style="margin-top:14px"><button class="btn" id="re-btn" onclick="startReread(${targetTime.toFixed(2)})">表示してスタート</button></div>
+      <div style="margin-top:14px;display:flex;gap:8px"><button class="btn" id="re-btn" onclick="startReread(${targetTime.toFixed(2)})">表示してスタート</button><button class="btn secondary small" onclick="abortSession()">中断</button></div>
     </div>`;
 }
 function startReread(targetTime) {
@@ -1779,6 +1819,28 @@ function storeTakeaways(passages) {
   }
   state.lastTakeaways = { date: today(), items: [...byHook.values()].slice(-12) };
 }
+function contentFeedbackKey(x) { return [x && x.passageId, x && x.date].join("|"); }
+function recordContentFeedback(p, rating) {
+  if (!p || !Number.isInteger(rating) || rating < 1 || rating > 5) return;
+  const xs = state.contentFeedback = state.contentFeedback || [];
+  const i = xs.findIndex(x => x.passageId === p.id && x.date === today());
+  const item = { date: today(), passageId: p.id, genre: genreOf(p), rating, title: p.title };
+  if (i >= 0) xs[i] = item; else xs.push(item);
+  state.contentFeedback = xs.slice(-300);
+  saveState();
+  const box = document.getElementById("content-feedback-" + p.id);
+  if (box) box.innerHTML = `<span class="small" style="color:var(--green)">✓ ${rating}/5 として記録。次回以降、${esc(genreOf(p))}の優先度に反映します。</span>`;
+}
+function renderContentFeedback(p) {
+  if (!p) return "";
+  const prev = (state.contentFeedback || []).find(x => x.passageId === p.id && x.date === today());
+  return `<div class="card" style="border-color:var(--gold)">
+    <div class="card-title">この記事は読み応えがあった？</div>
+    <div class="card-subtitle">CONTENT FIT · 評価の高いジャンルを次回の未読記事で優先します</div>
+    <div class="small" style="margin-bottom:8px">${esc(p.title)}</div>
+    <div id="content-feedback-${esc(p.id)}" style="display:flex;gap:6px;align-items:center">${[1,2,3,4,5].map(n => `<button class="recheck-btn" style="padding:6px 9px;${prev && prev.rating === n ? "border-color:var(--gold);background:var(--gold-dim)" : ""}" onclick="recordContentFeedback(content.passages.find(p=>p.id===${JSON.stringify(p.id)}),${n})">${n}</button>`).join("")}<span class="small">${prev ? `記録済み ${prev.rating}/5` : "1:浅い  5:人に話したい"}</span></div>
+  </div>`;
+}
 function renderShortResult() {
   const p = sess.p1Init;
   const comp = p.comp;
@@ -1804,6 +1866,7 @@ function renderShortResult() {
   updateStreak(); checkWeeklyWin(); saveState();
   const take = passageTakeaway(sess.p1);
   const title = sess.p1.title;
+  const completedPassage = sess.p1;
   sess = null;
   renderHeader(); renderNav();
   screen().innerHTML = `
@@ -1813,6 +1876,7 @@ function renderShortResult() {
       <div class="sub">理解度 ${Math.round(comp * 100)}% ${valid ? "✓ 記録対象" : "— 70%未満のため速度は記録対象外"}</div>
     </div></div>
     <div class="card" style="border-color:var(--gold)"><div class="card-title">💬 1つ持ち帰る</div><div class="card-subtitle">次の会話で「実は…」から話せる発見</div><div class="win-item"><span class="ico">🎁</span><div><b>${esc(take.hook)}</b>${take.detail ? `<div class="small">${esc(take.detail)}</div>` : ""}</div></div></div>
+    ${renderContentFeedback(completedPassage)}
     <div style="display:flex;gap:8px"><button class="btn secondary" onclick="go('home')">ホームへ</button><button class="btn" onclick="startSession('short')">もう1本</button></div>`;
 }
 function renderResult() {
@@ -1892,6 +1956,7 @@ function renderResult() {
   const takeItems = state.lastTakeaways ? state.lastTakeaways.items : [];
   const adjBest = Math.max(0, ...state.history.filter(h => h.valid && h.adjustedSpeed).map(h => h.adjustedSpeed));
   const adj30 = (() => { const v = state.history.filter(h => h.valid && h.adjustedSpeed && h.date >= daysAgoStr(30)).map(h => h.adjustedSpeed); return v.length ? Math.round(v.reduce((a, b) => a + b, 0) / v.length) : null; })();
+  const completedPassages = [sess.p1, sess.p2];
   sess = null;
   renderHeader(); renderNav();
   screen().innerHTML = `
@@ -1922,6 +1987,7 @@ function renderResult() {
       <div class="compare-row"><span class="lab">30日平均比</span><span>${ma30 && valid ? `<span class="delta-chip ${sessSpeed >= ma30 ? "up" : "down"}">${sessSpeed >= ma30 ? "+" : ""}${Math.round((sessSpeed - ma30) / ma30 * 100)}%</span>` : "—"}</span></div>
     </div>
     ${takeItems.length ? `<div class="card" style="border-color:var(--gold)"><div class="card-title">🎁 今日の持ち帰り — 誰かに話したくなったら合格</div><div class="card-subtitle">TAKEAWAYS · 「実は…」と雑談や会議で使えるネタ · 話すつもりで覚えると記憶に残る(g=0.50)</div>${takeItems.map(t => `<div class="win-item"><span class="ico">💬</span><div><b>${esc(t.hook)}</b>${t.detail ? `<div class="small" style="margin-top:2px">${esc(t.detail)}</div>` : ""}<div class="d">${esc(t.genre)}</div></div></div>`).join("")}<button class="btn secondary small" style="margin-top:10px" onclick="copyTakeaways()">📋 コピーして誰かに話す</button></div>` : ""}
+    ${completedPassages.map(renderContentFeedback).join("")}
     ${newWins.length ? `<div class="card"><div class="card-title">今日できるようになったこと</div><div class="card-subtitle">TODAY'S WINS</div>${newWins.map(w => `<div class="win-item"><span class="ico">${w.ico}</span><div>${w.text}</div></div>`).join("")}</div>` : ""}
     <div style="display:flex;gap:8px">
       <button class="btn secondary" onclick="go('home')">ホームへ</button>
@@ -2078,7 +2144,7 @@ function renderHistory() {
           <td>${h.date}${h.legacy ? ' <span class="small">1.0</span>' : ""}</td>
           <td><b>${h.speed}</b></td>
           <td>${h.comprehension != null ? Math.round(h.comprehension * 100) + "%" : "—"}</td>
-          <td>${h.valid ? (h.targetMet ? '<span class="delta-chip up">クリア</span>' : '<span class="delta-chip flat">有効</span>') : '<span class="delta-chip down">無効</span>'}</td>
+          <td>${h.mode === "partial" ? `<span class="delta-chip flat">中断 ${h.passagesRead || 0}本</span>` : h.valid ? (h.targetMet ? '<span class="delta-chip up">クリア</span>' : '<span class="delta-chip flat">有効</span>') : '<span class="delta-chip down">無効</span>'}</td>
         </tr>`).join("")}
       </table>
     </div>
@@ -2224,6 +2290,8 @@ function mergeStates(local, remote) {
     .sort((a, b) => String(a.date || "").localeCompare(String(b.date || "")) || String(histKey(a)).localeCompare(String(histKey(b))));
   out.wins = unionBy(local.wins, remote.wins, w => [w.date, w.text].join("|"));
   out.clarityFlags = unionBy(local.clarityFlags, remote.clarityFlags, f => [f.date, f.genre, f.q].join("|"));
+  out.contentFeedback = unionBy(local.contentFeedback, remote.contentFeedback, contentFeedbackKey)
+    .sort((a, b) => String(a.date || "").localeCompare(String(b.date || ""))).slice(-300);
   out.anchorHistory = unionBy(local.anchorHistory, remote.anchorHistory, a => [a.date, a.anchorId].join("|"))
     .sort((a, b) => String(a.date || "").localeCompare(String(b.date || "")));
   out.seenPassageKeys = [...new Set([...(local.seenPassageKeys || []), ...(remote.seenPassageKeys || [])])].slice(-3000);

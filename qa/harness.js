@@ -80,7 +80,7 @@ const _si = global.setInterval;
 global.setInterval = (f, d) => _si(f, Math.max(1, Math.min(d || 0, 5)));
 
 // ---------- アプリ実コードを実行 ----------
-eval(js + "\nglobal.__app = { get state(){return state}, set state(v){state=v}, get sess(){return sess}, get content(){return content}, get syncState(){return syncState}, DEFAULT_CONTENT, ANCHOR_POOL, chunkText, getChunks, validChunks, chunkPool, spanTrialSet, pickSessionPassages, startSession, renderShortIntro, renderShortResult, unseenPassages, passageKey, passageKeys, isPassageSeen, markPassagesSeen, markPassageRead, textFingerprint, sourceUrlKey, renderHome, renderHistory, contentStatus, renderFreshnessPanel, guardedStart, renderPacer, renderPacerQuiz, answerPacer, renderSpanIntro, answerSpan, finishSpan, renderRead, startReading, finishReading, renderQuiz, finishQuiz, renderReread, startReread, finishReread, renderResult, textStats, adjustSpeed, makeDeepCloze, answerDeepCloze, normalizeNumerals, parseKanjiNum, startAnchor, renderAnchorRead, startAnchorRead, finishAnchorRead, renderAnchorQuiz, answerAnchor, anchorDue, todayMenu, goalProgress, gazeSpan, sessionKeyTerms, passageTakeaway, finishVocab, proceedAfterCloze1, weakestSkill, defaultState, newSessionId, stampField, saveState, mergeStates, unionBy, histKey, syncCfg, syncEnabled, signedIn, loadAuth, saveAuth, syncNow, pullRemote, pushRemote, scheduleSync, flushSyncQueue, syncStatusText, renderSyncCard, renderSyncLine, syncSignOut, KEY, AUTH_KEY };");
+eval(js + "\nglobal.__app = { get state(){return state}, set state(v){state=v}, get sess(){return sess}, get content(){return content}, get syncState(){return syncState}, DEFAULT_CONTENT, ANCHOR_POOL, chunkText, getChunks, validChunks, chunkPool, spanTrialSet, pickSessionPassages, startSession, abortSession, renderShortIntro, renderShortResult, unseenPassages, passageKey, passageKeys, isPassageSeen, markPassagesSeen, markPassageRead, textFingerprint, sourceUrlKey, renderHome, renderHistory, contentStatus, renderFreshnessPanel, guardedStart, renderPacer, renderPacerQuiz, answerPacer, renderSpanIntro, answerSpan, finishSpan, renderRead, startReading, finishReading, renderQuiz, finishQuiz, renderReread, startReread, finishReread, renderResult, textStats, adjustSpeed, makeDeepCloze, answerDeepCloze, normalizeNumerals, parseKanjiNum, startAnchor, renderAnchorRead, startAnchorRead, finishAnchorRead, renderAnchorQuiz, answerAnchor, anchorDue, todayMenu, goalProgress, gazeSpan, sessionKeyTerms, passageTakeaway, finishVocab, proceedAfterCloze1, weakestSkill, feedbackGenreScore, preferByFeedback, recordContentFeedback, renderContentFeedback, contentFeedbackKey, defaultState, newSessionId, stampField, saveState, mergeStates, unionBy, histKey, syncCfg, syncEnabled, signedIn, loadAuth, saveAuth, syncNow, pullRemote, pushRemote, scheduleSync, flushSyncQueue, syncStatusText, renderSyncCard, renderSyncLine, syncSignOut, KEY, AUTH_KEY };");
 
 (async () => {
   await new Promise(r => _st(r, 80)); // init完了待ち
@@ -335,6 +335,26 @@ eval(js + "\nglobal.__app = { get state(){return state}, set state(v){state=v}, 
   check("B18c ショート版: 1本文＋3問で結果・履歴まで完走", shortLast && shortLast.mode === "short" && screenEl().includes("SHORT SESSION COMPLETE"));
   check("B18d 既読キーを端末履歴へ永続化", (A.state.seenPassageKeys || []).length >= 4, `${(A.state.seenPassageKeys || []).length}本`);
 
+  // B18e: 選択前に正答だけが濃く見えるネイティブfocusを防ぐ（keyboard focusは青で明示）
+  check("B18e 選択肢の未回答focusは中立の青アウトライン（正答色を使わない）",
+    /\.opt:focus\{outline:none\}/.test(html) && /\.opt:focus-visible\{outline:2px solid var\(--blue\)/.test(html) && /\.opt\.correct\{border-color:var\(--green\)/.test(html));
+
+  // B18f: 中断でも読了済み本文だけを部分記録。PB/目標/streakを汚さない
+  A.state = A.defaultState();
+  A.startSession("short"); A.renderRead(1); A.startReading(1); await new Promise(r => _st(r, 12)); A.finishReading(1);
+  global.window._quizAnswers = [true]; A.abortSession();
+  const partial = A.state.history[A.state.history.length - 1];
+  check("B18f 中断は測定済み本文を部分記録し、KPIには使わない",
+    partial && partial.mode === "partial" && partial.completed === false && partial.passagesRead === 1 && partial.valid === false && partial.questionsAnswered === 1);
+
+  // B18g: 読後評価は保存・同期対象で、次回の未読選択にジャンル優先度として反映される
+  const rated = daily.passages[0];
+  A.recordContentFeedback(rated, 5);
+  const feedback = A.state.contentFeedback[0];
+  const preferred = A.preferByFeedback([daily.passages[1], rated]);
+  check("B18g 読後評価を保存し、次回選定のジャンル優先度へ反映",
+    feedback && feedback.passageId === rated.id && feedback.rating === 5 && A.feedbackGenreScore(rated.genre) === 5 && preferred[0].genre === rated.genre);
+
   // ---------- C. 解析エンジン（難度・Deep Cloze・アンカー） ----------
   const rs = (daily.passages || []).map(p => A.textStats(p.text));
   check("C1 難度スコアが0..1・bucket1-5で算出", rs.every(s => s.readability >= 0 && s.readability <= 1 && s.bucket >= 1 && s.bucket <= 5), rs.map(s => s.bucket).join(","));
@@ -359,16 +379,16 @@ eval(js + "\nglobal.__app = { get state(){return state}, set state(v){state=v}, 
   check("E1 keyTerms: 10本すべてに2語以上・各語 plain+lures3", ktPass.length === 10 && ktPass.every(p => p.keyTerms.every(t => t.term && (t.plain || "").length >= 15 && (t.lures || []).length >= 3)), `${ktPass.length}/10本`);
   const tkPass = (daily.passages || []).filter(p => p.takeaway && (p.takeaway.hook || "").length >= 10 && (p.takeaway.hook || "").length <= 70);
   check("E2 takeaway: 10本すべてに10-70字のフック", tkPass.length === 10, `${tkPass.length}/10本`);
-  // キャッチv3: 選択肢は原則ターゲットと同じ書き出し
-  let prefOK = true, prefDetail = [];
+  // キャッチ: 合成した文字列を使わず、選択肢のすべてが本文から得た自然なチャンクである
+  let naturalSpanOK = true, naturalSpanDetail = [];
+  const sourceChunks = new Set(Object.values(A.chunkPool()).flat());
   for (const lv of [4, 5, 6]) {
     const t = A.spanTrialSet(lv);
-    if (!t) continue;
-    const share = t.opts.filter(o => o[0] === t.target[0]).length / t.opts.length;
-    prefDetail.push(lv + ":" + Math.round(share * 100) + "%");
-    if (share < 0.75) prefOK = false;
+    const ok = t && t.opts.every(o => sourceChunks.has(o));
+    naturalSpanDetail.push(lv + ":" + (ok ? "本文由来" : "不正"));
+    if (!ok) naturalSpanOK = false;
   }
-  check("E3 キャッチv3: 選択肢の75%以上がターゲットと同じ書き出し", prefOK, prefDetail.join(" "));
+  check("E3 瞬間キャッチ: 全選択肢が本文由来の自然なチャンク（合成語なし）", naturalSpanOK, naturalSpanDetail.join(" "));
   A.renderHome();
   const homeHtml = screenEl();
   check("E4 ホーム: 今日のメニュー表示", /の日/.test(homeHtml) && homeHtml.includes(A.todayMenu().label));
@@ -476,6 +496,10 @@ eval(js + "\nglobal.__app = { get state(){return state}, set state(v){state=v}, 
   check("F4 seen/wins/flags/anchorはunion＋重複排除",
     M3.seenPassageKeys.join(",") === "k1,k2,k3" && M3.wins.length === 2 && M3.clarityFlags.length === 2 && M3.anchorHistory.length === 2,
     `seen=${M3.seenPassageKeys.length} wins=${M3.wins.length} flags=${M3.clarityFlags.length} anchor=${M3.anchorHistory.length}`);
+  const MFb = A.mergeStates(
+    mk({ contentFeedback: [{ date: "2026-08-20", passageId: "p1", genre: "社会・価値観", rating: 5, title: "A" }] }),
+    mk({ contentFeedback: [{ date: "2026-08-20", passageId: "p1", genre: "社会・価値観", rating: 5, title: "A" }, { date: "2026-08-21", passageId: "p2", genre: "未来の兆し", rating: 4, title: "B" }] }));
+  check("F4b 読後評価は端末間でunionし、重複計上しない", MFb.contentFeedback.length === 2);
   const M4 = A.mergeStates(
     mk({ vocabBook: [{ term: "利回り", level: 1, date: "2026-08-20" }, { term: "系統連系", level: 3, date: "2026-08-20" }] }),
     mk({ vocabBook: [{ term: "利回り", level: 3, date: "2026-08-22" }, { term: "福利厚生", level: 2, date: "2026-08-21" }] }));
