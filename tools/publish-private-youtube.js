@@ -1,19 +1,19 @@
 #!/usr/bin/env node
 /*
  * SOKUGAN用に生成済みの非公開YouTube教材を、本人のSupabase学習状態へ追加する。
- * service_role key はPCの環境変数だけで使い、GitHub PagesやGitには絶対に置かない。
+ * Secret API Key はPCローカルの環境変数だけで使い、GitHub PagesやGitには絶対に置かない。
  */
 const fs = require("fs");
 const path = require("path");
 
 const usage = `使い方:
-  SOKUGAN_SUPABASE_URL=... SOKUGAN_SUPABASE_SERVICE_ROLE_KEY=... SOKUGAN_USER_ID=... \\
+  SOKUGAN_SUPABASE_URL=... SOKUGAN_SUPABASE_SECRET_API_KEY=... SOKUGAN_USER_ID=... \\
     node tools/publish-private-youtube.js private-imports/sokugan-youtube-YYYYMMDD-VIDEOID.json
 
 必要な環境変数:
   SOKUGAN_SUPABASE_URL              Supabase Project URL
-  SOKUGAN_SUPABASE_SERVICE_ROLE_KEY service_role key（PCローカルのみ。Gitに保存しない）
-  SOKUGAN_USER_ID                   SOKUGANにログインした本人のUUID
+  SOKUGAN_SUPABASE_SECRET_API_KEY   Secret API Key（PCローカルのみ。Gitに保存しない）
+  SOKUGAN_USER_ID                   SOKUGANにログインした本人のUUID（未指定時は唯一のAuthユーザーを使う）
 `;
 
 function fail(message) { console.error(`ERROR: ${message}\n\n${usage}`); process.exit(1); }
@@ -37,6 +37,14 @@ async function api(url, key, route, opts) {
   }));
   if (!res.ok) throw new Error(`${res.status} ${await res.text()}`);
   return res.status === 204 ? null : res.json();
+}
+async function resolveUserId(url, key, configuredUserId) {
+  if (configuredUserId) return configuredUserId;
+  const result = await api(url, key, "/auth/v1/admin/users?per_page=50", { method: "GET" });
+  const users = Array.isArray(result && result.users) ? result.users : [];
+  if (users.length === 1 && users[0].id) return users[0].id;
+  if (!users.length) fail("SOKUGANで一度メール認証してから、もう一度実行してください");
+  fail("Authユーザーが複数いるため、SOKUGAN_USER_IDをPCローカル環境変数に設定してください");
 }
 async function publish(passages, cfg) {
   const id = encodeURIComponent(cfg.userId);
@@ -62,7 +70,10 @@ async function publish(passages, cfg) {
 if (process.argv.includes("--help") || process.argv.includes("-h")) { console.log(usage); process.exit(0); }
 const file = process.argv[2];
 if (!file) fail("教材JSONのパスがありません");
-const cfg = { url: process.env.SOKUGAN_SUPABASE_URL, key: process.env.SOKUGAN_SUPABASE_SERVICE_ROLE_KEY, userId: process.env.SOKUGAN_USER_ID };
-if (!cfg.url || !cfg.key || !cfg.userId) fail("Supabaseの接続情報または本人のuser_idが未設定です");
+const cfg = { url: process.env.SOKUGAN_SUPABASE_URL, key: process.env.SOKUGAN_SUPABASE_SECRET_API_KEY || process.env.SOKUGAN_SUPABASE_SERVICE_ROLE_KEY, userId: process.env.SOKUGAN_USER_ID };
+if (!cfg.url || !cfg.key) fail("Supabaseの接続情報またはSecret API Keyが未設定です");
 const passages = readLesson(path.resolve(file));
-publish(passages, cfg).then(r => console.log(`OK: YouTube教材を${r.added}本追加しました（ライブラリ合計 ${r.total}本）。スマホでSOKUGANを開くと自動同期します。`)).catch(e => fail(`自動登録に失敗しました: ${e.message}`));
+resolveUserId(cfg.url, cfg.key, cfg.userId)
+  .then(userId => publish(passages, Object.assign(cfg, { userId })))
+  .then(r => console.log(`OK: YouTube教材を${r.added}本追加しました（ライブラリ合計 ${r.total}本）。スマホでSOKUGANを開くと自動同期します。`))
+  .catch(e => fail(`自動登録に失敗しました: ${e.message}`));
