@@ -651,8 +651,9 @@ eval(js + "\nglobal.__app = { get state(){return state}, set state(v){state=v}, 
   check("F14c 設定キーは supabaseUrl / supabaseAnonKey の2つだけ",
     (cfgCode.match(/^\s*[A-Za-z_$][\w$]*\s*:/gm) || []).length === 2,
     (cfgCode.match(/^\s*[A-Za-z_$][\w$]*\s*:/gm) || []).map(x => x.trim()).join(" "));
-  check("F14b 設定ファイルは既定で空（未設定でも動く既定値）",
-    /supabaseUrl:\s*""/.test(cfgSrc) && /supabaseAnonKey:\s*""/.test(cfgSrc));
+  check("F14b 設定ファイルは未設定でも安全に動き、設定時は公開キーだけを許可",
+    (/supabaseUrl:\s*""/.test(cfgSrc) && /supabaseAnonKey:\s*""/.test(cfgSrc)) ||
+    (/supabaseUrl:\s*"https:\/\/[^"]+\.supabase\.co"/.test(cfgSrc) && /supabaseAnonKey:\s*"sb_publishable_[^"]+"/.test(cfgSrc)));
   const sqlSrc = fs.readFileSync(path.join(ROOT, "supabase", "schema.sql"), "utf8");
   check("F15 RLSが有効化されている", /enable row level security/i.test(sqlSrc));
   check("F15b select/insert/update/delete の4ポリシーが自分の行に限定",

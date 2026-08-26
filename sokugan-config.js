@@ -9,6 +9,6 @@
 // 空のままでもアプリは完全に動作する（localStorage単独＝従来どおり）。
 // 値を入れた瞬間から端末間同期が有効になる。設定手順: supabase/セットアップ手順.md
 window.SOKUGAN_CONFIG = {
-  supabaseUrl: "",      // 例: https://xxxxxxxxxxxx.supabase.co
-  supabaseAnonKey: ""   // 例: eyJhbGciOi...（Project Settings > API > anon public）
+  supabaseUrl: "https://weanydapeersamxlphku.supabase.co",
+  supabaseAnonKey: "sb_publishable_r6wpQOCf9TI3jPDYMlCl6A_dmIYfswF"
 };
