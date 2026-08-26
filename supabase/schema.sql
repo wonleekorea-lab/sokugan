@@ -54,6 +54,9 @@ create policy "sokugan_state_delete_own"
 -- anon（未ログイン）には一切触らせない。認証済みのみ。
 revoke all on public.sokugan_state from anon;
 grant select, insert, update, delete on public.sokugan_state to authenticated;
+-- 台本の定時配信はPC上だけでSecret API Keyを使う。公開キーでは利用できず、
+-- RLSもservice_roleには適用されないため、本人専用ライブラリへの配信に限って使う。
+grant select, insert, update on public.sokugan_state to service_role;
 
 -- ---------- updated_at の自動更新 ----------
 create or replace function public.sokugan_touch_updated_at()
