@@ -80,7 +80,7 @@ const _si = global.setInterval;
 global.setInterval = (f, d) => _si(f, Math.max(1, Math.min(d || 0, 5)));
 
 // ---------- アプリ実コードを実行 ----------
-eval(js + "\nglobal.__app = { get state(){return state}, set state(v){state=v}, get sess(){return sess}, get content(){return content}, get syncState(){return syncState}, DEFAULT_CONTENT, ANCHOR_POOL, chunkText, getChunks, validChunks, chunkPool, spanTrialSet, pickSessionPassages, startSession, abortSession, renderShortIntro, renderShortResult, unseenPassages, passageKey, passageKeys, isPassageSeen, markPassagesSeen, markPassageRead, textFingerprint, sourceUrlKey, renderHome, renderHistory, contentStatus, renderFreshnessPanel, guardedStart, renderPacer, renderPacerQuiz, answerPacer, renderSpanIntro, answerSpan, finishSpan, renderRead, startReading, finishReading, renderQuiz, finishQuiz, renderReread, startReread, finishReread, renderResult, textStats, adjustSpeed, makeDeepCloze, answerDeepCloze, normalizeNumerals, parseKanjiNum, startAnchor, renderAnchorRead, startAnchorRead, finishAnchorRead, renderAnchorQuiz, answerAnchor, anchorDue, todayMenu, goalProgress, gazeSpan, sessionKeyTerms, passageTakeaway, finishVocab, proceedAfterCloze1, weakestSkill, feedbackGenreScore, preferByFeedback, recordContentFeedback, renderContentFeedback, contentFeedbackKey, defaultState, newSessionId, stampField, saveState, mergeStates, unionBy, histKey, syncCfg, syncEnabled, signedIn, loadAuth, saveAuth, syncNow, pullRemote, pushRemote, scheduleSync, flushSyncQueue, syncStatusText, renderSyncCard, renderSyncLine, syncSignOut, KEY, AUTH_KEY };");
+eval(js + "\nglobal.__app = { get state(){return state}, set state(v){state=v}, get sess(){return sess}, get content(){return content}, get syncState(){return syncState}, DEFAULT_CONTENT, ANCHOR_POOL, chunkText, getChunks, validChunks, chunkPool, spanTrialSet, pickSessionPassages, startSession, abortSession, renderShortIntro, renderShortResult, unseenPassages, allPassages, personalPassages, normalizePersonalPassage, importPersonalContent, daysFromToday, passageKey, passageKeys, isPassageSeen, markPassagesSeen, markPassageRead, textFingerprint, sourceUrlKey, renderHome, renderHistory, contentStatus, renderFreshnessPanel, guardedStart, renderPacer, renderPacerQuiz, answerPacer, renderSpanIntro, answerSpan, finishSpan, renderRead, startReading, finishReading, renderQuiz, finishQuiz, renderReread, startReread, finishReread, renderResult, textStats, adjustSpeed, makeDeepCloze, answerDeepCloze, normalizeNumerals, parseKanjiNum, startAnchor, renderAnchorRead, startAnchorRead, finishAnchorRead, renderAnchorQuiz, answerAnchor, anchorDue, todayMenu, goalProgress, gazeSpan, sessionKeyTerms, passageTakeaway, finishVocab, proceedAfterCloze1, weakestSkill, feedbackGenreScore, preferByFeedback, recordContentFeedback, renderContentFeedback, contentFeedbackKey, defaultState, newSessionId, stampField, saveState, mergeStates, unionBy, histKey, syncCfg, syncEnabled, signedIn, loadAuth, saveAuth, syncNow, pullRemote, pushRemote, scheduleSync, flushSyncQueue, syncStatusText, renderSyncCard, renderSyncLine, syncSignOut, KEY, AUTH_KEY };");
 
 (async () => {
   await new Promise(r => _st(r, 80)); // init完了待ち
@@ -258,18 +258,28 @@ eval(js + "\nglobal.__app = { get state(){return state}, set state(v){state=v}, 
   // ========== B. UI描画検査（実コードのE2E） ==========
   check("B1 コンテンツがJSONからロードされた", A.content && A.content.date === daily.date, A.content && A.content.date);
   A.renderHome();
-  check("B2 ホーム: じっくり版・ショート版の開始ボタン描画", screenEl().includes("今日の目標") && screenEl().includes("じっくり版") && screenEl().includes("ショート版"));
+  check("B2 ホーム: 読む本文を選んでから開始する導線を描画", screenEl().includes("今日、何を読む？") && screenEl().includes("このテーマで始める") && screenEl().includes("ショート"));
   check("B3 ホーム: 成長カーブ描画", screenEl().includes("成長カーブ"));
   // 鮮度ゲート（開始前に最新かを確認できる仕組み）
   check("B3a ホーム: 鮮度ゲート＋更新確認ボタン描画", screenEl().includes("更新を確認") && /fresh (ok|stale|err)/.test(screenEl()));
   const fr = A.contentStatus();
   // 夕方実行では翌日分を先取り生成するため、アプリ設計上の正常状態 isAhead も許容する（isStaleのみNG）
   check("B3b 鮮度判定: 今日(isToday)または先取り翌日分(isAhead)と認識", fr.date !== daily.date ? true : (fr.isToday || fr.isAhead), `date=${fr.date} isToday=${fr.isToday} isAhead=${fr.isAhead}`);
-  check("B3c 鮮度パネルに今日のタイトル一覧を表示", A.renderFreshnessPanel(fr).includes(daily.passages[0].title));
-  check("B3e 鮮度パネルに設問明快さ点検の表示", A.renderFreshnessPanel(fr).includes("設問明快さ"));
+  check("B3c 鮮度パネルは更新状態だけを簡潔に表示", A.renderFreshnessPanel(fr).includes("更新を確認") && !A.renderFreshnessPanel(fr).includes(daily.passages[0].title));
+  check("B3e 鮮度パネルはQA詳細をホームから外し、開始画面を簡潔に保つ", !A.renderFreshnessPanel(fr).includes("設問明快さ"));
   check("B3d guardedStart が定義されている", typeof A.guardedStart === "function");
+  A.state = A.defaultState();
+  const privatePassage = Object.assign({}, daily.passages[0], { id: "youtube-private-01", availableOn: A.daysFromToday(1) });
+  const imported = A.importPersonalContent({ schema: "sokugan-private-youtube-v1", availableOn: A.daysFromToday(1), passages: [privatePassage] });
+  check("B3f YouTube由来の私用教材は翌日まで表示せず、同期対象へ保存", imported.count === 1 && A.state.personalLibrary.length === 1 && A.personalPassages().length === 0);
+  A.state.personalLibrary[0].availableOn = A.daysFromToday(0);
+  check("B3g 解禁日以降の私用教材は本文選択肢に加わる", A.personalPassages().length === 1 && A.allPassages().some(p => p.id === "youtube-private-01"));
   A.startSession();
   check("B4 セッション開始 (warmChunks生成)", A.sess && A.sess.warmChunks.length >= 20, A.sess && A.sess.warmChunks.length + "chunks");
+  const selectedId = daily.passages[1].id;
+  A.startSession("short", selectedId);
+  check("B4a 選んだ本文をショート版の先頭に使う", A.sess && A.sess.p1 && A.sess.p1.id === selectedId, A.sess && A.sess.p1 && A.sess.p1.id);
+  A.startSession();
   A.renderPacer();
   const spanTexts = [...screenEl().matchAll(/<span class="chunk" id="ck\d+">([\s\S]*?)<\/span>/g)].map(m => unesc(m[1]));
   check("B5 ペーサーUI: チャンクspan描画数一致", spanTexts.length === A.sess.warmChunks.length, `${spanTexts.length}/${A.sess.warmChunks.length}`);
@@ -500,6 +510,8 @@ eval(js + "\nglobal.__app = { get state(){return state}, set state(v){state=v}, 
     mk({ contentFeedback: [{ date: "2026-08-20", passageId: "p1", genre: "社会・価値観", rating: 5, title: "A" }] }),
     mk({ contentFeedback: [{ date: "2026-08-20", passageId: "p1", genre: "社会・価値観", rating: 5, title: "A" }, { date: "2026-08-21", passageId: "p2", genre: "未来の兆し", rating: 4, title: "B" }] }));
   check("F4b 読後評価は端末間でunionし、重複計上しない", MFb.contentFeedback.length === 2);
+  const MPrivate = A.mergeStates(mk({ personalLibrary: [{ id: "yt-1", availableOn: "2026-08-27" }] }), mk({ personalLibrary: [{ id: "yt-1", availableOn: "2026-08-27" }, { id: "yt-2", availableOn: "2026-08-28" }] }));
+  check("F4c 私用YouTube教材は端末間でunionし、公開コンテンツへ混ぜない", MPrivate.personalLibrary.length === 2 && !daily.passages.some(p => p.id === "yt-1"));
   const M4 = A.mergeStates(
     mk({ vocabBook: [{ term: "利回り", level: 1, date: "2026-08-20" }, { term: "系統連系", level: 3, date: "2026-08-20" }] }),
     mk({ vocabBook: [{ term: "利回り", level: 3, date: "2026-08-22" }, { term: "福利厚生", level: 2, date: "2026-08-21" }] }));

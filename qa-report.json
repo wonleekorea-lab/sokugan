@@ -1,9 +1,9 @@
 {
  "date": "2026-08-26",
  "status": "pass",
- "checked_at": "2026-08-25T23:17:26.714Z",
- "passed": 266,
- "total": 266,
+ "checked_at": "2026-08-26T02:07:11.840Z",
+ "passed": 270,
+ "total": 270,
  "failures": [],
- "notes": "fix: chunk quality, natural span choices, feedback, partial sessions"
+ "notes": "feat: private YouTube transcript learning flow and simplified start"
 }

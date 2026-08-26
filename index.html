@@ -226,6 +226,8 @@ function defaultState() {
     lastWinCheck: null,
     clarityFlags: [],     // ユーザーが「わかりにくい」と報告した設問 {date, genre, q}
     contentFeedback: [],  // 読後評価 {date, passageId, genre, rating, title}。次回の選定を個人化する材料
+    selectedPassageId: null, // 開始前に本人が選んだ本文。選択の主体性を残す
+    personalLibrary: [], // 非公開の本人用教材。YouTube台本から作る翌日解禁の学習文を保存
     goal: null,           // {target, baseline, setAt, why, hit:[]} 週次の具体的困難目標(Locke&Latham)
     vocabBook: [],        // 語彙道場の習得記録 {term, plain, date, level} level:1=初見,2=曖昧,3=説明できる
     lastTakeaways: null,  // {date, items:[{hook, detail, genre}]} 今日の持ち帰り
@@ -373,6 +375,10 @@ function daysAgoStr(n) {
   const d = new Date(); d.setDate(d.getDate() - n);
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
 }
+function daysFromToday(n) {
+  const d = new Date(); d.setDate(d.getDate() + n);
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+}
 // 2つのYYYY-MM-DD間の日数差（d2 - d1）。ローカル時刻基準。
 function daysBetween(d1, d2) {
   const a = new Date(d1 + "T00:00:00"), b = new Date(d2 + "T00:00:00");
@@ -381,6 +387,21 @@ function daysBetween(d1, d2) {
 }
 function fmtTime(s) { return `${String(Math.floor(s/60)).padStart(2,"0")}:${String(Math.floor(s%60)).padStart(2,"0")}`; }
 function charCount(t) { return (t || "").replace(/\s/g, "").length; }
+function normalizePersonalPassage(p, i, availableOn) {
+  const text = String((p && p.text) || "").trim();
+  const qs = (p && p.questions) || [];
+  if (!p || !p.title || charCount(text) < 400 || charCount(text) > 700 || qs.length !== 3 || !qs.every(q => Array.isArray(q.opts) && q.opts.length === 4 && q.ans >= 0 && q.ans < 4 && q.rationale)) return null;
+  return Object.assign({}, p, { id: p.id || `youtube-${Date.now()}-${i}`, text, kind: "youtube", availableOn: p.availableOn || availableOn, genre: p.genre || "YouTubeからの学習" });
+}
+function importPersonalContent(data) {
+  if (!data || data.schema !== "sokugan-private-youtube-v1" || !Array.isArray(data.passages)) throw new Error("SOKUGAN用の非公開教材ファイルではありません");
+  const availableOn = data.availableOn || daysFromToday(1);
+  const items = data.passages.map((p, i) => normalizePersonalPassage(p, i, availableOn)).filter(Boolean);
+  if (!items.length || items.length !== data.passages.length) throw new Error("本文（400〜700字）または設問3問×4択の形式が不足しています");
+  state.personalLibrary = unionBy(state.personalLibrary, items, p => p.id).slice(-120);
+  saveState();
+  return { count: items.length, availableOn };
+}
 function screen() { return document.getElementById("screen"); }
 function esc(t) { return String(t).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
 function ensureTodaySession() {
@@ -419,6 +440,10 @@ function passageKeys(p) {
   return [passageKey(p), textFingerprint(p.text), sourceUrlKey(p)].filter(Boolean);
 }
 function seenPassageSet() { return new Set(state.seenPassageKeys || []); }
+function personalPassages() {
+  return (state.personalLibrary || []).filter(p => p && p.id && p.text && (!p.availableOn || p.availableOn <= today()));
+}
+function allPassages() { return [...(content.passages || []), ...personalPassages()]; }
 function isPassageSeen(p, seen) {
   const set = seen || seenPassageSet();
   return passageKeys(p).some(k => set.has(k));
@@ -438,7 +463,7 @@ function markPassageRead(p) {
 }
 function unseenPassages() {
   const seen = seenPassageSet();
-  return (content.passages || []).filter(p => !isPassageSeen(p, seen));
+  return allPassages().filter(p => !isPassageSeen(p, seen));
 }
 function totalTrainingDays() {
   return new Set(state.history.map(h => h.date)).size;
@@ -986,6 +1011,8 @@ function renderHome() {
   const gz = gazeSpan(adjMa7);
   const tk = (state.lastTakeaways && state.lastTakeaways.date === today()) ? state.lastTakeaways : null;
   const unseenN = unseenPassages().length;
+  const selectable = preferByFeedback(unseenPassages());
+  const selected = selectable.find(p => p.id === state.selectedPassageId) || selectable[0] || null;
 
   screen().innerHTML = `
     ${renderFreshnessPanel(fr)}
@@ -998,11 +1025,14 @@ function renderHome() {
         ${yestBest ? `<span class="delta-chip ${t > yestBest ? "up" : "flat"}">昨回実績 ${yestBest} 比 ${t - yestBest >= 0 ? "+" : ""}${t - yestBest}</span>` : ""}
       </div>
       ${todayBest ? `<p class="muted" style="margin:4px 0 10px">今日のベスト: <b style="color:var(--ink)">${todayBest}字/分</b>${deltaVsYest != null ? `（昨回比 ${deltaVsYest >= 0 ? "+" : ""}${deltaVsYest}）` : ""}</p>` : `<p class="muted" style="margin:4px 0 10px">クリアすると明日の目標が約2.5%上がります。昨日の自分が今日のライバルです。</p>`}
+      <div style="margin-top:10px"><div class="small" style="margin-bottom:5px">今日、何を読む？</div>
+      <select onchange="selectPassage(this.value)" style="width:100%;padding:11px;border:1px solid var(--border2);border-radius:9px;background:var(--card);font:inherit;color:var(--ink)">${selectable.map(p => `<option value="${esc(p.id)}" ${selected && p.id === selected.id ? "selected" : ""}>${esc(genreOf(p))}｜${esc(p.title)}</option>`).join("")}</select></div>
+      ${selected ? `<p class="small" style="margin:8px 0">選択中: <b style="color:var(--ink)">${esc(selected.title)}</b></p>` : ""}
+      <div style="margin:8px 0 2px"><button class="btn ghost small" onclick="document.getElementById('personal-content-file').click()">＋ YouTube台本の教材を取り込む</button><input id="personal-content-file" type="file" accept=".json,application/json" style="display:none" onchange="handlePersonalContentFile(this)"></div>
       <div class="grid2" style="margin-top:8px">
-        <button class="btn ${fr.isStale ? "secondary" : ""}" onclick="guardedStart('full')" ${unseenN < 3 ? "disabled" : ""}>じっくり版<br><span style="font-size:11px;font-weight:500">約12分 · 3本</span></button>
-        <button class="btn secondary" onclick="guardedStart('short')" ${unseenN < 1 ? "disabled" : ""}>ショート版<br><span style="font-size:11px;font-weight:500">約3〜5分 · 1本</span></button>
+        <button class="btn ${fr.isStale ? "secondary" : ""}" onclick="guardedStart('full')" ${unseenN < 3 ? "disabled" : ""}>このテーマで始める<br><span style="font-size:11px;font-weight:500">じっくり 12分</span></button>
+        <button class="btn secondary" onclick="guardedStart('short')" ${unseenN < 1 ? "disabled" : ""}>ショート<br><span style="font-size:11px;font-weight:500">3〜5分</span></button>
       </div>
-      <p class="small" style="margin-top:7px">未読コンテンツ <b>${unseenN}本</b> / 全${(content.passages || []).length}本 · 一度表示した本文は再出題しません</p>
       ${unseenN < 1 ? `<div class="banner info" style="margin-top:8px">🏁 <b>本日分を完走</b>しました（未読0本）。既読を混ぜての再表示はしません。上の「更新を確認」で新着を待ってください。</div>` : unseenN < 3 ? `<div class="banner info" style="margin-top:8px">未読が${unseenN}本のため、ショート版で最後まで重複なく読めます。</div>` : ""}
       ${fr.isStale ? `<p class="small" style="margin-top:8px;color:var(--gold)">⚠ 表示中のコンテンツは <b>${fr.date}</b> 分です。最新でない可能性があるため、上の「更新を確認」を押すか、開始時に確認します。</p>` : ""}
       ${gp ? `
@@ -1149,13 +1179,15 @@ function preferByFeedback(passages) {
   // 未評価ジャンルを少し優先して探索しつつ、読後評価の高いジャンルを先に出す。
   return [...passages].sort((a, b) => feedbackGenreScore(genreOf(b)) - feedbackGenreScore(genreOf(a)));
 }
-function pickSessionPassages(mode = "full") {
+function selectPassage(id) { state.selectedPassageId = id || null; saveState(); renderHome(); }
+function pickSessionPassages(mode = "full", selectedId) {
   const pool = preferByFeedback(unseenPassages());
   const need = mode === "short" ? 1 : 3;
   if (pool.length < need) return null; // 重複させて穴埋めしない
   const deep = pool.filter(isDeep);
   const news = pool.filter(p => !isDeep(p));
-  const p1 = news[0] || pool[0];
+  const preferred = pool.find(p => p.id === (selectedId || state.selectedPassageId));
+  const p1 = preferred || news[0] || pool[0];
   if (mode === "short") return { p1, p2: null, warm: null };
   const p2 = deep.find(p => p.id !== p1.id) || pool.find(p => p.id !== p1.id) || pool[0];
   const rest = pool.filter(p => p.id !== p1.id && p.id !== p2.id);
@@ -1198,25 +1230,6 @@ function renderFreshnessPanel(fr) {
     cls = "stale"; icon = "⚠"; status = "コンテンツ日付が不明";
     sub = "「更新を確認」を押してください。";
   }
-  const titleList = (fr.isToday || fr.isAhead || fr.isStale) && fr.titles.length
-    ? `<div class="fresh-titles">${fr.titles.map(t => `<div class="ft"><span class="tag" style="margin:0">${esc(t.genre)}</span><b>${esc(t.title)}</b></div>`).join("")}</div>`
-    : "";
-  // QA監視AIの検査状態（同じ日付のレポートがある時だけ）
-  let qaLine = "";
-  if (qaReport && qaReport.date === fr.date) {
-    qaLine = qaReport.status === "pass"
-      ? `<div class="fresh-sub" style="margin-top:6px">🛡 QA検査済 ✅ ${qaReport.passed}/${qaReport.total}（前夜の自動点検に合格）</div>`
-      : `<div class="fresh-sub" style="margin-top:6px;color:var(--coral)">🛡 <b>QA検査で問題検出</b>（${qaReport.passed}/${qaReport.total}）— 内容に不備の可能性</div>`;
-  }
-  // 設問明快さ監査の状態（LLMが実際に全設問を解いて明快さを採点した記録）
-  let clarityLine = "";
-  if (clarityAudit && clarityAudit.date === fr.date) {
-    clarityLine = clarityAudit.status === "pass"
-      ? `<div class="fresh-sub" style="margin-top:4px">📝 設問明快さ 点検済 ✅ 平均${clarityAudit.avgScore}/5${clarityAudit.rewritten ? `（${clarityAudit.rewritten}問を平易化）` : ""}</div>`
-      : `<div class="fresh-sub" style="margin-top:4px;color:var(--coral)">📝 <b>設問明快さに要改善</b>（平均${clarityAudit.avgScore}/5）</div>`;
-  } else {
-    clarityLine = `<div class="fresh-sub" style="margin-top:4px;color:var(--ink3)">📝 設問明快さ監査は未実施（今夜のQAで点検）</div>`;
-  }
   return `
     <div class="fresh ${cls}">
       <div class="fresh-head">
@@ -1226,9 +1239,6 @@ function renderFreshnessPanel(fr) {
         </div>
         <button class="recheck-btn" id="recheck-btn" onclick="recheckContent()">🔄 更新を確認</button>
       </div>
-      ${qaLine}
-      ${clarityLine}
-      ${titleList}
     </div>`;
 }
 function showToast(msg) {
@@ -1263,10 +1273,10 @@ function guardedStart(mode = "full") {
     const ok = confirm(`表示中のコンテンツは ${fr.date} 分で、今日（${today()}）の最新ではありません。\n\n先に「更新を確認」を押すのがおすすめです。\nこのまま ${fr.date} 分の内容で練習を始めますか？`);
     if (!ok) return;
   }
-  startSession(mode);
+  startSession(mode, state.selectedPassageId);
 }
-function startSession(mode = "full") {
-  const picked = pickSessionPassages(mode);
+function startSession(mode = "full", selectedId) {
+  const picked = pickSessionPassages(mode, selectedId);
   if (!picked) {
     showToast(mode === "full" ? "未読が3本未満です。ショート版か次の更新をお待ちください" : "🏁 本日分を完走しました。次の更新をお待ちください");
     if (view === "home") renderHome();
@@ -2190,6 +2200,19 @@ function handleImportFile(input) {
   reader.readAsText(f);
   input.value = "";
 }
+function handlePersonalContentFile(input) {
+  const f = input.files && input.files[0];
+  if (!f) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const result = importPersonalContent(JSON.parse(reader.result));
+      showToast(`✅ ${result.count}本を取り込みました。${result.availableOn}から選べます`);
+      renderHome();
+    } catch (e) { showToast("⚠ 取り込み失敗: " + e.message); }
+  };
+  reader.readAsText(f); input.value = "";
+}
 function confirmReset() {
   if (confirm("本当に全データを初期化しますか？（1.0のデータは消えません）") && confirm("最終確認: 2.0の記録・成長履歴がすべて消えます。")) {
     localStorage.removeItem(KEY); location.reload();
@@ -2292,6 +2315,8 @@ function mergeStates(local, remote) {
   out.clarityFlags = unionBy(local.clarityFlags, remote.clarityFlags, f => [f.date, f.genre, f.q].join("|"));
   out.contentFeedback = unionBy(local.contentFeedback, remote.contentFeedback, contentFeedbackKey)
     .sort((a, b) => String(a.date || "").localeCompare(String(b.date || ""))).slice(-300);
+  out.personalLibrary = unionBy(local.personalLibrary, remote.personalLibrary, p => p.id)
+    .sort((a, b) => String(a.availableOn || "").localeCompare(String(b.availableOn || ""))).slice(-120);
   out.anchorHistory = unionBy(local.anchorHistory, remote.anchorHistory, a => [a.date, a.anchorId].join("|"))
     .sort((a, b) => String(a.date || "").localeCompare(String(b.date || "")));
   out.seenPassageKeys = [...new Set([...(local.seenPassageKeys || []), ...(remote.seenPassageKeys || [])])].slice(-3000);
