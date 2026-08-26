@@ -2331,7 +2331,13 @@ function mergeStates(local, remote) {
   out.clarityFlags = unionBy(local.clarityFlags, remote.clarityFlags, f => [f.date, f.genre, f.q].join("|"));
   out.contentFeedback = unionBy(local.contentFeedback, remote.contentFeedback, contentFeedbackKey)
     .sort((a, b) => String(a.date || "").localeCompare(String(b.date || ""))).slice(-300);
-  out.personalLibrary = unionBy(local.personalLibrary, remote.personalLibrary, p => p.id)
+  // YouTube教材は同じIDでも公開日などの配信メタデータが更新される。
+  // 単純なlocal-first unionだと、古い端末の「翌日公開」が新しいサーバ値を
+  // 上書きしてしまうため、同一IDはremote（サーバ正本）を採用する。
+  const libraryById = new Map();
+  for (const p of (local.personalLibrary || [])) if (p && p.id) libraryById.set(String(p.id), p);
+  for (const p of (remote.personalLibrary || [])) if (p && p.id) libraryById.set(String(p.id), p);
+  out.personalLibrary = [...libraryById.values()]
     .sort((a, b) => String(a.availableOn || "").localeCompare(String(b.availableOn || ""))).slice(-120);
   out.anchorHistory = unionBy(local.anchorHistory, remote.anchorHistory, a => [a.date, a.anchorId].join("|"))
     .sort((a, b) => String(a.date || "").localeCompare(String(b.date || "")));

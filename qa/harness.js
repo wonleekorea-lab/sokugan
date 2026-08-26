@@ -519,7 +519,9 @@ eval(js + "\nglobal.__app = { get state(){return state}, set state(v){state=v}, 
     mk({ contentFeedback: [{ date: "2026-08-20", passageId: "p1", genre: "社会・価値観", rating: 5, title: "A" }, { date: "2026-08-21", passageId: "p2", genre: "未来の兆し", rating: 4, title: "B" }] }));
   check("F4b 読後評価は端末間でunionし、重複計上しない", MFb.contentFeedback.length === 2);
   const MPrivate = A.mergeStates(mk({ personalLibrary: [{ id: "yt-1", availableOn: "2026-08-27" }] }), mk({ personalLibrary: [{ id: "yt-1", availableOn: "2026-08-27" }, { id: "yt-2", availableOn: "2026-08-28" }] }));
-  check("F4c 私用YouTube教材は端末間でunionし、公開コンテンツへ混ぜない", MPrivate.personalLibrary.length === 2 && !daily.passages.some(p => p.id === "yt-1"));
+  check("F4c 私用YouTube教材は端末間でunionし、公開コンテンツへ混ぜない", MPrivate.personalLibrary.length === 2 && MPrivate.personalLibrary.find(p => p.id === "yt-1").availableOn === "2026-08-27" && !daily.passages.some(p => p.id === "yt-1"));
+  const MPrivateRelease = A.mergeStates(mk({ personalLibrary: [{ id: "yt-release", availableOn: "2026-08-27" }] }), mk({ personalLibrary: [{ id: "yt-release", availableOn: "2026-08-26" }] }));
+  check("F4d YouTube教材は同一IDのサーバー公開日更新を端末へ反映", MPrivateRelease.personalLibrary.length === 1 && MPrivateRelease.personalLibrary[0].availableOn === "2026-08-26");
   const M4 = A.mergeStates(
     mk({ vocabBook: [{ term: "利回り", level: 1, date: "2026-08-20" }, { term: "系統連系", level: 3, date: "2026-08-20" }] }),
     mk({ vocabBook: [{ term: "利回り", level: 3, date: "2026-08-22" }, { term: "福利厚生", level: 2, date: "2026-08-21" }] }));
