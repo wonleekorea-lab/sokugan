@@ -391,14 +391,14 @@ function charCount(t) { return (t || "").replace(/\s/g, "").length; }
 function normalizePersonalPassage(p, i, availableOn) {
   const text = String((p && p.text) || "").trim();
   const qs = (p && p.questions) || [];
-  if (!p || !p.title || charCount(text) < 400 || charCount(text) > 700 || qs.length !== 3 || !qs.every(q => Array.isArray(q.opts) && q.opts.length === 4 && q.ans >= 0 && q.ans < 4 && q.rationale)) return null;
+  if (!p || !p.title || charCount(text) < 400 || charCount(text) > 700 || qs.length !== 3 || !qs.every(q => q.q && Array.isArray(q.opts) && q.opts.length === 4 && q.ans >= 0 && q.ans < 4 && q.rationale)) return null;
   return Object.assign({}, p, { id: p.id || `youtube-${Date.now()}-${i}`, text, kind: "youtube", availableOn: p.availableOn || availableOn, genre: p.genre || "YouTubeからの学習" });
 }
 function importPersonalContent(data) {
-  if (!data || data.schema !== "sokugan-private-youtube-v1" || !Array.isArray(data.passages)) throw new Error("SOKUGAN用の非公開教材ファイルではありません");
+  if (!data || data.schema !== "sokugan-private-youtube-v2" || !Array.isArray(data.passages) || data.passages.length !== 1 || !data.videoId || !data.coreConcept || !data.selectionRationale) throw new Error("1動画1教材のSOKUGAN用非公開教材ファイルではありません");
   const availableOn = data.availableOn || daysFromToday(1);
-  const items = data.passages.map((p, i) => normalizePersonalPassage(p, i, availableOn)).filter(Boolean);
-  if (!items.length || items.length !== data.passages.length) throw new Error("本文（400〜700字）または設問3問×4択の形式が不足しています");
+  const items = data.passages.map((p, i) => normalizePersonalPassage(Object.assign({}, p, { videoId: data.videoId, source: data.source, sourceTitle: data.sourceTitle, coreConcept: data.coreConcept, selectionRationale: data.selectionRationale }), i, availableOn)).filter(Boolean);
+  if (items.length !== 1) throw new Error("本文（400〜700字）または設問3問×4択の形式が不足しています");
   state.personalLibrary = unionBy(state.personalLibrary, items, p => p.id).slice(-120);
   saveState();
   return { count: items.length, availableOn };
@@ -2331,13 +2331,25 @@ function mergeStates(local, remote) {
   out.clarityFlags = unionBy(local.clarityFlags, remote.clarityFlags, f => [f.date, f.genre, f.q].join("|"));
   out.contentFeedback = unionBy(local.contentFeedback, remote.contentFeedback, contentFeedbackKey)
     .sort((a, b) => String(a.date || "").localeCompare(String(b.date || ""))).slice(-300);
-  // YouTube教材は同じIDでも公開日などの配信メタデータが更新される。
-  // 単純なlocal-first unionだと、古い端末の「翌日公開」が新しいサーバ値を
-  // 上書きしてしまうため、同一IDはremote（サーバ正本）を採用する。
-  const libraryById = new Map();
-  for (const p of (local.personalLibrary || [])) if (p && p.id) libraryById.set(String(p.id), p);
-  for (const p of (remote.personalLibrary || [])) if (p && p.id) libraryById.set(String(p.id), p);
-  out.personalLibrary = [...libraryById.values()]
+  // YouTube教材は動画IDを正本キーにする。同じ動画の旧分割教材が端末に
+  // 残っていても、サーバーの新しい1教材へ収束させる。
+  const youtubeVideoId = (p) => {
+    if (!p) return "";
+    if (p.videoId) return String(p.videoId);
+    const source = String(p.source || "");
+    const fromUrl = source.match(/(?:youtube\.com\/(?:watch\?(?:[^#]*&)?v=|shorts\/)|youtu\.be\/)([A-Za-z0-9_-]{6,})/);
+    if (fromUrl) return fromUrl[1];
+    const fromId = String(p.id || "").match(/^youtube[_-](?:\d{8}_)?(.+?)(?:_(?:habit|learning)_\d+)?$/);
+    return fromId ? fromId[1] : "";
+  };
+  const personalKey = (p) => {
+    const vid = youtubeVideoId(p);
+    return vid ? `youtube:${vid}` : `id:${String((p && p.id) || "")}`;
+  };
+  const libraryByKey = new Map();
+  for (const p of (local.personalLibrary || [])) if (p && p.id) libraryByKey.set(personalKey(p), p);
+  for (const p of (remote.personalLibrary || [])) if (p && p.id) libraryByKey.set(personalKey(p), p);
+  out.personalLibrary = [...libraryByKey.values()]
     .sort((a, b) => String(a.availableOn || "").localeCompare(String(b.availableOn || ""))).slice(-120);
   out.anchorHistory = unionBy(local.anchorHistory, remote.anchorHistory, a => [a.date, a.anchorId].join("|"))
     .sort((a, b) => String(a.date || "").localeCompare(String(b.date || "")));

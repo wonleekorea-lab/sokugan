@@ -21,14 +21,36 @@ function charCount(s) { return String(s || "").replace(/\s/g, "").length; }
 function validPassage(p) {
   return p && p.id && p.title && charCount(p.text) >= 400 && charCount(p.text) <= 700 &&
     Array.isArray(p.questions) && p.questions.length === 3 && p.questions.every(q =>
-      Array.isArray(q.opts) && q.opts.length === 4 && Number.isInteger(q.ans) && q.ans >= 0 && q.ans < 4 && q.rationale);
+      q.q && Array.isArray(q.opts) && q.opts.length === 4 && Number.isInteger(q.ans) && q.ans >= 0 && q.ans < 4 && q.rationale);
 }
+function videoIdFromUrl(source) {
+  const s = String(source || "");
+  const m = s.match(/(?:youtube\.com\/(?:watch\?(?:[^#]*&)?v=|shorts\/)|youtu\.be\/)([A-Za-z0-9_-]{6,})/);
+  return m ? m[1] : "";
+}
+function sameVideo(existing, incoming) {
+  if (!existing || !incoming) return false;
+  if (existing.id === incoming.id) return true;
+  const vid = incoming.videoId || videoIdFromUrl(incoming.source);
+  return !!vid && (videoIdFromUrl(existing.source) === vid || String(existing.id || "").includes(vid));
+}
+function sameJson(a, b) { return JSON.stringify(a) === JSON.stringify(b); }
 function readLesson(file) {
   let data;
   try { data = JSON.parse(fs.readFileSync(file, "utf8")); } catch (e) { fail(`教材JSONを読めません: ${e.message}`); }
-  if (!data || data.schema !== "sokugan-private-youtube-v1" || !Array.isArray(data.passages) || !data.passages.length) fail("SOKUGAN用の非公開YouTube教材JSONではありません");
-  if (!data.passages.every(validPassage)) fail("本文400〜700字、3問×4択の教材形式を満たしていません");
-  return data.passages.map(p => Object.assign({}, p, { kind: "youtube", availableOn: p.availableOn || data.availableOn }));
+  if (!data || data.schema !== "sokugan-private-youtube-v2" || !Array.isArray(data.passages) || data.passages.length !== 1) {
+    fail("新形式のSOKUGAN用YouTube教材ではありません。1動画につきpassagesを1本だけ、schema=sokugan-private-youtube-v2で作成してください");
+  }
+  const videoId = data.videoId || videoIdFromUrl(data.source);
+  if (!videoId || !/^https:\/\/(?:www\.)?youtube\.com\/watch\?v=|^https:\/\/youtu\.be\//.test(String(data.source || ""))) fail("YouTube URLまたは動画IDがありません");
+  if (!data.sourceTitle || !data.coreConcept || !data.selectionRationale) fail("sourceTitle、coreConcept、selectionRationaleが必要です");
+  if (!validPassage(data.passages[0])) fail("本文400〜700字、3問×4択・自然な設問の教材形式を満たしていません");
+  const p = data.passages[0];
+  return [Object.assign({}, p, {
+    id: `youtube-${videoId}`, kind: "youtube", videoId, source: data.source,
+    sourceTitle: data.sourceTitle, coreConcept: data.coreConcept,
+    selectionRationale: data.selectionRationale, availableOn: p.availableOn || data.availableOn
+  })];
 }
 async function api(url, key, route, opts) {
   const o = opts || {};
@@ -53,16 +75,34 @@ async function publish(passages, cfg) {
     const row = Array.isArray(rows) ? rows[0] : null;
     const current = (row && row.state) || {};
     const existing = Array.isArray(current.personalLibrary) ? current.personalLibrary : [];
-    const known = new Set(existing.map(p => p && p.id));
-    const added = passages.filter(p => !known.has(p.id));
-    if (!added.length) return { added: 0, total: existing.length };
-    const state = Object.assign({}, current, { personalLibrary: [...existing, ...added].slice(-120), updatedAt: new Date().toISOString() });
+    const handled = new Set();
+    let added = 0, updated = 0, removed = 0;
+    const next = [];
+    for (const oldPassage of existing) {
+      const incoming = passages.find(p => sameVideo(oldPassage, p));
+      if (!incoming) { next.push(oldPassage); continue; }
+      const key = incoming.videoId || incoming.id;
+      if (handled.has(key)) { removed++; continue; }
+      handled.add(key);
+      if (sameJson(oldPassage, incoming)) next.push(oldPassage);
+      else {
+        next.push(incoming);
+        if (oldPassage.id === incoming.id) updated++;
+        else { added++; removed++; }
+      }
+    }
+    for (const incoming of passages) {
+      const key = incoming.videoId || incoming.id;
+      if (!handled.has(key)) { next.push(incoming); handled.add(key); added++; }
+    }
+    if (!added && !updated && !removed) return { added: 0, updated: 0, removed: 0, total: existing.length };
+    const state = Object.assign({}, current, { personalLibrary: next.slice(-120), updatedAt: new Date().toISOString() });
     if (!row) {
       await api(cfg.url, cfg.key, "/rest/v1/sokugan_state", { method: "POST", headers: { Prefer: "return=representation" }, body: JSON.stringify({ user_id: cfg.userId, state, rev: 1, device_id: "youtube-importer" }) });
-      return { added: added.length, total: state.personalLibrary.length };
+      return { added, updated, removed, total: state.personalLibrary.length };
     }
     const saved = await api(cfg.url, cfg.key, `/rest/v1/sokugan_state?user_id=eq.${id}&rev=eq.${encodeURIComponent(row.rev)}`, { method: "PATCH", headers: { Prefer: "return=representation" }, body: JSON.stringify({ state, rev: Number(row.rev) + 1, device_id: "youtube-importer" }) });
-    if (Array.isArray(saved) && saved.length) return { added: added.length, total: state.personalLibrary.length };
+    if (Array.isArray(saved) && saved.length) return { added, updated, removed, total: state.personalLibrary.length };
   }
   throw new Error("他端末との更新競合が続いたため、3回試して保存できませんでした");
 }
@@ -75,5 +115,5 @@ if (!cfg.url || !cfg.key) fail("Supabaseの接続情報またはSecret API Key�
 const passages = readLesson(path.resolve(file));
 resolveUserId(cfg.url, cfg.key, cfg.userId)
   .then(userId => publish(passages, Object.assign(cfg, { userId })))
-  .then(r => console.log(`OK: YouTube教材を${r.added}本追加しました（ライブラリ合計 ${r.total}本）。スマホでSOKUGANを開くと自動同期します。`))
+  .then(r => console.log(`OK: 1動画1教材で登録しました（追加${r.added}、更新${r.updated}、旧教材整理${r.removed}、ライブラリ合計${r.total}本）。スマホでSOKUGANを開くと自動同期します。`))
   .catch(e => fail(`自動登録に失敗しました: ${e.message}`));

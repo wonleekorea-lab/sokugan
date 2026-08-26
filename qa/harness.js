@@ -271,7 +271,7 @@ eval(js + "\nglobal.__app = { get state(){return state}, set state(v){state=v}, 
   check("B3d guardedStart が定義されている", typeof A.guardedStart === "function");
   A.state = A.defaultState();
   const privatePassage = Object.assign({}, daily.passages[0], { id: "youtube-private-01", availableOn: A.daysFromToday(1) });
-  const imported = A.importPersonalContent({ schema: "sokugan-private-youtube-v1", availableOn: A.daysFromToday(1), passages: [privatePassage] });
+  const imported = A.importPersonalContent({ schema: "sokugan-private-youtube-v2", videoId: "youtube-private-01", source: "https://www.youtube.com/watch?v=youtube-private-01", sourceTitle: "検証動画", coreConcept: "検証用の中心概念", selectionRationale: "検証用", availableOn: A.daysFromToday(1), passages: [privatePassage] });
   check("B3f YouTube由来の私用教材は翌日まで表示せず、同期対象へ保存", imported.count === 1 && A.state.personalLibrary.length === 1 && A.personalPassages().length === 0);
   A.state.personalLibrary[0].availableOn = A.daysFromToday(0);
   check("B3g 解禁日以降の私用教材は本文選択肢に加わる", A.personalPassages().length === 1 && A.allPassages().some(p => p.id === "youtube-private-01"));
@@ -522,6 +522,8 @@ eval(js + "\nglobal.__app = { get state(){return state}, set state(v){state=v}, 
   check("F4c 私用YouTube教材は端末間でunionし、公開コンテンツへ混ぜない", MPrivate.personalLibrary.length === 2 && MPrivate.personalLibrary.find(p => p.id === "yt-1").availableOn === "2026-08-27" && !daily.passages.some(p => p.id === "yt-1"));
   const MPrivateRelease = A.mergeStates(mk({ personalLibrary: [{ id: "yt-release", availableOn: "2026-08-27" }] }), mk({ personalLibrary: [{ id: "yt-release", availableOn: "2026-08-26" }] }));
   check("F4d YouTube教材は同一IDのサーバー公開日更新を端末へ反映", MPrivateRelease.personalLibrary.length === 1 && MPrivateRelease.personalLibrary[0].availableOn === "2026-08-26");
+  const MPrivateLegacy = A.mergeStates(mk({ personalLibrary: [{ id: "youtube_20260826_TAMofmIVGLk_habit_01", availableOn: "2026-08-27" }] }), mk({ personalLibrary: [{ id: "youtube-TAMofmIVGLk", videoId: "TAMofmIVGLk", availableOn: "2026-08-26" }] }));
+  check("F4e 旧分割YouTube教材は動画ID単位で新1教材へ収束", MPrivateLegacy.personalLibrary.length === 1 && MPrivateLegacy.personalLibrary[0].id === "youtube-TAMofmIVGLk");
   const M4 = A.mergeStates(
     mk({ vocabBook: [{ term: "利回り", level: 1, date: "2026-08-20" }, { term: "系統連系", level: 3, date: "2026-08-20" }] }),
     mk({ vocabBook: [{ term: "利回り", level: 3, date: "2026-08-22" }, { term: "福利厚生", level: 2, date: "2026-08-21" }] }));
@@ -669,6 +671,7 @@ eval(js + "\nglobal.__app = { get state(){return state}, set state(v){state=v}, 
   check("F16b YouTube教材の自動登録ツールが存在し、秘密鍵は環境変数だけから読む",
     /SOKUGAN_SUPABASE_SERVICE_ROLE_KEY/.test(publisherSrc) && /headers:\s*Object\.assign\(\{ apikey: key, Authorization: `Bearer \$\{key\}`/.test(publisherSrc) && !/service_role\s*[:=]\s*["'][^"']{8,}/i.test(publisherSrc),
     fs.existsSync(youtubePublisher) ? "環境変数経由" : "tools/publish-private-youtube.js がない");
+  check("F16c YouTube取込は1動画1教材・中心概念付きのv2形式", /sokugan-private-youtube-v2/.test(publisherSrc) && /data\.passages\.length !== 1/.test(publisherSrc) && /coreConcept/.test(publisherSrc) && /selectionRationale/.test(publisherSrc));
 
   // ========== H. PWA・自動更新の配線 ==========
   const swSrc = fs.readFileSync(path.join(ROOT, "sw.js"), "utf8");
