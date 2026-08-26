@@ -2415,11 +2415,25 @@ async function sbFetch(path, opts) {
   if (auth && auth.access_token) headers.Authorization = "Bearer " + auth.access_token;
   return await fetch(cfg.url + path, Object.assign({}, o, { headers }));
 }
-// メールにワンタイムコードを送る（パスワード不要。スマホとPCで同じ手順）
+// メールにマジックリンクを送る（Supabase無料枠の標準メール。パスワード不要）
 async function syncSendCode(email) {
-  const res = await sbFetch("/auth/v1/otp", { method: "POST", body: JSON.stringify({ email, create_user: true }) });
-  if (!res.ok) throw new Error("コード送信に失敗しました (" + res.status + ")");
+  const res = await sbFetch("/auth/v1/otp", { method: "POST", body: JSON.stringify({
+    email, create_user: true, email_redirect_to: "https://wonleekorea-lab.github.io/sokugan/"
+  }) });
+  if (!res.ok) throw new Error("ログインメールの送信に失敗しました (" + res.status + ")");
   return true;
+}
+function authFromMagicLink() {
+  try {
+    const h = new URLSearchParams(String(location.hash || "").replace(/^#/, ""));
+    const accessToken = h.get("access_token"), refreshToken = h.get("refresh_token");
+    if (!accessToken || !refreshToken) return false;
+    const payload = JSON.parse(atob(accessToken.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")));
+    if (!payload || !payload.sub) return false;
+    saveAuth({ access_token: accessToken, refresh_token: refreshToken, user_id: payload.sub, email: payload.email || "" });
+    history.replaceState(null, "", location.pathname + location.search);
+    return true;
+  } catch (e) { return false; }
 }
 async function syncVerifyCode(email, code) {
   const res = await sbFetch("/auth/v1/verify", {
@@ -2572,16 +2586,11 @@ function renderSyncCard() {
     return `<div class="card" style="border-color:var(--blue)">
       <div class="card-title">端末間同期</div>
       <div class="card-subtitle">CROSS-DEVICE SYNC · ログインすると全端末で記録が1つになります</div>
-      <p class="muted" style="margin-bottom:8px">パスワードは使いません。メールに6桁のコードが届きます。スマホでも同じメールでログインすれば、履歴・語彙・目標・既読がまとまります。</p>
+      <p class="muted" style="margin-bottom:8px">パスワードは使いません。届いたメールの「Sign in」をタップすると、このアプリへ戻ってログインします。スマホでも同じメールでログインすれば、履歴・語彙・目標・既読がまとまります。</p>
       <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
         <input id="sync-email" type="email" inputmode="email" autocomplete="email" placeholder="you@example.com"
           style="flex:1;min-width:180px;padding:8px 10px;border:1px solid var(--border2);border-radius:8px;font-size:14px">
-        <button class="btn secondary small" onclick="uiSendCode()">コードを送る</button>
-      </div>
-      <div id="sync-code-row" style="display:none;gap:6px;margin-top:8px;flex-wrap:wrap;align-items:center">
-        <input id="sync-code" type="text" inputmode="numeric" autocomplete="one-time-code" placeholder="6桁コード"
-          style="flex:1;min-width:120px;padding:8px 10px;border:1px solid var(--border2);border-radius:8px;font-size:14px">
-        <button class="btn small" onclick="uiVerifyCode()">ログイン</button>
+        <button class="btn secondary small" onclick="uiSendCode()">ログインメールを送る</button>
       </div>
       <div id="sync-msg" class="small" style="margin-top:8px"></div>
     </div>`;
@@ -2606,9 +2615,7 @@ async function uiSendCode() {
   if (msg) msg.innerHTML = "送信中…";
   try {
     await syncSendCode(email);
-    const row = document.getElementById("sync-code-row");
-    if (row) row.style.display = "flex";
-    if (msg) msg.innerHTML = `✉️ ${esc(email)} にコードを送りました。届いた6桁を入力してください。`;
+    if (msg) msg.innerHTML = `✉️ ${esc(email)} にログインメールを送りました。メールの「Sign in」をタップしてください。`;
   } catch (e) { if (msg) msg.innerHTML = "⚠ " + esc(String(e.message || e)); }
 }
 async function uiVerifyCode() {
@@ -2629,6 +2636,7 @@ async function uiVerifyCode() {
 // INIT
 // =============================================================
 (async function init() {
+  const signedInFromLink = authFromMagicLink();
   relieveRatchetIfNeeded();
   await loadContent();
   await loadQaReport();
@@ -2656,6 +2664,7 @@ async function uiVerifyCode() {
       }
     } catch (e) {}
   }
+  if (signedInFromLink) showToast("✅ ログインしました。端末間同期を開始します");
   // PWA: Service Worker登録（GitHub Pages等のhttps配信時。鮮度はネットワーク優先で担保）
   try {
     if (typeof navigator !== "undefined" && "serviceWorker" in navigator &&
