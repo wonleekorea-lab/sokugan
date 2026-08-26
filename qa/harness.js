@@ -259,6 +259,7 @@ eval(js + "\nglobal.__app = { get state(){return state}, set state(v){state=v}, 
   check("B1 コンテンツがJSONからロードされた", A.content && A.content.date === daily.date, A.content && A.content.date);
   A.renderHome();
   check("B2 ホーム: 2本文を選んでから開始する導線を描画", screenEl().includes("今日、何を読む？") && screenEl().includes("日次記事・YouTube教材から2本") && screenEl().includes("選んだ2本で始める"));
+  check("B2a ホーム: YouTube教材はファイル選択でなく自動受取を案内", screenEl().includes("台本取得後にあなた専用ライブラリへ自動追加") && !screenEl().includes("personal-content-file"));
   check("B3 ホーム: 成長カーブ描画", screenEl().includes("成長カーブ"));
   // 鮮度ゲート（開始前に最新かを確認できる仕組み）
   check("B3a ホーム: 鮮度ゲート＋更新確認ボタン描画", screenEl().includes("更新を確認") && /fresh (ok|stale|err)/.test(screenEl()));
@@ -660,6 +661,11 @@ eval(js + "\nglobal.__app = { get state(){return state}, set state(v){state=v}, 
     `auth.uid()照合 ${(sqlSrc.match(/auth\.uid\(\)\s*=\s*user_id/g) || []).length}箇所`);
   check("F15c anonロールにはテーブル権限を与えていない", /revoke all on public\.sokugan_state from anon/i.test(sqlSrc));
   check("F16 index.htmlが設定ファイルを読み込む", html.includes("sokugan-config.js"));
+  const youtubePublisher = path.join(ROOT, "tools", "publish-private-youtube.js");
+  const publisherSrc = fs.existsSync(youtubePublisher) ? fs.readFileSync(youtubePublisher, "utf8") : "";
+  check("F16b YouTube教材の自動登録ツールが存在し、秘密鍵は環境変数だけから読む",
+    /SOKUGAN_SUPABASE_SERVICE_ROLE_KEY/.test(publisherSrc) && /headers:\s*Object\.assign\(\{ apikey: key, Authorization: `Bearer \$\{key\}`/.test(publisherSrc) && !/service_role\s*[:=]\s*["'][^"']{8,}/i.test(publisherSrc),
+    fs.existsSync(youtubePublisher) ? "環境変数経由" : "tools/publish-private-youtube.js がない");
 
   // ========== H. PWA・自動更新の配線 ==========
   const swSrc = fs.readFileSync(path.join(ROOT, "sw.js"), "utf8");
