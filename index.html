@@ -2423,6 +2423,20 @@ async function syncSendCode(email) {
   if (!res.ok) throw new Error("ログインメールの送信に失敗しました (" + res.status + ")");
   return true;
 }
+async function syncWithPassword(email, password, mode) {
+  const isSignup = mode === "signup";
+  const route = isSignup ? "/auth/v1/signup" : "/auth/v1/token?grant_type=password";
+  const res = await sbFetch(route, { method: "POST", body: JSON.stringify({ email, password }) });
+  if (!res.ok) {
+    let detail = "";
+    try { detail = (await res.json()).message || ""; } catch (e) {}
+    throw new Error(isSignup ? "登録に失敗しました" + (detail ? "（" + detail + "）" : "") : "メールアドレスまたはパスワードが違います");
+  }
+  const j = await res.json();
+  if (!j.access_token || !(j.user && j.user.id)) throw new Error("ログイン情報を受け取れませんでした");
+  saveAuth({ access_token: j.access_token, refresh_token: j.refresh_token, user_id: j.user.id, email: j.user.email || email });
+  return isSignup;
+}
 function authFromMagicLink() {
   try {
     const h = new URLSearchParams(String(location.hash || "").replace(/^#/, ""));
@@ -2586,11 +2600,14 @@ function renderSyncCard() {
     return `<div class="card" style="border-color:var(--blue)">
       <div class="card-title">端末間同期</div>
       <div class="card-subtitle">CROSS-DEVICE SYNC · ログインすると全端末で記録が1つになります</div>
-      <p class="muted" style="margin-bottom:8px">パスワードは使いません。届いたメールの「Sign in」をタップすると、このアプリへ戻ってログインします。スマホでも同じメールでログインすれば、履歴・語彙・目標・既読がまとまります。</p>
+      <p class="muted" style="margin-bottom:8px">メールリンクは使いません。最初にメールアドレスと専用パスワードを登録してください。以後はスマホとPCで同じ組合せを使えば、履歴・語彙・目標・既読がまとまります。</p>
       <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
         <input id="sync-email" type="email" inputmode="email" autocomplete="email" placeholder="you@example.com"
           style="flex:1;min-width:180px;padding:8px 10px;border:1px solid var(--border2);border-radius:8px;font-size:14px">
-        <button class="btn secondary small" onclick="uiSendCode()">ログインメールを送る</button>
+        <input id="sync-password" type="password" autocomplete="current-password" placeholder="専用パスワード（12字以上）"
+          style="flex:1;min-width:180px;padding:8px 10px;border:1px solid var(--border2);border-radius:8px;font-size:14px">
+        <button class="btn secondary small" onclick="uiPasswordAuth('signup')">はじめて登録</button>
+        <button class="btn small" onclick="uiPasswordAuth('signin')">ログイン</button>
       </div>
       <div id="sync-msg" class="small" style="margin-top:8px"></div>
     </div>`;
@@ -2628,6 +2645,21 @@ async function uiVerifyCode() {
     if (msg) msg.innerHTML = "✅ ログインしました。同期します…";
     const r = await syncNow("signin");
     showToast(r.ok ? (r.migrated ? "✅ この端末の記録をクラウドへ移行しました" : "✅ 同期しました") : "⚠ 同期は後で自動再試行します");
+    render();
+  } catch (e) { if (msg) msg.innerHTML = "⚠ " + esc(String(e.message || e)); }
+}
+async function uiPasswordAuth(mode) {
+  const email = ((document.getElementById("sync-email") || {}).value || "").trim();
+  const password = (document.getElementById("sync-password") || {}).value || "";
+  const msg = document.getElementById("sync-msg");
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { if (msg) msg.innerHTML = "⚠ メールアドレスの形式を確認してください"; return; }
+  if (password.length < 12) { if (msg) msg.innerHTML = "⚠ 専用パスワードは12文字以上にしてください"; return; }
+  if (msg) msg.innerHTML = mode === "signup" ? "登録中…" : "ログイン中…";
+  try {
+    const created = await syncWithPassword(email, password, mode);
+    const r = await syncNow(mode === "signup" ? "signup" : "signin");
+    if (msg) msg.innerHTML = created ? "✅ 登録して同期を有効にしました" : "✅ ログインして同期を有効にしました";
+    showToast(r.ok ? "✅ 端末間同期を開始しました" : "⚠ 同期は後で自動再試行します");
     render();
   } catch (e) { if (msg) msg.innerHTML = "⚠ " + esc(String(e.message || e)); }
 }
