@@ -971,6 +971,12 @@ function render() {
   if (view === "home") renderHome();
   else if (view === "history") renderHistory();
   else if (view === "about") renderAbout();
+  // session / anchor は操作途中の一時画面。同期完了時にホームを描き直して
+  // 途中画面を消さないため、ここでは明示的な遷移時だけ描画し直す。
+  else if (view === "session" && sess) {
+    if (sess.mode === "short") renderShortIntro(); else renderPacer();
+  } else if (view === "anchor" && anchorState) renderAnchorIntro();
+  else { view = "home"; renderHome(); }
   window.scrollTo(0, 0);
 }
 function renderHeader() {
@@ -988,8 +994,10 @@ function renderHeader() {
 function renderNav() {
   if (sess) { document.getElementById("nav").innerHTML = ""; return; }
   const tabs = [["home","トレーニング"],["history","記録"],["about","メソッド"]];
+  // セッション/測定の結果画面では、戻り先であるホームを選択中として見せる。
+  const activeView = (view === "session" || view === "anchor") ? "home" : view;
   document.getElementById("nav").innerHTML = `
-    <div class="nav">${tabs.map(([k,l]) => `<button class="${view===k?"active":""}" onclick="go('${k}')">${l}</button>`).join("")}</div>`;
+    <div class="nav">${tabs.map(([k,l]) => `<button class="${activeView===k?"active":""}" onclick="go('${k}')">${l}</button>`).join("")}</div>`;
 }
 // =============================================================
 // HOME
@@ -1321,6 +1329,9 @@ function startSession(mode = "full", selectedIds) {
     vocabN: (menu.id === "vocab" || menu.weak === "vocab") ? 6 : 3,
     spanN: (menu.weak === "catch") ? 12 : SPAN_TRIALS,
   };
+  // saveState() はログイン済みなら自動同期を予約する。先に画面を session と
+  // 明示しておかないと、同期完了の描画更新がホーム画面を上書きしてしまう。
+  view = "session";
   saveState();
   if (mode === "short") renderShortIntro();
   else renderPacer();
@@ -1365,7 +1376,7 @@ function abortSession() {
     });
     saveState();
   }
-  sess = null; render();
+  sess = null; view = "home"; render();
 }
 // ---------- PHASE 0: 文中チャンクペーサー ----------
 let pacerTimer = null;
@@ -2053,6 +2064,7 @@ function startAnchor() {
     questions: base.questions.map(q => shuffleQuestionOptions({ ...q, q: normalizeNumerals(q.q), opts: q.opts.map(normalizeNumerals), rationale: normalizeNumerals(q.rationale) }))
   };
   anchorState = { a, init: null, answers: [] };
+  view = "anchor";
   renderAnchorIntro();
 }
 function renderAnchorIntro() {

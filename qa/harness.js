@@ -80,7 +80,7 @@ const _si = global.setInterval;
 global.setInterval = (f, d) => _si(f, Math.max(1, Math.min(d || 0, 5)));
 
 // ---------- アプリ実コードを実行 ----------
-eval(js + "\nglobal.__app = { get state(){return state}, set state(v){state=v}, get sess(){return sess}, get content(){return content}, get syncState(){return syncState}, DEFAULT_CONTENT, ANCHOR_POOL, chunkText, getChunks, validChunks, chunkPool, spanTrialSet, pickSessionPassages, selectedPassageIds, togglePassageSelection, startSession, abortSession, renderShortIntro, renderShortResult, unseenPassages, allPassages, personalPassages, normalizePersonalPassage, importPersonalContent, daysFromToday, passageKey, passageKeys, isPassageSeen, markPassagesSeen, markPassageRead, textFingerprint, sourceUrlKey, renderHome, renderHistory, contentStatus, renderFreshnessPanel, guardedStart, renderPacer, renderPacerQuiz, answerPacer, renderSpanIntro, answerSpan, finishSpan, renderRead, startReading, finishReading, renderQuiz, finishQuiz, renderReread, startReread, finishReread, renderResult, textStats, adjustSpeed, makeDeepCloze, answerDeepCloze, normalizeNumerals, parseKanjiNum, startAnchor, renderAnchorRead, startAnchorRead, finishAnchorRead, renderAnchorQuiz, answerAnchor, anchorDue, todayMenu, goalProgress, gazeSpan, sessionKeyTerms, passageTakeaway, finishVocab, proceedAfterCloze1, weakestSkill, feedbackGenreScore, preferByFeedback, recordContentFeedback, renderContentFeedback, contentFeedbackKey, defaultState, newSessionId, stampField, saveState, mergeStates, unionBy, histKey, syncCfg, syncEnabled, signedIn, loadAuth, saveAuth, syncNow, pullRemote, pushRemote, scheduleSync, flushSyncQueue, syncStatusText, renderSyncCard, renderSyncLine, syncSignOut, KEY, AUTH_KEY };");
+eval(js + "\nglobal.__app = { get state(){return state}, set state(v){state=v}, get sess(){return sess}, get view(){return view}, get content(){return content}, get syncState(){return syncState}, DEFAULT_CONTENT, ANCHOR_POOL, chunkText, getChunks, validChunks, chunkPool, spanTrialSet, pickSessionPassages, selectedPassageIds, togglePassageSelection, startSession, abortSession, renderShortIntro, renderShortResult, unseenPassages, allPassages, personalPassages, normalizePersonalPassage, importPersonalContent, daysFromToday, passageKey, passageKeys, isPassageSeen, markPassagesSeen, markPassageRead, textFingerprint, sourceUrlKey, renderHome, renderHistory, contentStatus, renderFreshnessPanel, guardedStart, renderPacer, renderPacerQuiz, answerPacer, renderSpanIntro, answerSpan, finishSpan, renderRead, startReading, finishReading, renderQuiz, finishQuiz, renderReread, startReread, finishReread, renderResult, textStats, adjustSpeed, makeDeepCloze, answerDeepCloze, normalizeNumerals, parseKanjiNum, startAnchor, renderAnchorRead, startAnchorRead, finishAnchorRead, renderAnchorQuiz, answerAnchor, anchorDue, todayMenu, goalProgress, gazeSpan, sessionKeyTerms, passageTakeaway, finishVocab, proceedAfterCloze1, weakestSkill, feedbackGenreScore, preferByFeedback, recordContentFeedback, renderContentFeedback, contentFeedbackKey, defaultState, newSessionId, stampField, saveState, mergeStates, unionBy, histKey, syncCfg, syncEnabled, signedIn, loadAuth, saveAuth, syncNow, pullRemote, pushRemote, scheduleSync, flushSyncQueue, syncStatusText, renderSyncCard, renderSyncLine, syncSignOut, KEY, AUTH_KEY };");
 
 (async () => {
   await new Promise(r => _st(r, 80)); // init完了待ち
@@ -602,6 +602,18 @@ eval(js + "\nglobal.__app = { get state(){return state}, set state(v){state=v}, 
     (mk1.row.state.history || []).length === 1 && mk1.row.state.history[0].sessionId === "LOCAL1",
     `ok=${r1.ok} migrated=${r1.migrated} pushed=${mk1.row ? (mk1.row.state.history || []).length : "none"}件`);
   check("F9b ローカル履歴が同期後も残っている", A.state.history.some(h => h.sessionId === "LOCAL1"));
+
+  // F9c: 実機で起きた回帰。開始保存が自動同期を予約し、同期完了がホームを
+  // 描き直すとショート導入画面が即座に消えてしまう。選択→開始→自動同期完了まで
+  // の実際の経路で、進行画面が残ることを確認する。
+  A.state = A.defaultState();
+  A.state.selectedPassageIds = [daily.passages[0].id];
+  A.guardedStart("short");
+  const shortStarted = A.sess && A.sess.mode === "short" && A.view === "session" && screenEl().includes("約3〜5分");
+  await new Promise(r => _st(r, 20));
+  check("F9c ショート開始後の自動同期が導入画面をホームへ戻さない",
+    shortStarted && A.sess && A.sess.mode === "short" && A.view === "session" && screenEl().includes("約3〜5分"),
+    `view=${A.view} screen=${screenEl().includes("約3〜5分") ? "short" : "other"}`);
 
   // F10: 2端末競合 — スマホとPCの両方で増えた分をどちらも残す
   const mk2 = installSyncMock({
