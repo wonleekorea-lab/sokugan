@@ -80,7 +80,7 @@ const _si = global.setInterval;
 global.setInterval = (f, d) => _si(f, Math.max(1, Math.min(d || 0, 5)));
 
 // ---------- アプリ実コードを実行 ----------
-eval(js + "\nglobal.__app = { get state(){return state}, set state(v){state=v}, get sess(){return sess}, get content(){return content}, get syncState(){return syncState}, DEFAULT_CONTENT, ANCHOR_POOL, chunkText, getChunks, validChunks, chunkPool, spanTrialSet, pickSessionPassages, startSession, abortSession, renderShortIntro, renderShortResult, unseenPassages, allPassages, personalPassages, normalizePersonalPassage, importPersonalContent, daysFromToday, passageKey, passageKeys, isPassageSeen, markPassagesSeen, markPassageRead, textFingerprint, sourceUrlKey, renderHome, renderHistory, contentStatus, renderFreshnessPanel, guardedStart, renderPacer, renderPacerQuiz, answerPacer, renderSpanIntro, answerSpan, finishSpan, renderRead, startReading, finishReading, renderQuiz, finishQuiz, renderReread, startReread, finishReread, renderResult, textStats, adjustSpeed, makeDeepCloze, answerDeepCloze, normalizeNumerals, parseKanjiNum, startAnchor, renderAnchorRead, startAnchorRead, finishAnchorRead, renderAnchorQuiz, answerAnchor, anchorDue, todayMenu, goalProgress, gazeSpan, sessionKeyTerms, passageTakeaway, finishVocab, proceedAfterCloze1, weakestSkill, feedbackGenreScore, preferByFeedback, recordContentFeedback, renderContentFeedback, contentFeedbackKey, defaultState, newSessionId, stampField, saveState, mergeStates, unionBy, histKey, syncCfg, syncEnabled, signedIn, loadAuth, saveAuth, syncNow, pullRemote, pushRemote, scheduleSync, flushSyncQueue, syncStatusText, renderSyncCard, renderSyncLine, syncSignOut, KEY, AUTH_KEY };");
+eval(js + "\nglobal.__app = { get state(){return state}, set state(v){state=v}, get sess(){return sess}, get content(){return content}, get syncState(){return syncState}, DEFAULT_CONTENT, ANCHOR_POOL, chunkText, getChunks, validChunks, chunkPool, spanTrialSet, pickSessionPassages, selectedPassageIds, togglePassageSelection, startSession, abortSession, renderShortIntro, renderShortResult, unseenPassages, allPassages, personalPassages, normalizePersonalPassage, importPersonalContent, daysFromToday, passageKey, passageKeys, isPassageSeen, markPassagesSeen, markPassageRead, textFingerprint, sourceUrlKey, renderHome, renderHistory, contentStatus, renderFreshnessPanel, guardedStart, renderPacer, renderPacerQuiz, answerPacer, renderSpanIntro, answerSpan, finishSpan, renderRead, startReading, finishReading, renderQuiz, finishQuiz, renderReread, startReread, finishReread, renderResult, textStats, adjustSpeed, makeDeepCloze, answerDeepCloze, normalizeNumerals, parseKanjiNum, startAnchor, renderAnchorRead, startAnchorRead, finishAnchorRead, renderAnchorQuiz, answerAnchor, anchorDue, todayMenu, goalProgress, gazeSpan, sessionKeyTerms, passageTakeaway, finishVocab, proceedAfterCloze1, weakestSkill, feedbackGenreScore, preferByFeedback, recordContentFeedback, renderContentFeedback, contentFeedbackKey, defaultState, newSessionId, stampField, saveState, mergeStates, unionBy, histKey, syncCfg, syncEnabled, signedIn, loadAuth, saveAuth, syncNow, pullRemote, pushRemote, scheduleSync, flushSyncQueue, syncStatusText, renderSyncCard, renderSyncLine, syncSignOut, KEY, AUTH_KEY };");
 
 (async () => {
   await new Promise(r => _st(r, 80)); // init完了待ち
@@ -258,7 +258,7 @@ eval(js + "\nglobal.__app = { get state(){return state}, set state(v){state=v}, 
   // ========== B. UI描画検査（実コードのE2E） ==========
   check("B1 コンテンツがJSONからロードされた", A.content && A.content.date === daily.date, A.content && A.content.date);
   A.renderHome();
-  check("B2 ホーム: 読む本文を選んでから開始する導線を描画", screenEl().includes("今日、何を読む？") && screenEl().includes("このテーマで始める") && screenEl().includes("ショート"));
+  check("B2 ホーム: 2本文を選んでから開始する導線を描画", screenEl().includes("今日、何を読む？") && screenEl().includes("日次記事・YouTube教材から2本") && screenEl().includes("選んだ2本で始める"));
   check("B3 ホーム: 成長カーブ描画", screenEl().includes("成長カーブ"));
   // 鮮度ゲート（開始前に最新かを確認できる仕組み）
   check("B3a ホーム: 鮮度ゲート＋更新確認ボタン描画", screenEl().includes("更新を確認") && /fresh (ok|stale|err)/.test(screenEl()));
@@ -274,10 +274,17 @@ eval(js + "\nglobal.__app = { get state(){return state}, set state(v){state=v}, 
   check("B3f YouTube由来の私用教材は翌日まで表示せず、同期対象へ保存", imported.count === 1 && A.state.personalLibrary.length === 1 && A.personalPassages().length === 0);
   A.state.personalLibrary[0].availableOn = A.daysFromToday(0);
   check("B3g 解禁日以降の私用教材は本文選択肢に加わる", A.personalPassages().length === 1 && A.allPassages().some(p => p.id === "youtube-private-01"));
+  A.state.selectedPassageIds = [];
+  A.togglePassageSelection(daily.passages[0].id);
+  A.togglePassageSelection("youtube-private-01");
+  check("B3h 日次記事とYouTube教材を2本タップし、選択順を保持", A.selectedPassageIds().join("|") === `${daily.passages[0].id}|youtube-private-01`, A.selectedPassageIds().join("|"));
+  const twoPicked = A.pickSessionPassages("full", A.selectedPassageIds());
+  check("B3i 選んだ2本を本文①・本文②として開始", twoPicked && twoPicked.p1.id === daily.passages[0].id && twoPicked.p2.id === "youtube-private-01", twoPicked && `${twoPicked.p1.id}|${twoPicked.p2.id}`);
+  A.state.selectedPassageIds = [];
   A.startSession();
   check("B4 セッション開始 (warmChunks生成)", A.sess && A.sess.warmChunks.length >= 20, A.sess && A.sess.warmChunks.length + "chunks");
   const selectedId = daily.passages[1].id;
-  A.startSession("short", selectedId);
+  A.startSession("short", [selectedId]);
   check("B4a 選んだ本文をショート版の先頭に使う", A.sess && A.sess.p1 && A.sess.p1.id === selectedId, A.sess && A.sess.p1 && A.sess.p1.id);
   A.startSession();
   A.renderPacer();
