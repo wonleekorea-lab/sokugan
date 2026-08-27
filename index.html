@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Sokugan 3.2 — Reading Fluency Lab</title>
+<title>Sokugan 3.3 — Reading Fluency Lab</title>
 <meta name="theme-color" content="#f6f7f9">
 <link rel="manifest" href="./manifest.json">
 <meta name="mobile-web-app-capable" content="yes">
@@ -81,6 +81,8 @@ a{color:var(--blue)}
 .opt.correct{border-color:var(--green);background:var(--green-dim)}
 .opt.wrong{border-color:var(--coral);background:var(--coral-dim)}
 .opt:disabled{cursor:default;opacity:.85}
+.passage-choice{margin-bottom:0}
+.passage-choice.chosen{background:var(--blue-dim);border-color:var(--blue)}
 .rationale{background:var(--blue-dim);border:1px solid rgba(88,166,255,.3);border-radius:10px;padding:10px 13px;font-size:13px;margin:6px 0 12px}
 .phase-dots{display:flex;gap:6px;justify-content:center;margin-bottom:14px}
 .phase-dots span{width:26px;height:5px;border-radius:99px;background:var(--card2)}
@@ -147,7 +149,7 @@ button{touch-action:manipulation}
   <div id="nav"></div>
   <div id="banner"></div>
   <div id="screen"></div>
-  <div class="footer-note">Sokugan 3.2 · cross-device synced reading fluency lab</div>
+  <div class="footer-note">Sokugan 3.3 · cross-device synced reading fluency lab</div>
 </div>
 <script>
 // =============================================================
@@ -207,7 +209,7 @@ const DEFAULT_CONTENT = {
 // =============================================================
 function defaultState() {
   return {
-    version: 3,
+    version: 4,
     migratedFromV2: false,
     migratedSessions: 0,
     baselineSpeed: null,
@@ -226,8 +228,6 @@ function defaultState() {
     lastWinCheck: null,
     clarityFlags: [],     // ユーザーが「わかりにくい」と報告した設問 {date, genre, q}
     contentFeedback: [],  // 読後評価 {date, passageId, genre, rating, title}。次回の選定を個人化する材料
-    selectedPassageId: null, // 開始前に本人が選んだ本文。選択の主体性を残す
-    selectedPassageIds: [], // じっくり版で読む2本。順番もこの配列で保持する
     personalLibrary: [], // 非公開の本人用教材。YouTube台本から作る翌日解禁の学習文を保存
     goal: null,           // {target, baseline, setAt, why, hit:[]} 週次の具体的困難目標(Locke&Latham)
     vocabBook: [],        // 語彙道場の習得記録 {term, plain, date, level} level:1=初見,2=曖昧,3=説明できる
@@ -315,6 +315,28 @@ function saveState() {
   try { scheduleSync("save"); } catch (e) {}
 }
 let state = loadState();
+// 画面操作中の状態は同期データから分離する。選択中の本文や表示中の画面は
+// この端末で「今から始める」ための下書きであり、他端末の同期応答で上書きしない。
+const UI_KEY = "sokugan_ui_v1";
+function normalizeSelection(ids) {
+  return [...new Set((Array.isArray(ids) ? ids : []).filter(id => typeof id === "string" && id))].slice(0, 2);
+}
+function loadUiState(legacyState) {
+  let saved = null;
+  try { saved = JSON.parse(localStorage.getItem(UI_KEY) || "null"); } catch (e) {}
+  const legacy = legacyState || {};
+  const selection = saved && Array.isArray(saved.selectionDraft)
+    ? saved.selectionDraft
+    : [...(legacy.selectedPassageIds || []), ...(legacy.selectedPassageId ? [legacy.selectedPassageId] : [])];
+  return { route: "home", selectionDraft: normalizeSelection(selection) };
+}
+function saveUiState() {
+  try { localStorage.setItem(UI_KEY, JSON.stringify({ selectionDraft: normalizeSelection(ui.selectionDraft) })); } catch (e) {}
+}
+let ui = loadUiState(state);
+// 旧版が同期していた選択状態は一度だけUI下書きへ移す。以降はクラウドへ送らない。
+delete state.selectedPassageId;
+delete state.selectedPassageIds;
 let content = DEFAULT_CONTENT;
 let contentSource = "fallback";
 let sess = null;
@@ -964,11 +986,12 @@ function relieveRatchetIfNeeded() {
 // =============================================================
 // NAV & HEADER
 // =============================================================
-let view = "home";
-function go(v) { view = v; render(); }
+let view = ui.route;
+function setRoute(v) { ui.route = v; view = v; }
+function go(v) { setRoute(v); render(); }
 function render() {
   renderHeader(); renderNav();
-  if (view === "home") renderHome();
+  if (ui.route === "home" && !sess) renderHome();
   else if (view === "history") renderHistory();
   else if (view === "about") renderAbout();
   // session / anchor は操作途中の一時画面。同期完了時にホームを描き直して
@@ -976,14 +999,14 @@ function render() {
   else if (view === "session" && sess) {
     if (sess.mode === "short") renderShortIntro(); else renderPacer();
   } else if (view === "anchor" && anchorState) renderAnchorIntro();
-  else { view = "home"; renderHome(); }
+  else { setRoute("home"); renderHome(); }
   window.scrollTo(0, 0);
 }
 function renderHeader() {
   const t = today();
   document.getElementById("header").innerHTML = `
     <div class="header">
-      <div class="logo">速眼<small>SOKUGAN 3.2</small></div>
+      <div class="logo">速眼<small>SOKUGAN 3.3</small></div>
       <div class="header-stats">
         <div>連続 <b>${state.streak}</b>日</div>
         <div>累計 <b>${totalTrainingDays()}</b>日</div>
@@ -1034,13 +1057,14 @@ function renderHome() {
         ${yestBest ? `<span class="delta-chip ${t > yestBest ? "up" : "flat"}">昨回実績 ${yestBest} 比 ${t - yestBest >= 0 ? "+" : ""}${t - yestBest}</span>` : ""}
       </div>
       ${todayBest ? `<p class="muted" style="margin:4px 0 10px">今日のベスト: <b style="color:var(--ink)">${todayBest}字/分</b>${deltaVsYest != null ? `（昨回比 ${deltaVsYest >= 0 ? "+" : ""}${deltaVsYest}）` : ""}</p>` : `<p class="muted" style="margin:4px 0 10px">クリアすると明日の目標が約2.5%上がります。昨日の自分が今日のライバルです。</p>`}
-      <div style="margin-top:10px"><div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:5px"><div class="small">今日、何を読む？ 日次記事・YouTube教材から2本</div><b style="font-size:12px;color:${selectedIds.length === 2 ? "var(--green)" : "var(--ink2)"}">${selectedIds.length}/2本</b></div>
-      <div style="display:grid;gap:7px;max-height:306px;overflow:auto;padding-right:2px">${selectable.map(p => { const order = selectedIds.indexOf(p.id); const isYoutube = p.kind === "youtube" || /^youtube-/.test(p.id); return `<button class="opt ${order >= 0 ? "chosen" : ""}" style="width:100%;min-height:0;text-align:left;padding:10px 12px;background:${order >= 0 ? "var(--blue-dim)" : "var(--card)"};border-color:${order >= 0 ? "var(--blue)" : "var(--border2)"}" onclick="togglePassageSelection(decodeURIComponent('${encodeURIComponent(p.id)}'))"><div style="display:flex;gap:7px;align-items:center"><span class="tag" style="font-size:10px">${order >= 0 ? `本文${order + 1}` : (isYoutube ? "YouTube教材" : esc(genreOf(p)))}</span>${isYoutube ? `<span class="small">${esc(genreOf(p))}</span>` : ""}</div><div style="font-size:13px;font-weight:700;line-height:1.45;margin-top:4px">${esc(p.title)}</div></button>`; }).join("") || `<p class="small">選べる未読教材がありません。</p>`}</div></div>
+      <div style="margin-top:10px"><div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:5px"><div class="small">今日、何を読む？ 日次記事・YouTube教材から2本</div><b id="selected-passage-count" style="font-size:12px;color:${selectedIds.length === 2 ? "var(--green)" : "var(--ink2)"}">${selectedIds.length}/2本</b></div>
+      <div id="passage-list" style="display:grid;gap:7px;max-height:306px;overflow:auto;padding-right:2px">${selectable.map(p => { const order = selectedIds.indexOf(p.id); const isYoutube = p.kind === "youtube" || /^youtube-/.test(p.id); const defaultLabel = isYoutube ? "YouTube教材" : esc(genreOf(p)); return `<button class="opt passage-choice ${order >= 0 ? "chosen" : ""}" data-passage-id="${encodeURIComponent(p.id)}" style="width:100%;min-height:0;text-align:left;padding:10px 12px" onclick="togglePassageSelection(decodeURIComponent('${encodeURIComponent(p.id)}'))"><div style="display:flex;gap:7px;align-items:center"><span class="tag" data-selection-label data-default-label="${defaultLabel}" style="font-size:10px">${order >= 0 ? `本文${order + 1}` : defaultLabel}</span>${isYoutube ? `<span class="small">${esc(genreOf(p))}</span>` : ""}</div><div style="font-size:13px;font-weight:700;line-height:1.45;margin-top:4px">${esc(p.title)}</div></button>`; }).join("") || `<p class="small">選べる未読教材がありません。</p>`}</div></div>
       <div class="small" style="margin:8px 0 2px;padding:8px 10px;border-radius:8px;background:var(--blue-dim)">🎬 YouTube教材は、台本取得後にあなた専用ライブラリへ自動追加されます。${syncEnabled() && signedIn() ? "スマホではアプリを開くと自動同期します。" : "自動受取には「記録」から端末間同期を1回だけ設定してください。"}</div>
       <div class="grid2" style="margin-top:8px">
-        <button class="btn ${fr.isStale ? "secondary" : ""}" onclick="guardedStart('full')" ${unseenN < 3 || selectedIds.length !== 2 ? "disabled" : ""}>選んだ2本で始める<br><span style="font-size:11px;font-weight:500">じっくり 12分</span></button>
-        <button class="btn secondary" onclick="guardedStart('short')" ${unseenN < 1 || selectedIds.length < 1 ? "disabled" : ""}>1本でショート<br><span style="font-size:11px;font-weight:500">3〜5分</span></button>
+        <button id="start-full" class="btn ${fr.isStale ? "secondary" : ""}" onclick="guardedStart('full')" ${unseenN < 3 || selectedIds.length !== 2 ? "disabled" : ""}>選んだ2本で始める<br><span style="font-size:11px;font-weight:500">じっくり 12分</span></button>
+        <button id="start-short" class="btn secondary" onclick="guardedStart('short')" ${unseenN < 1 || selectedIds.length !== 1 ? "disabled" : ""}>1本でショート<br><span style="font-size:11px;font-weight:500">3〜5分</span></button>
       </div>
+      <div id="short-selection-hint" class="small" style="margin-top:5px;${selectedIds.length === 2 ? "" : "display:none"}">ショート版は本文を1本だけ選んでください。</div>
       ${unseenN < 1 ? `<div class="banner info" style="margin-top:8px">🏁 <b>本日分を完走</b>しました（未読0本）。既読を混ぜての再表示はしません。上の「更新を確認」で新着を待ってください。</div>` : unseenN < 3 ? `<div class="banner info" style="margin-top:8px">未読が${unseenN}本のため、ショート版で最後まで重複なく読めます。</div>` : ""}
       ${fr.isStale ? `<p class="small" style="margin-top:8px;color:var(--gold)">⚠ 表示中のコンテンツは <b>${fr.date}</b> 分です。最新でない可能性があるため、上の「更新を確認」を押すか、開始時に確認します。</p>` : ""}
       ${gp ? `
@@ -1188,9 +1212,33 @@ function preferByFeedback(passages) {
   return [...passages].sort((a, b) => feedbackGenreScore(genreOf(b)) - feedbackGenreScore(genreOf(a)));
 }
 function selectedPassageIds() {
-  const ids = Array.isArray(state.selectedPassageIds) ? state.selectedPassageIds : [];
-  // 旧版の1本選択も初回だけ引き継ぐ
-  return [...new Set([...ids, ...(state.selectedPassageId ? [state.selectedPassageId] : [])])].slice(0, 2);
+  // 古い日付の本文や既読本文を選びっぱなしにしない。選択は同期対象ではなく
+  // この端末の開始下書きであり、表示できる未読本文だけを有効にする。
+  const available = new Set(unseenPassages().map(p => p.id));
+  const ids = normalizeSelection(ui.selectionDraft).filter(id => available.has(id));
+  if (ids.length !== ui.selectionDraft.length) { ui.selectionDraft = ids; saveUiState(); }
+  return ids;
+}
+function patchPassageSelectionUi() {
+  const list = document.getElementById("passage-list");
+  if (!list || !list.querySelectorAll) return false;
+  const ids = selectedPassageIds();
+  list.querySelectorAll("button[data-passage-id]").forEach(btn => {
+    const id = decodeURIComponent(btn.getAttribute("data-passage-id") || "");
+    const order = ids.indexOf(id);
+    btn.classList.toggle("chosen", order >= 0);
+    const label = btn.querySelector("[data-selection-label]");
+    if (label) label.textContent = order >= 0 ? `本文${order + 1}` : (label.getAttribute("data-default-label") || "教材");
+  });
+  const count = document.getElementById("selected-passage-count");
+  if (count) { count.textContent = `${ids.length}/2本`; count.style.color = ids.length === 2 ? "var(--green)" : "var(--ink2)"; }
+  const full = document.getElementById("start-full");
+  if (full) full.disabled = ids.length !== 2 || unseenPassages().length < 3;
+  const short = document.getElementById("start-short");
+  if (short) short.disabled = ids.length !== 1 || unseenPassages().length < 1;
+  const hint = document.getElementById("short-selection-hint");
+  if (hint) hint.style.display = ids.length === 2 ? "" : "none";
+  return true;
 }
 function togglePassageSelection(id) {
   const ids = selectedPassageIds();
@@ -1198,8 +1246,10 @@ function togglePassageSelection(id) {
   if (pos >= 0) ids.splice(pos, 1);
   else if (ids.length < 2) ids.push(id);
   else { showToast("読む本文は2本まで選べます。選択済みをもう一度タップすると外せます"); return; }
-  state.selectedPassageIds = ids; state.selectedPassageId = ids[0] || null;
-  saveState(); renderHome();
+  ui.selectionDraft = ids;
+  saveUiState();
+  // 選択だけでは同期しない。PCで一覧を先頭へ戻さず、ネットワーク遅延にも影響されない。
+  if (!patchPassageSelectionUi()) renderHome();
 }
 function pickSessionPassages(mode = "full", selectedIds) {
   const pool = preferByFeedback(unseenPassages());
@@ -1296,14 +1346,14 @@ function guardedStart(mode = "full") {
   }
   const ids = selectedPassageIds();
   if (mode === "full" && ids.length !== 2) { showToast("一覧から読みたい本文を2本選んでください"); return; }
-  if (mode === "short" && ids.length < 1) { showToast("一覧から本文を1本選んでください"); return; }
+  if (mode === "short" && ids.length !== 1) { showToast("ショート版は一覧から本文を1本だけ選んでください"); return; }
   startSession(mode, ids);
 }
 function startSession(mode = "full", selectedIds) {
   const picked = pickSessionPassages(mode, selectedIds);
   if (!picked) {
     showToast(mode === "full" ? "未読が3本未満です。ショート版か次の更新をお待ちください" : "🏁 本日分を完走しました。次の更新をお待ちください");
-    if (view === "home") renderHome();
+    if (ui.route === "home" && !sess) renderHome();
     return;
   }
   const ts = ensureTodaySession();
@@ -1331,7 +1381,10 @@ function startSession(mode = "full", selectedIds) {
   };
   // saveState() はログイン済みなら自動同期を予約する。先に画面を session と
   // 明示しておかないと、同期完了の描画更新がホーム画面を上書きしてしまう。
-  view = "session";
+  setRoute("session");
+  // 開始に使った本文はsessへ確定済み。選択下書きは次回ホームに持ち越さない。
+  ui.selectionDraft = [];
+  saveUiState();
   saveState();
   if (mode === "short") renderShortIntro();
   else renderPacer();
@@ -1376,7 +1429,7 @@ function abortSession() {
     });
     saveState();
   }
-  sess = null; view = "home"; render();
+  sess = null; setRoute("home"); render();
 }
 // ---------- PHASE 0: 文中チャンクペーサー ----------
 let pacerTimer = null;
@@ -2064,7 +2117,7 @@ function startAnchor() {
     questions: base.questions.map(q => shuffleQuestionOptions({ ...q, q: normalizeNumerals(q.q), opts: q.opts.map(normalizeNumerals), rationale: normalizeNumerals(q.rationale) }))
   };
   anchorState = { a, init: null, answers: [] };
-  view = "anchor";
+  setRoute("anchor");
   renderAnchorIntro();
 }
 function renderAnchorIntro() {
@@ -2432,10 +2485,21 @@ function mergeStates(local, remote) {
   }
   out.fieldTs = ft;
   out.updatedAt = maxStr(local.updatedAt, remote.updatedAt);
+  // 3.2までの選択状態は同期しない。一時的な開始下書きを古い端末応答で
+  // 巻き戻さないため、旧クラウド行に残っていてもマージ結果から除く。
+  delete out.selectedPassageId;
+  delete out.selectedPassageIds;
   return out;
 }
 
 // ---------- 通信 ----------
+function syncableState(s) {
+  // UI下書きはこの端末だけの状態。同期ペイロードへ混ぜない。
+  const out = Object.assign({}, s || {});
+  delete out.selectedPassageId;
+  delete out.selectedPassageIds;
+  return out;
+}
 async function sbFetch(path, opts) {
   const cfg = syncCfg();
   if (!cfg) throw new Error("同期が未設定です");
@@ -2503,7 +2567,8 @@ async function refreshAuth() {
 async function syncSignOut() {
   saveAuth(null);
   syncState = { status: syncEnabled() ? "needsAuth" : "off", lastSyncedAt: null, error: null, pending: false, inFlight: false };
-  if (view === "home") renderHome(); else if (view === "history") renderHistory();
+  if (!sess && !anchorState && ui.route === "home") renderHome();
+  else if (!sess && !anchorState && ui.route === "history") renderHistory();
 }
 async function pullRemote() {
   let res = await sbFetch("/rest/v1/" + SYNC_TABLE + "?select=state,rev", { method: "GET" });
@@ -2518,7 +2583,8 @@ async function pullRemote() {
 // 戻り値 true=書けた / false=rev衝突（他端末が先に書いた→再pullして再試行）
 async function pushRemote(stateObj, rev) {
   const auth = loadAuth();
-  const body = { state: stateObj, device_id: stateObj.deviceId || null };
+  const syncStateObj = syncableState(stateObj);
+  const body = { state: syncStateObj, device_id: syncStateObj.deviceId || null };
   if (rev == null) {
     body.user_id = auth.user_id; body.rev = 1;
     const res = await sbFetch("/rest/v1/" + SYNC_TABLE,
@@ -2551,7 +2617,7 @@ async function syncNow(reason) {
       const remoteState = row && row.state && Object.keys(row.state).length ? row.state : null;
       if (!remoteState) migrated = true;          // クラウドが空 = 初回。ローカルを移行する（消さない）
       const merged = remoteState ? mergeStates(state, remoteState) : state;
-      state = merged;
+      state = syncableState(merged);
       try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {}
       if (await pushRemote(state, row ? row.rev : null)) {
         syncState.status = "ok"; syncState.lastSyncedAt = new Date().toISOString();
@@ -2569,7 +2635,9 @@ async function syncNow(reason) {
   } finally {
     syncState.inFlight = false;
     renderSyncStatus();
-    if (view === "home") renderHome(); else if (view === "history") renderHistory();
+    // 同期はデータだけを更新する。進行中のセッション/アンカーへは一切描画しない。
+    if (!sess && !anchorState && ui.route === "home") renderHome();
+    else if (!sess && !anchorState && ui.route === "history") renderHistory();
   }
   return result;
 }

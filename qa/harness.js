@@ -80,7 +80,7 @@ const _si = global.setInterval;
 global.setInterval = (f, d) => _si(f, Math.max(1, Math.min(d || 0, 5)));
 
 // ---------- アプリ実コードを実行 ----------
-eval(js + "\nglobal.__app = { get state(){return state}, set state(v){state=v}, get sess(){return sess}, get view(){return view}, get content(){return content}, get syncState(){return syncState}, DEFAULT_CONTENT, ANCHOR_POOL, chunkText, getChunks, validChunks, chunkPool, spanTrialSet, pickSessionPassages, selectedPassageIds, togglePassageSelection, startSession, abortSession, renderShortIntro, renderShortResult, unseenPassages, allPassages, personalPassages, normalizePersonalPassage, importPersonalContent, daysFromToday, passageKey, passageKeys, isPassageSeen, markPassagesSeen, markPassageRead, textFingerprint, sourceUrlKey, renderHome, renderHistory, contentStatus, renderFreshnessPanel, guardedStart, renderPacer, renderPacerQuiz, answerPacer, renderSpanIntro, answerSpan, finishSpan, renderRead, startReading, finishReading, renderQuiz, finishQuiz, renderReread, startReread, finishReread, renderResult, textStats, adjustSpeed, makeDeepCloze, answerDeepCloze, normalizeNumerals, parseKanjiNum, startAnchor, renderAnchorRead, startAnchorRead, finishAnchorRead, renderAnchorQuiz, answerAnchor, anchorDue, todayMenu, goalProgress, gazeSpan, sessionKeyTerms, passageTakeaway, finishVocab, proceedAfterCloze1, weakestSkill, feedbackGenreScore, preferByFeedback, recordContentFeedback, renderContentFeedback, contentFeedbackKey, defaultState, newSessionId, stampField, saveState, mergeStates, unionBy, histKey, syncCfg, syncEnabled, signedIn, loadAuth, saveAuth, syncNow, pullRemote, pushRemote, scheduleSync, flushSyncQueue, syncStatusText, renderSyncCard, renderSyncLine, syncSignOut, KEY, AUTH_KEY };");
+eval(js + "\nglobal.__app = { get state(){return state}, set state(v){state=v}, get ui(){return ui}, get sess(){return sess}, get view(){return view}, get content(){return content}, get syncState(){return syncState}, DEFAULT_CONTENT, ANCHOR_POOL, chunkText, getChunks, validChunks, chunkPool, spanTrialSet, pickSessionPassages, selectedPassageIds, togglePassageSelection, patchPassageSelectionUi, startSession, abortSession, renderShortIntro, renderShortResult, unseenPassages, allPassages, personalPassages, normalizePersonalPassage, importPersonalContent, daysFromToday, passageKey, passageKeys, isPassageSeen, markPassagesSeen, markPassageRead, textFingerprint, sourceUrlKey, renderHome, renderHistory, contentStatus, renderFreshnessPanel, guardedStart, renderPacer, renderPacerQuiz, answerPacer, renderSpanIntro, answerSpan, finishSpan, renderRead, startReading, finishReading, renderQuiz, finishQuiz, renderReread, startReread, finishReread, renderResult, textStats, adjustSpeed, makeDeepCloze, answerDeepCloze, normalizeNumerals, parseKanjiNum, startAnchor, renderAnchorRead, startAnchorRead, finishAnchorRead, renderAnchorQuiz, answerAnchor, anchorDue, todayMenu, goalProgress, gazeSpan, sessionKeyTerms, passageTakeaway, finishVocab, proceedAfterCloze1, weakestSkill, feedbackGenreScore, preferByFeedback, recordContentFeedback, renderContentFeedback, contentFeedbackKey, defaultState, newSessionId, stampField, saveState, mergeStates, syncableState, unionBy, histKey, syncCfg, syncEnabled, signedIn, loadAuth, saveAuth, syncNow, pullRemote, pushRemote, scheduleSync, flushSyncQueue, syncStatusText, renderSyncCard, renderSyncLine, syncSignOut, KEY, AUTH_KEY, UI_KEY };");
 
 (async () => {
   await new Promise(r => _st(r, 80)); // init完了待ち
@@ -603,17 +603,45 @@ eval(js + "\nglobal.__app = { get state(){return state}, set state(v){state=v}, 
     `ok=${r1.ok} migrated=${r1.migrated} pushed=${mk1.row ? (mk1.row.state.history || []).length : "none"}件`);
   check("F9b ローカル履歴が同期後も残っている", A.state.history.some(h => h.sessionId === "LOCAL1"));
 
-  // F9c: 実機で起きた回帰。開始保存が自動同期を予約し、同期完了がホームを
+  // F9c: 選択は同期データではなく端末内UI下書き。選択時にクラウド同期を
+  // 予約せず、同期ペイロードにも混ざらないことを確認する。
+  A.state = A.defaultState();
+  A.ui.selectionDraft = [];
+  A.togglePassageSelection(daily.passages[0].id);
+  check("F9c 本文選択は端末UI下書きであり同期ペイロードへ含めない",
+    A.selectedPassageIds().join("|") === daily.passages[0].id &&
+    !Object.prototype.hasOwnProperty.call(A.syncableState(A.state), "selectedPassageIds"),
+    `selected=${A.selectedPassageIds().join("|")}`);
+
+  // F9d: 実機で起きた回帰。開始保存が自動同期を予約し、同期完了がホームを
   // 描き直すとショート導入画面が即座に消えてしまう。選択→開始→自動同期完了まで
   // の実際の経路で、進行画面が残ることを確認する。
-  A.state = A.defaultState();
-  A.state.selectedPassageIds = [daily.passages[0].id];
   A.guardedStart("short");
   const shortStarted = A.sess && A.sess.mode === "short" && A.view === "session" && screenEl().includes("約3〜5分");
   await new Promise(r => _st(r, 20));
-  check("F9c ショート開始後の自動同期が導入画面をホームへ戻さない",
+  check("F9d ショート開始後の自動同期が導入画面をホームへ戻さない",
     shortStarted && A.sess && A.sess.mode === "short" && A.view === "session" && screenEl().includes("約3〜5分"),
     `view=${A.view} screen=${screenEl().includes("約3〜5分") ? "short" : "other"}`);
+
+  // F9e: 2本版も同じ同期経路を通る。ショートだけを直して通常セッションが
+  // 巻き戻る回帰を防ぐ。
+  A.state = A.defaultState();
+  A.ui.selectionDraft = [daily.passages[0].id, daily.passages[1].id];
+  A.guardedStart("full");
+  const fullStarted = A.sess && A.sess.mode === "full" && A.view === "session" && screenEl().includes("チャンクペーサー");
+  await new Promise(r => _st(r, 20));
+  check("F9e 2本開始後の自動同期がペーサー画面をホームへ戻さない",
+    fullStarted && A.sess && A.sess.mode === "full" && A.view === "session" && screenEl().includes("チャンクペーサー"),
+    `view=${A.view} screen=${screenEl().includes("チャンクペーサー") ? "pacer" : "other"}`);
+
+  // F9f: 2本選択のままショートを始めると、以前のように先頭だけを黙って
+  // 開始しない。本人が1本へ戻してから選ぶ。
+  A.state = A.defaultState();
+  A.ui.selectionDraft = [daily.passages[0].id, daily.passages[1].id];
+  const beforeShortGuard = A.sess;
+  A.guardedStart("short");
+  check("F9f ショート版は本文1本だけの選択を要求する", A.sess === beforeShortGuard,
+    `selected=${A.selectedPassageIds().length}`);
 
   // F10: 2端末競合 — スマホとPCの両方で増えた分をどちらも残す
   const mk2 = installSyncMock({
@@ -688,7 +716,7 @@ eval(js + "\nglobal.__app = { get state(){return state}, set state(v){state=v}, 
   // ========== H. PWA・自動更新の配線 ==========
   const swSrc = fs.readFileSync(path.join(ROOT, "sw.js"), "utf8");
   check("H1 swのキャッシュ名がアプリ版と一致（更新が端末へ届く）",
-    /sokugan-v3\.2/.test(swSrc) && html.includes("SOKUGAN 3.2"), (swSrc.match(/sokugan-v[\d.]+/) || [])[0]);
+    /sokugan-v3\.3/.test(swSrc) && html.includes("SOKUGAN 3.3"), (swSrc.match(/sokugan-v[\d.]+/) || [])[0]);
   check("H2 swが旧バージョンのキャッシュを削除する",
     /caches\.keys\(\)/.test(swSrc) && /caches\.delete/.test(swSrc));
   const wfDaily = fs.readFileSync(path.join(ROOT, ".github/workflows/sokugan-daily.yml"), "utf8");
