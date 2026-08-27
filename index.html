@@ -486,7 +486,12 @@ function markPassageRead(p) {
 }
 function unseenPassages() {
   const seen = seenPassageSet();
-  return allPassages().filter(p => !isPassageSeen(p, seen));
+  const dailyUnseen = (content.passages || []).filter(p => !isPassageSeen(p, seen));
+  // 日次教材を完走した後は、私用教材へ黙ってフォールバックしない。
+  // 私用教材は日次在庫が残っている間だけ選択肢へ加える。
+  if (!dailyUnseen.length) return [];
+  const personalUnseen = personalPassages().filter(p => !isPassageSeen(p, seen));
+  return [...dailyUnseen, ...personalUnseen];
 }
 function totalTrainingDays() {
   return new Set(state.history.map(h => h.date)).size;
