@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Sokugan 3.3 — Reading Fluency Lab</title>
+<title>Sokugan 3.4 — Reading Fluency Lab</title>
 <meta name="theme-color" content="#f6f7f9">
 <link rel="manifest" href="./manifest.json">
 <meta name="mobile-web-app-capable" content="yes">
@@ -149,7 +149,7 @@ button{touch-action:manipulation}
   <div id="nav"></div>
   <div id="banner"></div>
   <div id="screen"></div>
-  <div class="footer-note">Sokugan 3.3 · cross-device synced reading fluency lab</div>
+  <div class="footer-note">Sokugan 3.4 · cross-device synced reading fluency lab</div>
 </div>
 <script>
 // =============================================================
@@ -157,7 +157,7 @@ button{touch-action:manipulation}
 // =============================================================
 const KEY = "sokugan_v3";
 const OLD_KEY = "jp_reading_trainer_v2";
-const PASS_COMP = 0.7;          // 理解度ゲート: これ未満の速度記録は無効
+const PASS_COMP = 0.6;          // 理解度ゲート: これ未満の速度記録は無効
 const NATIVE_AVG = 500;         // 日本語母語話者の平均黙読速度(字/分)
 const NATIVE_GOOD = 650;        // 母語話者の上位レンジ目安
 const RATCHET_UP = 1.025;       // 基準クリア時に翌日目標+2.5%
@@ -1011,7 +1011,7 @@ function renderHeader() {
   const t = today();
   document.getElementById("header").innerHTML = `
     <div class="header">
-      <div class="logo">速眼<small>SOKUGAN 3.3</small></div>
+      <div class="logo">速眼<small>SOKUGAN 3.4</small></div>
       <div class="header-stats">
         <div>連続 <b>${state.streak}</b>日</div>
         <div>累計 <b>${totalTrainingDays()}</b>日</div>
@@ -1057,7 +1057,7 @@ function renderHome() {
     <div class="card" style="border-color:${clearedToday ? "var(--green)" : "var(--border2)"}">
       <div style="margin-bottom:8px"><span class="tag" style="background:var(--gold-dim);color:var(--gold);font-size:12px">${menu.label}</span> <span class="small">${esc(menu.desc)}</span></div>
       <div class="card-title">今日の目標 ${clearedToday ? '<span class="delta-chip up">クリア済</span>' : ""}</div>
-      <div class="card-subtitle">DAILY TARGET · 理解度70%以上での読速 · 今日の一歩が週目標につながる</div>
+      <div class="card-subtitle">DAILY TARGET · 理解度60%以上での読速 · 今日の一歩が週目標につながる</div>
       <div class="target-hero"><span class="num">${t}</span><span class="unit">字/分</span>
         ${yestBest ? `<span class="delta-chip ${t > yestBest ? "up" : "flat"}">昨回実績 ${yestBest} 比 ${t - yestBest >= 0 ? "+" : ""}${t - yestBest}</span>` : ""}
       </div>
@@ -1401,7 +1401,7 @@ function renderShortIntro() {
     <div class="card" style="border-color:var(--blue)">
       <div class="card-title">ショート版 <span class="tag sci">約3〜5分</span></div>
       <div class="card-subtitle">QUICK READ · 初見1本を計測 → 設問3問 → 「実は…」を1つ持ち帰る</div>
-      <p class="muted" style="margin-bottom:10px">隙間時間でも、速度だけでなく理解度70%のゲートはそのままです。今日すでに読んだ本文は出ません。</p>
+      <p class="muted" style="margin-bottom:10px">隙間時間でも、速度だけでなく理解度60%のゲートはそのままです。今日すでに読んだ本文は出ません。</p>
       <div class="win-item"><span class="ico">📰</span><div><b>${esc(p.title)}</b><div class="d">${esc(genreOf(p))} · ${charCount(p.text)}字</div></div></div>
       <div style="display:flex;gap:8px;margin-top:12px"><button class="btn" onclick="renderRead(1)">始める</button><button class="btn secondary small" onclick="abortSession()">中断</button></div>
     </div>`;
@@ -1710,7 +1710,7 @@ function renderRead(which) {
     <div class="card">
       <div><span class="tag ${isDeep(p) ? "sci" : ""}">${esc(genreOf(p))}</span><span class="small">${esc(p.source || "")}</span></div>
       <div class="card-title" style="margin-top:6px">${esc(p.title)}</div>
-      <div class="card-subtitle">本文${which === 1 ? "①" : "②"} 初読 · ${n}字 · 読了後に設問3問 · 理解度70%未満は記録無効</div>
+      <div class="card-subtitle">本文${which === 1 ? "①" : "②"} 初読 · ${n}字 · 読了後に設問3問 · 理解度60%未満は記録無効</div>
       <div class="bigtime" id="read-clock">00:00</div>
       <div class="reading-text hidden-text" id="read-text">${esc(p.text)}</div>
       <div style="margin-top:14px;display:flex;gap:8px">
@@ -1915,6 +1915,12 @@ function storeTakeaways(passages) {
   state.lastTakeaways = { date: today(), items: [...byHook.values()].slice(-12) };
 }
 function contentFeedbackKey(x) { return [x && x.passageId, x && x.date].join("|"); }
+function findPassageById(id) { return allPassages().find(p => p && p.id === id) || null; }
+function contentFeedbackControls(p, rating) {
+  const passageId = encodeURIComponent(String(p.id)).replace(/'/g, "%27");
+  return `${[1,2,3,4,5].map(n => `<button class="recheck-btn" aria-pressed="${rating === n ? "true" : "false"}" style="padding:6px 9px;${rating === n ? "border-color:var(--gold);background:var(--gold-dim)" : ""}" onclick="recordContentFeedbackById(decodeURIComponent('${passageId}'),${n})">${n}</button>`).join("")}<span class="small" style="color:${rating ? "var(--green)" : ""}">${rating ? `✓ ${rating}/5 を保存済み。次回以降、${esc(genreOf(p))}の優先度に反映します。` : "1:浅い  5:人に話したい"}</span>`;
+}
+function recordContentFeedbackById(passageId, rating) { recordContentFeedback(findPassageById(passageId), rating); }
 function recordContentFeedback(p, rating) {
   if (!p || !Number.isInteger(rating) || rating < 1 || rating > 5) return;
   const xs = state.contentFeedback = state.contentFeedback || [];
@@ -1924,7 +1930,8 @@ function recordContentFeedback(p, rating) {
   state.contentFeedback = xs.slice(-300);
   saveState();
   const box = document.getElementById("content-feedback-" + p.id);
-  if (box) box.innerHTML = `<span class="small" style="color:var(--green)">✓ ${rating}/5 として記録。次回以降、${esc(genreOf(p))}の優先度に反映します。</span>`;
+  if (box) box.innerHTML = contentFeedbackControls(p, rating);
+  showToast(`コンテンツ評価 ${rating}/5 を保存しました`);
 }
 function renderContentFeedback(p) {
   if (!p) return "";
@@ -1933,7 +1940,7 @@ function renderContentFeedback(p) {
     <div class="card-title">この記事は読み応えがあった？</div>
     <div class="card-subtitle">CONTENT FIT · 評価の高いジャンルを次回の未読記事で優先します</div>
     <div class="small" style="margin-bottom:8px">${esc(p.title)}</div>
-    <div id="content-feedback-${esc(p.id)}" style="display:flex;gap:6px;align-items:center">${[1,2,3,4,5].map(n => `<button class="recheck-btn" style="padding:6px 9px;${prev && prev.rating === n ? "border-color:var(--gold);background:var(--gold-dim)" : ""}" onclick="recordContentFeedback(content.passages.find(p=>p.id===${JSON.stringify(p.id)}),${n})">${n}</button>`).join("")}<span class="small">${prev ? `記録済み ${prev.rating}/5` : "1:浅い  5:人に話したい"}</span></div>
+    <div id="content-feedback-${esc(p.id)}" style="display:flex;gap:6px;align-items:center">${contentFeedbackControls(p, prev && prev.rating)}</div>
   </div>`;
 }
 function renderShortResult() {
@@ -1968,7 +1975,7 @@ function renderShortResult() {
     <div class="card"><div class="result-verdict">
       <div class="card-subtitle">SHORT SESSION COMPLETE · ${esc(title)}</div>
       <div class="big" style="color:${valid ? "var(--green)" : "var(--ink3)"}">${p.speed}<span style="font-size:18px;color:var(--ink2)"> 字/分</span></div>
-      <div class="sub">理解度 ${Math.round(comp * 100)}% ${valid ? "✓ 記録対象" : "— 70%未満のため速度は記録対象外"}</div>
+      <div class="sub">理解度 ${Math.round(comp * 100)}% ${valid ? "✓ 記録対象" : "— 60%未満のため速度は記録対象外"}</div>
     </div></div>
     <div class="card" style="border-color:var(--gold)"><div class="card-title">💬 1つ持ち帰る</div><div class="card-subtitle">次の会話で「実は…」から話せる発見</div><div class="win-item"><span class="ico">🎁</span><div><b>${esc(take.hook)}</b>${take.detail ? `<div class="small">${esc(take.detail)}</div>` : ""}</div></div></div>
     ${renderContentFeedback(completedPassage)}
@@ -2059,7 +2066,7 @@ function renderResult() {
     <div class="card">
       <div class="result-verdict">
         <div class="big" style="color:${valid ? (rat.cleared ? "var(--green)" : "var(--ink)") : "var(--ink3)"}">${sessSpeed}<span style="font-size:18px;color:var(--ink2)"> 字/分</span></div>
-        <div class="sub">理解度 ${compPct}% ${valid ? "" : "— 70%未満のため速度は記録対象外（速さより理解の回復を優先）"}</div>
+        <div class="sub">理解度 ${compPct}% ${valid ? "" : "— 60%未満のため速度は記録対象外（速さより理解の回復を優先）"}</div>
         ${valid ? (rat.cleared
           ? `<div class="banner ok" style="margin-top:12px;text-align:left">🎉 目標 ${rat.oldTarget}字/分 をクリア。明日の目標は <b>${rat.newTarget}字/分</b>（+${rat.newTarget - rat.oldTarget}）。昨日の自分をまた一歩引き離しました。</div>`
           : `<div class="banner warn" style="margin-top:12px;text-align:left">目標 ${target}字/分 まであと <b>${Math.max(0, target - sessSpeed)}字/分</b>。今日中の再挑戦でクリア可能です。</div>`)
@@ -2212,7 +2219,7 @@ function finishAnchor() {
     <div class="card">
       <div class="result-verdict">
         <div class="big" style="color:${valid ? "var(--blue)" : "var(--ink3)"}">${adj}<span style="font-size:18px;color:var(--ink2)"> 字/分</span></div>
-        <div class="sub">転移（難度補正）速度 · 理解度 ${Math.round(comp * 100)}% ${valid ? "" : "— 70%未満のため無効。次回再測定"}</div>
+        <div class="sub">転移（難度補正）速度 · 理解度 ${Math.round(comp * 100)}% ${valid ? "" : "— 60%未満のため無効。次回再測定"}</div>
         ${valid ? (prevAvg ? `<div class="banner ${adj >= prevAvg ? "ok" : "warn"}" style="margin-top:12px;text-align:left">過去のアンカー平均 ${prevAvg}字/分 と比べて <b>${adj - prevAvg >= 0 ? "+" : ""}${adj - prevAvg}字/分</b>。${adj >= prevAvg ? "訓練が未訓練の文章にも転移しています。" : "今週は下振れ。1回では判断せず傾向で見ましょう。"}</div>`
           : `<div class="banner info" style="margin-top:12px;text-align:left">初回のアンカー基準を記録しました。来週以降、この値からの伸びで「転移」を測ります。</div>`) : ""}
       </div>
@@ -2228,7 +2235,7 @@ function renderHistory() {
   screen().innerHTML = `
     <div class="card">
       <div class="card-title">成長カーブ（30日）</div>
-      <div class="card-subtitle">理解度70%以上のセッションのみ表示</div>
+      <div class="card-subtitle">理解度60%以上のセッションのみ表示</div>
       ${renderSparkline()}
     </div>
     <div class="card">
@@ -2313,7 +2320,7 @@ function renderAbout() {
       <div class="card-title">Sokugan 2.0 の設計思想</div>
       <div class="card-subtitle">EVIDENCE-BASED DESIGN · 2026-06 リサーチ反映</div>
       <p class="muted" style="margin-bottom:10px">1.0のドリル群は再設計しました。「ページ全体を周辺視で読む」式の視野拡大やサブボーカリゼーション除去には根拠がありませんが（Rayner et al. 2016）、以下は効果が支持されています。</p>
-      <div class="win-item"><span class="ico">①</span><div><b>理解度ゲート付き速度がKPI</b> — 理解70%未満の速度は無効。速度と理解のトレードオフを直視する設計。</div></div>
+      <div class="win-item"><span class="ico">①</span><div><b>理解度ゲート付き速度がKPI</b> — 理解60%未満の速度は無効。速度と理解のトレードオフを直視する設計。</div></div>
       <div class="win-item"><span class="ico">②</span><div><b>昨日比ラチェット</b> — クリアごとに目標+2.5%。Timed reading研究では13週で+25〜40%の向上と未読文章への転移が確認されている（Chang 2010; Tran & Nation 2014）。</div></div>
       <div class="win-item"><span class="ico">③</span><div><b>反復読（Repeated Reading）</b> — 同一文章の高速再読は確実な成功体験を生み、効果は新しい文章にも転移する。</div></div>
       <div class="win-item"><span class="ico">④</span><div><b>文中チャンクペーサー</b> — 目的は視野拡大ではなく文節単位の統語処理の自動化。3連続成功で+5%、失敗で-5%（正答率約8割に収束 = 最適学習帯。Wilson et al. 2019の85%ルール）。</div></div>

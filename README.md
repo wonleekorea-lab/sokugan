@@ -1,12 +1,12 @@
-# SOKUGAN 3.2 — Reading Fluency Lab
+# SOKUGAN 3.4 — Reading Fluency Lab
 
-韓国語ネイティブのための日本語速読トレーニング。**理解度70%以上を保った読速（字/分）** だけをKPIに、毎日「昨日の自分+2.5%」を積み上げる設計。
+韓国語ネイティブのための日本語速読トレーニング。**理解度60%以上を保った読速（字/分）** だけをKPIに、毎日「昨日の自分+2.5%」を積み上げる設計。
 
 ## 📦 ファイル構成
 
 | ファイル | 役割 |
 |---|---|
-| `index.html` | SOKUGAN 3.2 本体 |
+| `index.html` | SOKUGAN 3.4 本体 |
 | `index-v1-backup.html` | 旧版（Reading Fluency Lab v2 / Sokugan 1.0）のバックアップ |
 | `daily-content.json` | 翌日分コンテンツ10本（毎日18:00 JST に GitHub Actions + Claude Code が生成） |
 | `archive/` | 過去のコンテンツ |

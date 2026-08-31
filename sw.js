@@ -1,4 +1,4 @@
-const CACHE = "sokugan-v3.3";
+const CACHE = "sokugan-v3.4";
 self.addEventListener("install", e => self.skipWaiting());
 // 旧バージョンのキャッシュを破棄してから制御を取る。
 // これが無いと 3.1 のindex.htmlがキャッシュに残り、同期UIが出ない端末が生まれる。

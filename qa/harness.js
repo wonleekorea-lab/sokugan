@@ -80,7 +80,7 @@ const _si = global.setInterval;
 global.setInterval = (f, d) => _si(f, Math.max(1, Math.min(d || 0, 5)));
 
 // ---------- アプリ実コードを実行 ----------
-eval(js + "\nglobal.__app = { get state(){return state}, set state(v){state=v}, get ui(){return ui}, get sess(){return sess}, get view(){return view}, get content(){return content}, get syncState(){return syncState}, DEFAULT_CONTENT, ANCHOR_POOL, chunkText, getChunks, validChunks, chunkPool, spanTrialSet, pickSessionPassages, selectedPassageIds, togglePassageSelection, patchPassageSelectionUi, startSession, abortSession, renderShortIntro, renderShortResult, unseenPassages, allPassages, personalPassages, normalizePersonalPassage, importPersonalContent, daysFromToday, passageKey, passageKeys, isPassageSeen, markPassagesSeen, markPassageRead, textFingerprint, sourceUrlKey, renderHome, renderHistory, contentStatus, renderFreshnessPanel, guardedStart, renderPacer, renderPacerQuiz, answerPacer, renderSpanIntro, answerSpan, finishSpan, renderRead, startReading, finishReading, renderQuiz, finishQuiz, renderReread, startReread, finishReread, renderResult, textStats, adjustSpeed, makeDeepCloze, answerDeepCloze, normalizeNumerals, parseKanjiNum, startAnchor, renderAnchorRead, startAnchorRead, finishAnchorRead, renderAnchorQuiz, answerAnchor, anchorDue, todayMenu, goalProgress, gazeSpan, sessionKeyTerms, passageTakeaway, finishVocab, proceedAfterCloze1, weakestSkill, feedbackGenreScore, preferByFeedback, recordContentFeedback, renderContentFeedback, contentFeedbackKey, defaultState, newSessionId, stampField, saveState, mergeStates, syncableState, unionBy, histKey, syncCfg, syncEnabled, signedIn, loadAuth, saveAuth, syncNow, pullRemote, pushRemote, scheduleSync, flushSyncQueue, syncStatusText, renderSyncCard, renderSyncLine, syncSignOut, KEY, AUTH_KEY, UI_KEY };");
+eval(js + "\nglobal.__app = { get state(){return state}, set state(v){state=v}, get ui(){return ui}, get sess(){return sess}, get view(){return view}, get content(){return content}, get syncState(){return syncState}, DEFAULT_CONTENT, ANCHOR_POOL, chunkText, getChunks, validChunks, chunkPool, spanTrialSet, pickSessionPassages, selectedPassageIds, togglePassageSelection, patchPassageSelectionUi, startSession, abortSession, renderShortIntro, renderShortResult, unseenPassages, allPassages, personalPassages, normalizePersonalPassage, importPersonalContent, daysFromToday, passageKey, passageKeys, isPassageSeen, markPassagesSeen, markPassageRead, textFingerprint, sourceUrlKey, renderHome, renderHistory, contentStatus, renderFreshnessPanel, guardedStart, renderPacer, renderPacerQuiz, answerPacer, renderSpanIntro, answerSpan, finishSpan, renderRead, startReading, finishReading, renderQuiz, finishQuiz, renderReread, startReread, finishReread, renderResult, textStats, adjustSpeed, makeDeepCloze, answerDeepCloze, normalizeNumerals, parseKanjiNum, startAnchor, renderAnchorRead, startAnchorRead, finishAnchorRead, renderAnchorQuiz, answerAnchor, anchorDue, todayMenu, goalProgress, gazeSpan, sessionKeyTerms, passageTakeaway, finishVocab, proceedAfterCloze1, weakestSkill, feedbackGenreScore, preferByFeedback, recordContentFeedback, recordContentFeedbackById, renderContentFeedback, contentFeedbackKey, findPassageById, defaultState, newSessionId, stampField, saveState, mergeStates, syncableState, unionBy, histKey, syncCfg, syncEnabled, signedIn, loadAuth, saveAuth, syncNow, pullRemote, pushRemote, scheduleSync, flushSyncQueue, syncStatusText, renderSyncCard, renderSyncLine, syncSignOut, KEY, AUTH_KEY, UI_KEY };");
 
 (async () => {
   await new Promise(r => _st(r, 80)); // init完了待ち
@@ -333,7 +333,7 @@ eval(js + "\nglobal.__app = { get state(){return state}, set state(v){state=v}, 
   A.startReading(2); await new Promise(r => _st(r, 12)); A.finishReading(2);
   A.finishQuiz(2, [true, true, false]);
   // Deep Cloze 画面が出たら回答して結果へ（本文②に接続表現がある場合）
-  let deepClozeShown = screenEl().includes("深層読解");
+  let deepClozeShown = !!(A.sess && A.sess.deepClozeQ && screenEl().includes("深層読解"));
   if (deepClozeShown) { A.answerDeepCloze(0); A.renderResult(); }
   const resHtml = screenEl();
   check("B16 結果画面: KPIと内訳描画", resHtml.includes("字/分") && resHtml.includes("今日の中身") && resHtml.includes("瞬間キャッチ"));
@@ -352,6 +352,13 @@ eval(js + "\nglobal.__app = { get state(){return state}, set state(v){state=v}, 
   const shortLast = A.state.history[A.state.history.length - 1];
   check("B18c ショート版: 1本文＋3問で結果・履歴まで完走", shortLast && shortLast.mode === "short" && screenEl().includes("SHORT SESSION COMPLETE"));
   check("B18d 既読キーを端末履歴へ永続化", (A.state.seenPassageKeys || []).length >= 4, `${(A.state.seenPassageKeys || []).length}本`);
+
+  // B18g-1: 1本文3問で1問不正解でも、2/3=66%は記録対象にする
+  A.state = A.defaultState();
+  A.startSession("short"); A.renderRead(1); A.startReading(1); await new Promise(r => _st(r, 12)); A.finishReading(1); A.finishQuiz(1, [true, false, true]);
+  const oneWrong = A.state.history[A.state.history.length - 1];
+  check("B18g-1 理解度2/3（約67%）を速度記録の対象にする", oneWrong && oneWrong.comprehension === 2 / 3 && oneWrong.valid === true,
+    oneWrong && `理解度=${Math.round(oneWrong.comprehension * 100)}% valid=${oneWrong.valid}`);
 
   // B18e: 選択前に正答だけが濃く見えるネイティブfocusを防ぐ（keyboard focusは青で明示）
   check("B18e 選択肢の未回答focusは中立の青アウトライン（正答色を使わない）",
@@ -372,6 +379,19 @@ eval(js + "\nglobal.__app = { get state(){return state}, set state(v){state=v}, 
   const preferred = A.preferByFeedback([daily.passages[1], rated]);
   check("B18g 読後評価を保存し、次回選定のジャンル優先度へ反映",
     feedback && feedback.passageId === rated.id && feedback.rating === 5 && A.feedbackGenreScore(rated.genre) === 5 && preferred[0].genre === rated.genre);
+
+  // B18h: YouTubeの本人用教材でも評価ボタンが対象本文を解決し、画面を更新する
+  A.state = A.defaultState();
+  const regressionPassage = Object.assign({}, rated, { id: "youtube-feedback-regression", kind: "youtube", availableOn: A.daysFromToday(-1) });
+  A.state.personalLibrary = [regressionPassage];
+  const feedbackHtml = A.renderContentFeedback(regressionPassage);
+  A.recordContentFeedbackById(regressionPassage.id, 4);
+  const privateFeedback = A.state.contentFeedback[0];
+  const feedbackBox = global.document.getElementById("content-feedback-" + regressionPassage.id)._h;
+  check("B18h 本人用教材の評価後に保存済み表示と選択状態を反映",
+    feedbackHtml.includes("recordContentFeedbackById(decodeURIComponent('youtube-feedback-regression'),4)") && privateFeedback && privateFeedback.rating === 4
+    && feedbackBox.includes("4/5 を保存済み") && feedbackBox.includes('aria-pressed="true"'));
+  A.state.personalLibrary = [];
 
   // ---------- C. 解析エンジン（難度・Deep Cloze・アンカー） ----------
   const rs = (daily.passages || []).map(p => A.textStats(p.text));
@@ -716,7 +736,7 @@ eval(js + "\nglobal.__app = { get state(){return state}, set state(v){state=v}, 
   // ========== H. PWA・自動更新の配線 ==========
   const swSrc = fs.readFileSync(path.join(ROOT, "sw.js"), "utf8");
   check("H1 swのキャッシュ名がアプリ版と一致（更新が端末へ届く）",
-    /sokugan-v3\.3/.test(swSrc) && html.includes("SOKUGAN 3.3"), (swSrc.match(/sokugan-v[\d.]+/) || [])[0]);
+    /sokugan-v3\.4/.test(swSrc) && html.includes("SOKUGAN 3.4"), (swSrc.match(/sokugan-v[\d.]+/) || [])[0]);
   check("H2 swが旧バージョンのキャッシュを削除する",
     /caches\.keys\(\)/.test(swSrc) && /caches\.delete/.test(swSrc));
   const wfDaily = fs.readFileSync(path.join(ROOT, ".github/workflows/sokugan-daily.yml"), "utf8");
