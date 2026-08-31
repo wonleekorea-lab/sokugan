@@ -1,9 +1,20 @@
 name: SOKUGAN daily content
-# 毎日18:00 JSTに翌日分の教材を生成・QA・公開する。実行主体は Claude Code
-# （anthropics/claude-code-action）。ローカルCodex自動化には依存しない。
+# 翌日分の教材を生成・QA・公開する。実行主体は Claude Code
+# （anthropics/claude-code-action）。
+#
+# cron は停止中（2026-08-31）。理由:
+#   1. このリポジトリ（origin = sokugan-workspace / PRIVATE）は作業リポジトリで、
+#      公開先は production = sokugan / PUBLIC の GitHub Pages。GITHUB_TOKEN は
+#      リポジトリを跨げないため、このワークフローだけでは公開まで到達できない。
+#   2. 現在の日次公開はローカルの launchd ジョブ
+#      （local.wota.codex-sokugan-daily-refresh / 18:00 JST）が担っている。
+#      そちらは origin と production の両方へ push できる。
+#   3. cron を残すと、Secret 未設定の Preflight 失敗が毎日出続ける。
+# 復活の条件: production への push 権限を持つ PAT を Secret に登録し、
+# 公開ステップを追加してから schedule を戻す。
 on:
-  schedule:
-    - cron: "0 9 * * *"      # 09:00 UTC = 18:00 JST
+  # schedule:
+  #   - cron: "0 9 * * *"      # 09:00 UTC = 18:00 JST
   workflow_dispatch:
 
 concurrency:

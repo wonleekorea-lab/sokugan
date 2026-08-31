@@ -53,14 +53,33 @@
 `.claude/hooks/qa-gate.sh` が **`git push` の直前にQAハーネスを実行**し、不合格なら push を**拒否**する（`PreToolUse` フック）。
 絶対ルール1は指示ではなく装置で守られている。壊れた教材が配信されることはない。
 
-## 公開先とリモート同期
-- 公開: `main` への push が GitHub Pages に反映され、スマホのPWAに届く（`https://wonleekorea-lab.github.io/sokugan/`）。
-- **毎日18:00/19:00にGitHub Actionsが`main`を更新する**ため、別の作業場所は放置すると古くなる。
-  実行主体は `anthropics/claude-code-action`（`.github/workflows/`）。Codexローカル自動化には依存しない。
-  必要なSecretは `CLAUDE_CODE_OAUTH_TOKEN` のみ。未設定だとPreflightが明示的に落ちる。
-  `.claude/hooks/sync-check.sh` がセッション開始時に差分を確認し、作業ツリーがきれいなら自動でpullする。
+## リポジトリ構成（2つある・2026-08-31以降）
+
+| remote | リポジトリ | 公開性 | 役割 |
+|---|---|---|---|
+| `origin` | `wonleekorea-lab/sokugan-workspace` | PRIVATE | **作業の正本**。履歴・規約・ツールはここ |
+| `production` | `wonleekorea-lab/sokugan` | PUBLIC | **公開専用**。`main` の直下が GitHub Pages |
+
+- 作業は必ず `origin` に対して行う。`production` は公開のために push するだけの出口で、**そこで作業しない**。
+- 公開は `production/main` への push で GitHub Pages に反映され、スマホのPWAに届く（`https://wonleekorea-lab.github.io/sokugan/`）。
+- **公開の順序は `origin` → QA合格 → `production`**。QA不合格のものを `production` に出さない。
+- `production` は `origin` の早送りであること。`production` にだけ存在するコミットを作らない（作ると公開物と正本がずれる）。
+
+## 日次更新の実行主体
+
+- **現在の担当はローカルの launchd ジョブ** `local.wota.codex-sokugan-daily-refresh`（18:00 JST、`codex exec`）。
+  両リモートへの push 権限を持つのがここだけなので、生成から公開まで一貫して行える。
+  ログ: `~/Library/Logs/codex-launchd/`。設定: `~/.codex/launchd/`。
+- `.github/workflows/` の2本は **cron を停止中**（`workflow_dispatch` のみ）。
+  `GITHUB_TOKEN` はリポジトリを跨げず、このワークフローだけでは `production` に公開できないため。
+  復活させるなら `production` への push 権限を持つ PAT を Secret に入れ、公開ステップを追加してから。
+- ChatGPTアプリ内の Codex automation（`sokugan-daily-refresh`）は **PAUSED**。アプリを閉じると発火しないため launchd に移した。
+
+## リモート同期
+
+- `.claude/hooks/sync-check.sh` がセッション開始時に差分を確認し、作業ツリーがきれいなら自動でpullする。
   ずれの警告が出たら、作業を始める前に整理する（未コミット分をcommit → `git pull --rebase origin main`）。
-- 作業の起点は常に**リモートの最新**。古いローカルの上に実装を重ねない。
+- 作業の起点は常に **`origin/main` の最新**。古いローカルの上に実装を重ねない。
 
 ## 設計の根拠（変更時に壊さないこと）
 - 理解度60%ゲート付き速度が唯一の北極星KPI（速度と理解のトレードオフを直視）

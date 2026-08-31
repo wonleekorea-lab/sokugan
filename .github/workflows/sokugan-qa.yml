@@ -1,9 +1,13 @@
 name: SOKUGAN QA supervisor
 # 毎日19:00 JST、daily生成の1時間後に監督を走らせる。設問を自力で解き、
 # 明快さを採点し、必要なら書き直してから公開する。
+#
+# cron は停止中（2026-08-31）。理由は sokugan-daily.yml のコメントと同じ
+# （公開先が別リポジトリで GITHUB_TOKEN が跨げない／Secret 未設定の失敗が毎日出る）。
+# 現在は launchd ジョブ側の QA ゲートが同じ検査を担っている。
 on:
-  schedule:
-    - cron: "0 10 * * *"     # 10:00 UTC = 19:00 JST
+  # schedule:
+  #   - cron: "0 10 * * *"     # 10:00 UTC = 19:00 JST
   workflow_dispatch:
 
 concurrency:

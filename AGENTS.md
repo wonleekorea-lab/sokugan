@@ -16,6 +16,7 @@
 - **`chunks` を自分で書く**。`index.html` 内の決定論チャンカーが生成する（CLAUDE.md 絶対ルール2）。
 - **秘密情報をリポジトリに置く**。`.gitignore` は許可リスト方式で、既定は全無視。`厳秘_*` や `private-imports/` を追跡対象に加えてはならない。`sokugan-config.js` に置けるのは anon key だけ。
 - **`.github/workflows/` の cron やゲートを、失敗を回避する目的で緩める**。
+- **QA不合格のものを `production`（公開リポジトリ）へ push する**。`production` は出口専用で、そこで作業しない。
 
 ## 止まって人間に渡す条件
 
@@ -26,13 +27,22 @@
 - QAハーネスが同じ項目で2回修正しても通らない。
 - 教材10本の要件（5系統×2本、AI中心2本以下、archive30日と重複なし）を満たす素材が集まらない。
 
+## リポジトリは2つある
+
+| remote | リポジトリ | 公開性 | 役割 |
+|---|---|---|---|
+| `origin` | `sokugan-workspace` | PRIVATE | 作業の正本 |
+| `production` | `sokugan` | PUBLIC | 公開専用（`main` 直下が GitHub Pages） |
+
+公開の順序は **`origin` → QAハーネス合格 → `production`**。詳細は `CLAUDE.md`。
+
 ## 実行環境ごとの前提
 
-| 環境 | 主体 | 備考 |
+| 環境 | 主体 | 公開まで到達できるか |
 |---|---|---|
-| GitHub Actions | `anthropics/claude-code-action` | 18:00 JST 生成 / 19:00 JST QA。ここが本線 |
-| launchd 無人実行 | `codex exec`（`~/.codex/launchd/`） | Actions が落ちている間のフォールバック。ログは `~/Library/Logs/codex-launchd/` |
-| Codex Cloud | クラウドコンテナ | 依存ゼロ（node組み込みのみ）。setup script 不要 |
+| launchd 無人実行 | `codex exec`（`~/.codex/launchd/`） | **できる（現在の日次担当）**。両remoteへpush可 |
+| GitHub Actions | `anthropics/claude-code-action` | **できない**。cron停止中。`GITHUB_TOKEN` がリポジトリを跨げない |
+| Codex Cloud | クラウドコンテナ | `origin` まで。依存ゼロなので setup script 不要 |
 | 対話 | Codex CLI / Claude Code | `.claude/commands/` のコマンドに従う |
 
-いずれの環境でも、作業の起点は**リモート `main` の最新**。古いローカルの上に実装を重ねない。
+いずれの環境でも、作業の起点は **`origin/main` の最新**。古いローカルの上に実装を重ねない。
