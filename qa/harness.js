@@ -80,7 +80,7 @@ const _si = global.setInterval;
 global.setInterval = (f, d) => _si(f, Math.max(1, Math.min(d || 0, 5)));
 
 // ---------- アプリ実コードを実行 ----------
-eval(js + "\nglobal.__app = { get state(){return state}, set state(v){state=v}, get ui(){return ui}, get sess(){return sess}, get view(){return view}, get content(){return content}, get syncState(){return syncState}, DEFAULT_CONTENT, ANCHOR_POOL, chunkText, getChunks, validChunks, chunkPool, spanTrialSet, pickSessionPassages, selectedPassageIds, togglePassageSelection, patchPassageSelectionUi, startSession, abortSession, renderShortIntro, renderShortResult, unseenPassages, allPassages, personalPassages, normalizePersonalPassage, importPersonalContent, daysFromToday, passageKey, passageKeys, isPassageSeen, markPassagesSeen, markPassageRead, textFingerprint, sourceUrlKey, renderHome, renderHistory, contentStatus, renderFreshnessPanel, guardedStart, renderPacer, renderPacerQuiz, answerPacer, renderSpanIntro, answerSpan, finishSpan, renderRead, startReading, finishReading, renderQuiz, finishQuiz, renderReread, startReread, finishReread, renderResult, textStats, adjustSpeed, makeDeepCloze, answerDeepCloze, normalizeNumerals, parseKanjiNum, startAnchor, renderAnchorRead, startAnchorRead, finishAnchorRead, renderAnchorQuiz, answerAnchor, anchorDue, todayMenu, goalProgress, gazeSpan, sessionKeyTerms, passageTakeaway, finishVocab, proceedAfterCloze1, weakestSkill, feedbackGenreScore, preferByFeedback, recordContentFeedback, recordContentFeedbackById, renderContentFeedback, contentFeedbackKey, findPassageById, defaultState, newSessionId, stampField, saveState, mergeStates, syncableState, unionBy, histKey, syncCfg, syncEnabled, signedIn, loadAuth, saveAuth, syncNow, pullRemote, pushRemote, scheduleSync, flushSyncQueue, syncStatusText, renderSyncCard, renderSyncLine, syncSignOut, KEY, AUTH_KEY, UI_KEY };");
+eval(js + "\nglobal.__app = { get state(){return state}, set state(v){state=v}, get ui(){return ui}, get sess(){return sess}, get view(){return view}, get content(){return content}, get syncState(){return syncState}, DEFAULT_CONTENT, ANCHOR_POOL, chunkText, getChunks, validChunks, chunkPool, spanTrialSet, pickSessionPassages, selectedPassageIds, togglePassageSelection, patchPassageSelectionUi, startSession, abortSession, renderShortIntro, renderShortResult, unseenPassages, allPassages, personalPassages, normalizePersonalPassage, importPersonalContent, daysFromToday, passageKey, passageKeys, isPassageSeen, markPassagesSeen, markPassageRead, textFingerprint, sourceUrlKey, renderHome, renderHistory, contentStatus, renderFreshnessPanel, guardedStart, renderPacer, renderPacerQuiz, answerPacer, renderSpanIntro, answerSpan, finishSpan, renderRead, startReading, finishReading, renderQuiz, finishQuiz, renderReread, startReread, finishReread, renderResult, textStats, adjustSpeed, makeDeepCloze, answerDeepCloze, normalizeNumerals, parseKanjiNum, startAnchor, renderAnchorRead, startAnchorRead, finishAnchorRead, renderAnchorQuiz, answerAnchor, anchorDue, todayMenu, goalProgress, gazeSpan, sessionKeyTerms, passageTakeaway, finishVocab, proceedAfterCloze1, weakestSkill, feedbackGenreScore, preferByFeedback, recordContentFeedback, recordContentFeedbackById, recordQuestionFeedback, recordQuestionFeedbackById, renderContentFeedback, contentFeedbackFor, contentFeedbackKey, findPassageById, defaultState, newSessionId, stampField, saveState, mergeStates, syncableState, unionBy, mergeContentFeedback, histKey, syncCfg, syncEnabled, signedIn, loadAuth, saveAuth, syncNow, pullRemote, pushRemote, scheduleSync, flushSyncQueue, syncStatusText, renderSyncCard, renderSyncLine, syncSignOut, KEY, AUTH_KEY, UI_KEY };");
 
 (async () => {
   await new Promise(r => _st(r, 80)); // init完了待ち
@@ -380,17 +380,33 @@ eval(js + "\nglobal.__app = { get state(){return state}, set state(v){state=v}, 
   check("B18g 読後評価を保存し、次回選定のジャンル優先度へ反映",
     feedback && feedback.passageId === rated.id && feedback.rating === 5 && A.feedbackGenreScore(rated.genre) === 5 && preferred[0].genre === rated.genre);
 
-  // B18h: YouTubeの本人用教材でも評価ボタンが対象本文を解決し、画面を更新する
+  // B18h: 設問評価は内容評価を消さず、日次教材の設問設計に渡せる形で保存する
+  A.recordQuestionFeedback(rated, "hard");
+  const feedbackWithQuestionFit = A.state.contentFeedback[0];
+  const feedbackRichHtml = A.renderContentFeedback(rated);
+  check("B18h 設問評価を内容評価と分けて保存し、選択済み表示を描画",
+    feedbackWithQuestionFit && feedbackWithQuestionFit.rating === 5 && feedbackWithQuestionFit.questionFit === "hard"
+    && feedbackRichHtml.includes("問題はどうだった？") && feedbackRichHtml.includes("recordQuestionFeedbackById") && feedbackRichHtml.includes("難しい"));
+
+  const mergedFeedback = A.mergeContentFeedback(
+    [{ date: "2026-09-04", passageId: rated.id, genre: rated.genre, rating: 5, updatedAt: "2026-09-04T09:00:00.000Z" }],
+    [{ date: "2026-09-04", passageId: rated.id, genre: rated.genre, questionFit: "hard", updatedAt: "2026-09-04T09:01:00.000Z" }]
+  )[0];
+  check("B18h2 端末間で内容・設問評価を別々に保存しても両方を残す",
+    mergedFeedback && mergedFeedback.rating === 5 && mergedFeedback.questionFit === "hard");
+
+  // B18i: YouTubeの本人用教材でも評価ボタンが対象本文を解決し、画面を更新する
   A.state = A.defaultState();
   const regressionPassage = Object.assign({}, rated, { id: "youtube-feedback-regression", kind: "youtube", availableOn: A.daysFromToday(-1) });
   A.state.personalLibrary = [regressionPassage];
   const feedbackHtml = A.renderContentFeedback(regressionPassage);
   A.recordContentFeedbackById(regressionPassage.id, 4);
+  A.recordQuestionFeedbackById(regressionPassage.id, "just_right");
   const privateFeedback = A.state.contentFeedback[0];
   const feedbackBox = global.document.getElementById("content-feedback-" + regressionPassage.id)._h;
-  check("B18h 本人用教材の評価後に保存済み表示と選択状態を反映",
+  check("B18i 本人用教材の内容・設問評価後に保存済み表示と選択状態を反映",
     feedbackHtml.includes("recordContentFeedbackById(decodeURIComponent('youtube-feedback-regression'),4)") && privateFeedback && privateFeedback.rating === 4
-    && feedbackBox.includes("4/5 を保存済み") && feedbackBox.includes('aria-pressed="true"'));
+    && privateFeedback.questionFit === "just_right" && feedbackBox.includes("内容 4/5 を保存済み") && feedbackBox.includes("ちょうどよい") && feedbackBox.includes('aria-pressed="true"'));
   A.state.personalLibrary = [];
 
   // ---------- C. 解析エンジン（難度・Deep Cloze・アンカー） ----------
@@ -732,11 +748,18 @@ eval(js + "\nglobal.__app = { get state(){return state}, set state(v){state=v}, 
     /SOKUGAN_SUPABASE_SERVICE_ROLE_KEY/.test(publisherSrc) && /headers:\s*Object\.assign\(\{ apikey: key, Authorization: `Bearer \$\{key\}`/.test(publisherSrc) && !/service_role\s*[:=]\s*["'][^"']{8,}/i.test(publisherSrc),
     fs.existsSync(youtubePublisher) ? "環境変数経由" : "tools/publish-private-youtube.js がない");
   check("F16c YouTube取込は1動画1教材・中心概念付きのv2形式", /sokugan-private-youtube-v2/.test(publisherSrc) && /data\.passages\.length !== 1/.test(publisherSrc) && /coreConcept/.test(publisherSrc) && /selectionRationale/.test(publisherSrc));
+  const feedbackProfileTool = path.join(ROOT, "tools", "export-content-feedback-profile.js");
+  const feedbackProfileSrc = fs.existsSync(feedbackProfileTool) ? fs.readFileSync(feedbackProfileTool, "utf8") : "";
+  const dailyGuide = fs.readFileSync(path.join(ROOT, ".claude", "commands", "daily.md"), "utf8");
+  check("F16d 個人評価を匿名集計し、日次の選定・設問設計へ渡すツールと指示がある",
+    /sokugan-content-feedback-profile-v1/.test(feedbackProfileSrc) && /minimumSamplesPerSignal/.test(feedbackProfileSrc)
+    && /本文、タイトル、ユーザーIDは出力しない/.test(feedbackProfileSrc) && /export-content-feedback-profile\.js/.test(dailyGuide)
+    && /questionFit\.instruction/.test(dailyGuide), fs.existsSync(feedbackProfileTool) ? "匿名集計ツール＋日次指示" : "評価集計ツールがない");
 
   // ========== H. PWA・自動更新の配線 ==========
   const swSrc = fs.readFileSync(path.join(ROOT, "sw.js"), "utf8");
   check("H1 swのキャッシュ名がアプリ版と一致（更新が端末へ届く）",
-    /sokugan-v3\.4/.test(swSrc) && html.includes("SOKUGAN 3.4"), (swSrc.match(/sokugan-v[\d.]+/) || [])[0]);
+    /sokugan-v3\.5/.test(swSrc) && html.includes("SOKUGAN 3.5"), (swSrc.match(/sokugan-v[\d.]+/) || [])[0]);
   check("H2 swが旧バージョンのキャッシュを削除する",
     /caches\.keys\(\)/.test(swSrc) && /caches\.delete/.test(swSrc));
   const wfDaily = fs.readFileSync(path.join(ROOT, ".github/workflows/sokugan-daily.yml"), "utf8");

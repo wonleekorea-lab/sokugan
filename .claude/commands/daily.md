@@ -15,6 +15,20 @@ SOKUGAN 3.0 の教材を生成する。**CLAUDE.md の絶対ルールに従う�
 直近12〜72時間から10本。ジャンルを2本ずつ:
 ①スタートアップ・新規事業 ②社会・価値観 ③市場・経済・地政学 ④経営・リーダーシップ ⑤未来の兆し
 
+素材を探す前に、PCローカルの評価プロファイルを取得する。これは本人の読後・設問評価の集計だけで、本文・タイトル・ユーザーIDは出力しない。
+
+```bash
+set -a; . /Users/wota/Documents/ChatGPT/AI\ Engineering/sokugan-work/.sokugan-private.env; set +a
+node /Users/wota/Documents/ChatGPT/AI\ Engineering/sokugan-work/tools/export-content-feedback-profile.js
+```
+
+- `genres[ジャンル].instruction=prioritize` は、そのジャンル内で評価の高かった切り口を候補比較で優先する。ただし2本という本数は変えない
+- `vary_angle` は、低評価だった話題・構図の繰り返しを避けて別の切り口を選ぶ
+- `samples` が3未満なら偏りとみなし、選定を変えない
+- `questionFit.instruction=increase_inference` は、根拠が一意な因果・比較・応用の設問を各本文で1問以上含める
+- `questionFit.instruction=make_clearer` は、問題文を短くし、代名詞・曖昧な比較対象を避け、本文の明示情報だけで解ける設問にする
+- 取得に失敗したら通常基準で生成し、失敗理由だけを報告する。評価プロファイルや個人情報を `daily-content.json`、公開リポジトリ、報告へ保存しない
+
 **選定基準は「Wonが読んだその日、誰かに『実は…』と話したくなるか」。** 意外な数字・常識の反転・構造の発見を優先し、ありきたりの追認記事は捨てる。AI中心は最大2本、非AIは8本以上。芸能・スポーツ・天気は除外。`archive/` の直近30日分からタイトル・主要論点・source URLを抽出し、同じ出来事や同じ主張の言い換えを候補から外す。
 
 ## 3. 執筆

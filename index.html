@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Sokugan 3.4 — Reading Fluency Lab</title>
+<title>Sokugan 3.5 — Reading Fluency Lab</title>
 <meta name="theme-color" content="#f6f7f9">
 <link rel="manifest" href="./manifest.json">
 <meta name="mobile-web-app-capable" content="yes">
@@ -149,7 +149,7 @@ button{touch-action:manipulation}
   <div id="nav"></div>
   <div id="banner"></div>
   <div id="screen"></div>
-  <div class="footer-note">Sokugan 3.4 · cross-device synced reading fluency lab</div>
+  <div class="footer-note">Sokugan 3.5 · cross-device synced reading fluency lab</div>
 </div>
 <script>
 // =============================================================
@@ -209,7 +209,7 @@ const DEFAULT_CONTENT = {
 // =============================================================
 function defaultState() {
   return {
-    version: 4,
+    version: 5,
     migratedFromV2: false,
     migratedSessions: 0,
     baselineSpeed: null,
@@ -227,7 +227,7 @@ function defaultState() {
     seenPassageKeys: [],  // 端末で一度でも出題した本文。日付をまたいで再表示しない
     lastWinCheck: null,
     clarityFlags: [],     // ユーザーが「わかりにくい」と報告した設問 {date, genre, q}
-    contentFeedback: [],  // 読後評価 {date, passageId, genre, rating, title}。次回の選定を個人化する材料
+    contentFeedback: [],  // 読後評価 {date, passageId, genre, rating, questionFit, title}。次回の選定・設問設計を個人化する材料
     personalLibrary: [], // 非公開の本人用教材。YouTube台本から作る翌日解禁の学習文を保存
     goal: null,           // {target, baseline, setAt, why, hit:[]} 週次の具体的困難目標(Locke&Latham)
     vocabBook: [],        // 語彙道場の習得記録 {term, plain, date, level} level:1=初見,2=曖昧,3=説明できる
@@ -1011,7 +1011,7 @@ function renderHeader() {
   const t = today();
   document.getElementById("header").innerHTML = `
     <div class="header">
-      <div class="logo">速眼<small>SOKUGAN 3.4</small></div>
+      <div class="logo">速眼<small>SOKUGAN 3.5</small></div>
       <div class="header-stats">
         <div>連続 <b>${state.streak}</b>日</div>
         <div>累計 <b>${totalTrainingDays()}</b>日</div>
@@ -1916,31 +1916,55 @@ function storeTakeaways(passages) {
 }
 function contentFeedbackKey(x) { return [x && x.passageId, x && x.date].join("|"); }
 function findPassageById(id) { return allPassages().find(p => p && p.id === id) || null; }
-function contentFeedbackControls(p, rating) {
+function contentFeedbackFor(p) {
+  return (state.contentFeedback || []).find(x => x.passageId === p.id && x.date === today()) || null;
+}
+function contentFeedbackControls(p, feedback) {
+  const rating = feedback && feedback.rating;
+  const questionFit = feedback && feedback.questionFit;
   const passageId = encodeURIComponent(String(p.id)).replace(/'/g, "%27");
-  return `${[1,2,3,4,5].map(n => `<button class="recheck-btn" aria-pressed="${rating === n ? "true" : "false"}" style="padding:6px 9px;${rating === n ? "border-color:var(--gold);background:var(--gold-dim)" : ""}" onclick="recordContentFeedbackById(decodeURIComponent('${passageId}'),${n})">${n}</button>`).join("")}<span class="small" style="color:${rating ? "var(--green)" : ""}">${rating ? `✓ ${rating}/5 を保存済み。次回以降、${esc(genreOf(p))}の優先度に反映します。` : "1:浅い  5:人に話したい"}</span>`;
+  const questionFits = [["easy", "易しい"], ["just_right", "ちょうどよい"], ["hard", "難しい"], ["unclear", "分かりにくい"]];
+  const contentStatus = rating ? `✓ 内容 ${rating}/5 を保存済み。${esc(genreOf(p))}の選定優先度に反映します。` : "1:浅い  5:人に話したい";
+  const questionStatus = questionFit ? `✓ 設問「${esc(questionFits.find(x => x[0] === questionFit)[1])}」を保存済み。次回の設問設計に反映します。` : "問題文と選択肢の体感を選んでください";
+  return `<div style="display:grid;gap:8px;width:100%">
+    <div><div class="small" style="margin-bottom:4px">内容はどうだった？</div><div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center">${[1,2,3,4,5].map(n => `<button class="recheck-btn" aria-label="内容評価 ${n}/5" aria-pressed="${rating === n ? "true" : "false"}" style="padding:6px 9px;${rating === n ? "border-color:var(--gold);background:var(--gold-dim)" : ""}" onclick="recordContentFeedbackById(decodeURIComponent('${passageId}'),${n})">${n}</button>`).join("")}<span class="small" style="color:${rating ? "var(--green)" : ""}">${contentStatus}</span></div></div>
+    <div><div class="small" style="margin-bottom:4px">問題はどうだった？</div><div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center">${questionFits.map(([value, label]) => `<button class="recheck-btn" aria-pressed="${questionFit === value ? "true" : "false"}" style="padding:6px 9px;${questionFit === value ? "border-color:var(--blue);background:var(--blue-dim)" : ""}" onclick="recordQuestionFeedbackById(decodeURIComponent('${passageId}'),'${value}')">${label}</button>`).join("")}<span class="small" style="color:${questionFit ? "var(--green)" : ""}">${questionStatus}</span></div></div>
+  </div>`;
 }
 function recordContentFeedbackById(passageId, rating) { recordContentFeedback(findPassageById(passageId), rating); }
-function recordContentFeedback(p, rating) {
-  if (!p || !Number.isInteger(rating) || rating < 1 || rating > 5) return;
+function recordQuestionFeedbackById(passageId, questionFit) { recordQuestionFeedback(findPassageById(passageId), questionFit); }
+function saveContentFeedback(p, patch) {
+  if (!p) return null;
   const xs = state.contentFeedback = state.contentFeedback || [];
   const i = xs.findIndex(x => x.passageId === p.id && x.date === today());
-  const item = { date: today(), passageId: p.id, genre: genreOf(p), rating, title: p.title };
+  const before = i >= 0 ? xs[i] : { date: today(), passageId: p.id, genre: genreOf(p), title: p.title };
+  const item = Object.assign({}, before, { date: today(), passageId: p.id, genre: genreOf(p), title: p.title, updatedAt: new Date().toISOString() }, patch);
   if (i >= 0) xs[i] = item; else xs.push(item);
   state.contentFeedback = xs.slice(-300);
   saveState();
   const box = document.getElementById("content-feedback-" + p.id);
-  if (box) box.innerHTML = contentFeedbackControls(p, rating);
+  if (box) box.innerHTML = contentFeedbackControls(p, item);
+  return item;
+}
+function recordContentFeedback(p, rating) {
+  if (!p || !Number.isInteger(rating) || rating < 1 || rating > 5) return;
+  saveContentFeedback(p, { rating });
   showToast(`コンテンツ評価 ${rating}/5 を保存しました`);
+}
+function recordQuestionFeedback(p, questionFit) {
+  if (!p || !["easy", "just_right", "hard", "unclear"].includes(questionFit)) return;
+  const labels = { easy: "易しい", just_right: "ちょうどよい", hard: "難しい", unclear: "分かりにくい" };
+  saveContentFeedback(p, { questionFit });
+  showToast(`設問評価「${labels[questionFit]}」を保存しました`);
 }
 function renderContentFeedback(p) {
   if (!p) return "";
-  const prev = (state.contentFeedback || []).find(x => x.passageId === p.id && x.date === today());
+  const prev = contentFeedbackFor(p);
   return `<div class="card" style="border-color:var(--gold)">
-    <div class="card-title">この記事は読み応えがあった？</div>
-    <div class="card-subtitle">CONTENT FIT · 評価の高いジャンルを次回の未読記事で優先します</div>
+    <div class="card-title">今回のコンテンツを評価</div>
+    <div class="card-subtitle">CONTENT & QUESTION FIT · 内容は次回の素材選び、設問は日次教材の問題設計に反映します</div>
     <div class="small" style="margin-bottom:8px">${esc(p.title)}</div>
-    <div id="content-feedback-${esc(p.id)}" style="display:flex;gap:6px;align-items:center">${contentFeedbackControls(p, prev && prev.rating)}</div>
+    <div id="content-feedback-${esc(p.id)}">${contentFeedbackControls(p, prev)}</div>
   </div>`;
 }
 function renderShortResult() {
@@ -2386,6 +2410,25 @@ function unionBy(a, b, keyFn) {
   }
   return out;
 }
+// 同じ教材の内容評価と設問評価を別端末で続けて付けても、片方を消さない。
+// 新しい更新を優先しつつ、古いレコードにしか無い項目は残す。
+function mergeContentFeedback(local, remote) {
+  const byKey = new Map();
+  for (const item of [...(local || []), ...(remote || [])]) {
+    if (!item) continue;
+    const key = contentFeedbackKey(item);
+    const prev = byKey.get(key);
+    if (!prev) { byKey.set(key, item); continue; }
+    const incomingIsNewer = String(item.updatedAt || "") > String(prev.updatedAt || "");
+    const newer = incomingIsNewer ? item : prev;
+    const older = incomingIsNewer ? prev : item;
+    const merged = Object.assign({}, older, newer);
+    if (newer.rating == null && older.rating != null) merged.rating = older.rating;
+    if (!newer.questionFit && older.questionFit) merged.questionFit = older.questionFit;
+    byKey.set(key, merged);
+  }
+  return [...byKey.values()].sort((a, b) => String(a.date || "").localeCompare(String(b.date || ""))).slice(-300);
+}
 // 履歴の同一性: sessionIdがあればそれ。無い旧データは内容から合成鍵を作る
 // （3.1以前の記録にはsessionIdが無いため、これが無いと同じ日の記録が二重に増える）。
 function histKey(h) {
@@ -2406,8 +2449,7 @@ function mergeStates(local, remote) {
     .sort((a, b) => String(a.date || "").localeCompare(String(b.date || "")) || String(histKey(a)).localeCompare(String(histKey(b))));
   out.wins = unionBy(local.wins, remote.wins, w => [w.date, w.text].join("|"));
   out.clarityFlags = unionBy(local.clarityFlags, remote.clarityFlags, f => [f.date, f.genre, f.q].join("|"));
-  out.contentFeedback = unionBy(local.contentFeedback, remote.contentFeedback, contentFeedbackKey)
-    .sort((a, b) => String(a.date || "").localeCompare(String(b.date || ""))).slice(-300);
+  out.contentFeedback = mergeContentFeedback(local.contentFeedback, remote.contentFeedback);
   // YouTube教材は動画IDを正本キーにする。同じ動画の旧分割教材が端末に
   // 残っていても、サーバーの新しい1教材へ収束させる。
   const youtubeVideoId = (p) => {
