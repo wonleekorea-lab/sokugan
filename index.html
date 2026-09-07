@@ -49,7 +49,9 @@ svg.i{width:1em;height:1em;flex:none;vertical-align:-.13em;stroke:currentColor;f
 
 /* ---- ヘッダ / ナビ ---- */
 .header{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:20px}
-.logo{font-size:21px;font-weight:700;letter-spacing:.2em;line-height:1}
+.brand{display:flex;align-items:center;gap:11px}
+.mark{flex:none;display:block}
+.logo{font-size:20px;font-weight:700;letter-spacing:.2em;line-height:1}
 .logo small{display:block;font-size:8.5px;color:var(--ink3);font-weight:600;letter-spacing:.32em;margin-top:5px}
 /* 直近7日を点で見せる（数字を読まなくても連続が分かる） */
 .streak-dots{display:flex;gap:4px;align-items:center}
@@ -218,7 +220,8 @@ details.fold[open]>summary{color:var(--ink)}
 @media (max-width:430px){
   #app{padding:16px 14px calc(72px + env(safe-area-inset-bottom));max-width:100%}
   body{font-size:15px}
-  .logo{font-size:19px;letter-spacing:.16em}
+  .logo{font-size:17px;letter-spacing:.15em}
+  .brand{gap:9px}
   .streak-dots i{width:6px;height:6px}
   .streak-dots{gap:3.5px}
   .pb{font-size:15px;margin-left:10px}
@@ -1173,10 +1176,23 @@ function targetRing(pct, size) {
     ${v >= 100 ? `<path d="M${(S/2-9).toFixed(1)},${(S/2).toFixed(1)} l6,6 l12,-13" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>` : ""}
   </svg>`;
 }
+// ロゴマーク: 丸に三つ引き。三本の横線は本文の行、中央の朱がいま読んでいる行
+function mark(size) {
+  const S = size || 26;
+  return `<svg class="mark" width="${S}" height="${S}" viewBox="0 0 512 512" aria-hidden="true">
+    <defs><clipPath id="mk"><circle cx="256" cy="256" r="147"/></clipPath></defs>
+    <circle cx="256" cy="256" r="172" fill="none" stroke="var(--ink)" stroke-width="30"/>
+    <g clip-path="url(#mk)">
+      <rect x="80" y="152" width="352" height="46" fill="var(--ink)"/>
+      <rect x="80" y="233" width="352" height="46" fill="var(--acc)"/>
+      <rect x="80" y="314" width="352" height="46" fill="var(--ink)"/>
+    </g>
+  </svg>`;
+}
 function renderHeader() {
   document.getElementById("header").innerHTML = `
     <div class="header">
-      <div class="logo">SOKUGAN<small>速眼</small></div>
+      <div class="brand">${mark(32)}<div class="logo">SOKUGAN<small>速眼</small></div></div>
       <div style="display:flex;align-items:center">
         ${last7Dots()}
         <div class="pb"><s>PB</s>${state.bestSpeed || `<span style="color:var(--ink3)">—</span>`}</div>
