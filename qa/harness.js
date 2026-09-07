@@ -446,7 +446,7 @@ eval(js + "\nglobal.__app = { get state(){return state}, set state(v){state=v}, 
   A.renderHome();
   const homeHtml = screenEl();
   check("E4 ホーム: 今日のメニュー表示", /の日/.test(homeHtml) && homeHtml.includes(A.todayMenu().label));
-  check("E5 ホーム: 目標セクション（設定済バー or 設定ボタン）", homeHtml.includes("🎯"));
+  check("E5 ホーム: 目標セクション（設定済バー or 設定ボタン）", homeHtml.includes("data-goal-progress") || homeHtml.includes("data-goal-setter"));
   check("E6 メニューが曜日で定義済み・弱点計算が動く", !!A.todayMenu().id && !!A.weakestSkill().id, A.todayMenu().id + "/" + A.weakestSkill().id);
 
   // ========== G. 既読管理・ショート版（読んだ本文を再表示しない） ==========

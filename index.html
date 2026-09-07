@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Sokugan 3.5 — Reading Fluency Lab</title>
-<meta name="theme-color" content="#f6f7f9">
+<meta name="theme-color" content="#f2eee4">
 <link rel="manifest" href="./manifest.json">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -15,132 +15,236 @@
 <script src="./sokugan-config.js"></script>
 <style>
 :root{
-  --bg:#f6f7f9; --card:#ffffff; --card2:#f0f2f5; --border:#e5e8ec; --border2:#d3d8df;
-  --ink:#1b2430; --ink2:#57636f; --ink3:#8b95a1;
-  --coral:#e0492f; --coral-dim:rgba(224,73,47,.10);
-  --green:#1a7f37; --green-dim:rgba(26,127,55,.10);
-  --gold:#9a6700; --gold-dim:rgba(154,103,0,.10);
-  --blue:#0969da; --blue-dim:rgba(9,105,218,.08);
-  --purple:#8250df;
+  /* 和紙 → 墨 → 朱。色はこの3系統だけ */
+  --washi:#f2eee4; --card:#fbf9f4; --card2:#ece7da; --border:#e2dccd; --border2:#cec6b2;
+  --ink:#1d1b17; --ink2:#6b6558; --ink3:#9d9689;
+  --acc:#c8452b; --acc-dim:rgba(200,69,43,.10); --acc-ink:#a83a24;
+  /* 旧トークン互換（全部この3系統へ畳む） */
+  --coral:var(--acc); --coral-dim:var(--acc-dim);
+  --green:var(--ink); --green-dim:rgba(29,27,23,.06);
+  --gold:var(--ink2); --gold-dim:rgba(29,27,23,.05);
+  --blue:var(--ink2); --blue-dim:rgba(29,27,23,.04);
+  --purple:var(--ink2);
 }
 *{margin:0;padding:0;box-sizing:border-box}
-body{background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Noto Sans JP",sans-serif;font-size:15px;line-height:1.7;-webkit-font-smoothing:antialiased}
-#app{max-width:760px;margin:0 auto;padding:18px 16px 80px}
-a{color:var(--blue)}
-.header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
-.logo{font-size:19px;font-weight:800;letter-spacing:.02em}
-.logo small{font-size:11px;color:var(--coral);font-weight:700;margin-left:6px;vertical-align:2px}
-.header-stats{display:flex;gap:14px;font-size:12px;color:var(--ink2)}
-.header-stats b{color:var(--ink);font-size:14px}
-.nav{display:flex;gap:6px;margin-bottom:16px}
-.nav button{flex:1;background:var(--card);border:1px solid var(--border);color:var(--ink2);padding:8px 0;border-radius:8px;font-size:13px;cursor:pointer;font-family:inherit}
-.nav button.active{background:var(--card2);color:var(--ink);border-color:var(--border2);font-weight:700}
-.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:18px;margin-bottom:14px;box-shadow:0 1px 3px rgba(27,36,48,.05)}
-.card-title{font-size:15px;font-weight:800;margin-bottom:2px}
-.card-subtitle{font-size:11px;color:var(--ink3);letter-spacing:.08em;margin-bottom:12px}
-.banner{padding:10px 14px;border-radius:10px;font-size:13px;margin-bottom:14px;border:1px solid var(--border2)}
-.banner.info{background:var(--blue-dim);border-color:rgba(88,166,255,.3)}
-.banner.warn{background:var(--gold-dim);border-color:rgba(210,153,34,.35)}
-.banner.ok{background:var(--green-dim);border-color:rgba(63,185,80,.3)}
-.btn{display:inline-block;background:var(--coral);color:#fff;border:none;border-radius:10px;padding:13px 22px;font-size:15px;font-weight:800;cursor:pointer;font-family:inherit;width:100%;text-align:center}
-.btn:active{transform:scale(.985)}
-.btn.secondary{background:var(--card2);color:var(--ink);border:1px solid var(--border2)}
-.btn.small{width:auto;padding:8px 16px;font-size:13px;font-weight:700}
+html{color-scheme:light}
+body{
+  color:var(--ink);
+  background-color:var(--washi);
+  background-image:
+    radial-gradient(rgba(124,106,74,.055) .7px, transparent .8px),
+    radial-gradient(rgba(124,106,74,.038) .6px, transparent .7px),
+    radial-gradient(rgba(150,132,98,.028) 1px, transparent 1.2px),
+    repeating-linear-gradient(96deg, rgba(124,106,74,.020) 0 1px, transparent 1px 14px);
+  background-size:7px 7px, 11px 13px, 29px 31px, auto;
+  background-position:0 0, 3px 5px, 7px 11px, 0 0;
+  background-attachment:fixed;
+  font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Hiragino Kaku Gothic ProN","Noto Sans JP",sans-serif;
+  font-size:15px;line-height:1.7;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;
+}
+#app{max-width:680px;margin:0 auto;padding:22px 18px 88px}
+a{color:var(--ink)}
+b,strong{font-weight:700}
+svg.i{width:1em;height:1em;flex:none;vertical-align:-.13em;stroke:currentColor;fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+
+/* ---- ヘッダ / ナビ ---- */
+.header{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:20px}
+.logo{font-size:21px;font-weight:700;letter-spacing:.2em;line-height:1}
+.logo small{display:block;font-size:8.5px;color:var(--ink3);font-weight:600;letter-spacing:.32em;margin-top:5px}
+/* 直近7日を点で見せる（数字を読まなくても連続が分かる） */
+.streak-dots{display:flex;gap:4px;align-items:center}
+.streak-dots i{width:7px;height:7px;border-radius:50%;background:var(--border2);display:block}
+.streak-dots i.on{background:var(--acc)}
+.streak-dots i.today{box-shadow:0 0 0 2.5px var(--acc-dim)}
+.pb{font-size:16px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:-.02em;margin-left:14px;color:var(--ink);line-height:1.2}
+.pb s{text-decoration:none;font-size:8.5px;color:var(--ink3);letter-spacing:.16em;display:block;text-align:right;font-weight:600}
+
+.nav{display:flex;gap:0;margin-bottom:20px;border-bottom:1px solid var(--border2)}
+.nav button{flex:1;background:none;border:none;border-bottom:2px solid transparent;color:var(--ink3);padding:10px 0 9px;font-size:13px;letter-spacing:.06em;cursor:pointer;font-family:inherit;margin-bottom:-1px}
+.nav button.active{color:var(--ink);border-bottom-color:var(--acc);font-weight:700}
+
+/* ---- カード ---- */
+.scrollwrap{position:relative}
+.scrollwrap::after{content:"";position:absolute;left:0;right:0;bottom:0;height:34px;pointer-events:none;background:linear-gradient(to bottom, rgba(251,249,244,0), var(--card))}
+.card{overflow-wrap:anywhere;background:var(--card);border:1px solid var(--border);border-radius:3px;padding:18px;margin-bottom:12px}
+.card-title{font-size:14.5px;font-weight:700;margin-bottom:2px;display:flex;align-items:center;gap:8px}
+.card-subtitle{font-size:10.5px;color:var(--ink3);letter-spacing:.03em;margin-bottom:14px;line-height:1.5}
+.card-subtitle.up{font-size:9px;letter-spacing:.24em;text-transform:uppercase}
+.banner{padding:11px 14px;border-radius:3px;font-size:12.5px;margin-bottom:12px;border:1px solid var(--border2);background:var(--card);color:var(--ink2)}
+.banner b{color:var(--ink)}
+.banner.ok{border-left:2px solid var(--acc)}
+
+/* ---- ボタン ---- */
+.btn{display:inline-block;background:var(--acc);color:#fff;border:1px solid var(--acc);border-radius:3px;padding:15px 20px;font-size:15px;font-weight:700;letter-spacing:.04em;cursor:pointer;font-family:inherit;width:100%;text-align:center;transition:opacity .12s}
+.btn:active{opacity:.82}
+.btn.secondary{background:none;color:var(--ink);border-color:var(--border2)}
+.btn:disabled,.btn.secondary:disabled{background:var(--card2);border-color:var(--border);color:var(--ink3);opacity:1;cursor:default}
+.btn.small{width:auto;padding:9px 14px;font-size:12.5px}
 .btn.ghost{background:none;border:1px dashed var(--border2);color:var(--ink2)}
-.target-hero{display:flex;align-items:baseline;gap:10px;margin:6px 0 2px}
-.target-hero .num{font-size:44px;font-weight:900;letter-spacing:-.02em;color:var(--coral)}
-.target-hero .unit{font-size:14px;color:var(--ink2)}
-.delta-chip{display:inline-block;font-size:12px;font-weight:700;padding:2px 9px;border-radius:99px}
-.delta-chip.up{background:var(--green-dim);color:var(--green)}
-.delta-chip.down{background:var(--coral-dim);color:var(--coral)}
-.delta-chip.flat{background:var(--card2);color:var(--ink2)}
-.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
-.stat-box{background:var(--card2);border-radius:10px;padding:12px;text-align:center}
-.stat-box .v{font-size:22px;font-weight:900}
-.stat-box .l{font-size:11px;color:var(--ink2);margin-top:2px}
-.win-item{display:flex;gap:10px;align-items:flex-start;padding:9px 0;border-bottom:1px solid var(--border);font-size:13px}
+.recheck-btn{background:none;border:1px solid var(--border2);color:var(--ink2);border-radius:3px;padding:10px 13px;min-height:40px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap;display:inline-flex;align-items:center;justify-content:center;gap:5px}
+.recheck-btn:active{opacity:.7}
+.icon-btn{background:none;border:none;color:var(--ink3);cursor:pointer;font-family:inherit;font-size:17px;width:44px;height:44px;display:inline-flex;align-items:center;justify-content:center;line-height:0;border-radius:3px;margin:-10px -10px -10px 0}
+.icon-btn:active{color:var(--ink)}
+button{touch-action:manipulation}
+input,textarea,select{background:#fffdf8;border:1px solid var(--border2);color:var(--ink);border-radius:3px;padding:10px 12px;font-size:14px;font-family:inherit;appearance:none}
+input::placeholder{color:var(--ink3)}
+input:focus{outline:none;border-color:var(--ink3)}
+code{background:var(--card2);border:1px solid var(--border);border-radius:2px;padding:1px 5px;font-size:.9em}
+
+/* ---- 目標ゲージ（数字を読まなくても達成度が分かる） ---- */
+.gauge{display:flex;align-items:center;gap:18px;margin:6px 0 4px}
+.gauge svg{flex:none}
+.gauge .nums{min-width:0}
+.target-hero{display:flex;align-items:baseline;gap:7px}
+.target-hero .num{font-size:50px;font-weight:700;letter-spacing:-.04em;line-height:1;font-variant-numeric:tabular-nums}
+.target-hero .unit{font-size:9.5px;color:var(--ink3);letter-spacing:.16em;text-transform:uppercase}
+.delta-chip{display:inline-block;font-size:11px;font-weight:600;padding:2px 8px;border-radius:2px;border:1px solid var(--border2);color:var(--ink2);font-variant-numeric:tabular-nums}
+.delta-chip.up{border-color:var(--acc);color:var(--acc)}
+
+/* ---- 選択スロット（何本選んだかを枠で見せる） ---- */
+.slots{display:flex;gap:5px;align-items:center}
+.slots i{width:16px;height:16px;border:1.5px solid var(--border2);border-radius:2px;display:block}
+.slots i.on{background:var(--acc);border-color:var(--acc)}
+
+/* ---- グリッド / スタット ---- */
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1px;background:var(--border);border:1px solid var(--border);border-radius:3px;overflow:hidden}
+.stat-box{background:var(--card);padding:14px 6px;min-height:64px;text-align:center}
+.stat-box .v{font-size:22px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:-.025em;line-height:1.1}
+.stat-box .l{font-size:9px;color:var(--ink3);margin-top:5px;letter-spacing:.1em;text-transform:uppercase;line-height:1.4}
+
+/* ---- リスト行 ---- */
+.win-item{display:flex;gap:11px;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--border);font-size:12.5px;color:var(--ink2)}
 .win-item:last-child{border-bottom:none}
-.win-item .ico{font-size:16px;line-height:1.4}
-.win-item .d{color:var(--ink3);font-size:11px}
-.reading-text{font-size:19px;line-height:2.15;letter-spacing:.01em;padding:6px 2px;text-align:justify}
+.win-item b{color:var(--ink)}
+.win-item .ico{font-size:15px;line-height:1.4;color:var(--ink3);flex:none;margin-top:2px;font-variant-numeric:tabular-nums}
+.win-item .d{color:var(--ink3);font-size:10.5px;font-variant-numeric:tabular-nums;margin-top:2px}
+
+/* ---- 読書面（和紙に墨） ---- */
+.reading-text{font-size:19.5px;line-height:2.15;letter-spacing:.02em;padding:8px 2px;text-align:justify;color:var(--ink)}
 .reading-text.hidden-text{filter:blur(7px);user-select:none}
-.chunk{border-radius:4px;padding:1px 1px;transition:background .12s}
-.chunk.lit{background:var(--coral-dim);box-shadow:inset 0 -2px 0 var(--coral)}
+.chunk{border-radius:2px;padding:1px 1px;transition:background .12s}
+.chunk.lit{background:var(--acc-dim);box-shadow:inset 0 -1.5px 0 var(--acc)}
 .chunk.past{color:var(--ink3)}
-.timerbar{height:8px;background:var(--card2);border-radius:99px;overflow:hidden;margin:10px 0}
-.timerbar .fill{height:100%;background:var(--green);border-radius:99px;transition:width .25s linear}
-.timerbar .fill.warning{background:var(--gold)}
-.timerbar .fill.over{background:var(--coral);animation:pulse 1s infinite}
-@keyframes pulse{50%{opacity:.55}}
-.bigtime{font-variant-numeric:tabular-nums;font-size:30px;font-weight:900;text-align:center;margin:4px 0}
-.opt{display:block;width:100%;text-align:left;background:var(--card2);border:1px solid var(--border2);color:var(--ink);border-radius:10px;padding:12px 14px;font-size:14px;line-height:1.6;cursor:pointer;margin-bottom:8px;font-family:inherit;appearance:none}
+
+/* ---- 進捗 ---- */
+.timerbar{height:2px;background:var(--card2);overflow:hidden;margin:14px 0}
+.timerbar .fill{height:100%;background:var(--ink);transition:width .25s linear}
+.timerbar .fill.warning{background:var(--ink2)}
+.timerbar .fill.over{background:var(--acc);animation:pulse 1s infinite}
+@keyframes pulse{50%{opacity:.45}}
+.bigtime{font-variant-numeric:tabular-nums;font-size:36px;font-weight:700;letter-spacing:-.03em;text-align:center;margin:6px 0}
+
+/* ---- 選択肢 ---- */
+.opt{display:block;width:100%;text-align:left;background:none;border:1px solid var(--border2);color:var(--ink);border-radius:3px;padding:13px 15px;font-size:14px;line-height:1.6;cursor:pointer;margin-bottom:7px;font-family:inherit;appearance:none;transition:border-color .12s,background .12s}
 .opt:hover{border-color:var(--ink3)}
 .opt:focus{outline:none}
 .opt:focus-visible{outline:2px solid var(--blue);outline-offset:2px;border-color:var(--blue)}
 .opt.correct{border-color:var(--green);background:var(--green-dim)}
-.opt.wrong{border-color:var(--coral);background:var(--coral-dim)}
+.opt.wrong{border-color:var(--acc);background:var(--acc-dim)}
 .opt:disabled{cursor:default;opacity:.85}
-.passage-choice{margin-bottom:0}
-.passage-choice.chosen{background:var(--blue-dim);border-color:var(--blue)}
-.rationale{background:var(--blue-dim);border:1px solid rgba(88,166,255,.3);border-radius:10px;padding:10px 13px;font-size:13px;margin:6px 0 12px}
-.phase-dots{display:flex;gap:6px;justify-content:center;margin-bottom:14px}
-.phase-dots span{width:26px;height:5px;border-radius:99px;background:var(--card2)}
-.phase-dots span.done{background:var(--green)}
-.phase-dots span.cur{background:var(--coral)}
-.tag{display:inline-block;font-size:11px;font-weight:700;padding:1px 9px;border-radius:99px;background:var(--card2);color:var(--ink2);margin-right:6px}
-.tag.sci{background:var(--blue-dim);color:var(--blue)}
-.result-verdict{text-align:center;padding:8px 0 4px}
-.result-verdict .big{font-size:52px;font-weight:900;letter-spacing:-.02em}
-.result-verdict .sub{font-size:13px;color:var(--ink2)}
-.compare-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);font-size:14px}
+.passage-choice{margin-bottom:0;background:none;border-color:var(--border)}
+.passage-choice.chosen{border-color:var(--acc);background:var(--acc-dim)}
+.rationale{border-left:2px solid var(--border2);padding:2px 0 2px 12px;font-size:12.5px;color:var(--ink2);margin:8px 0 12px}
+
+/* ---- フェーズ ---- */
+.phase-dots{display:flex;gap:5px;justify-content:center;margin-bottom:18px}
+.phase-dots span{width:20px;height:2px;background:var(--border2)}
+.phase-dots span.done{background:var(--ink3)}
+.phase-dots span.cur{background:var(--acc)}
+.tag{display:inline-block;font-size:9.5px;font-weight:700;letter-spacing:.1em;padding:2px 7px;border-radius:2px;border:1px solid var(--border2);background:none;color:var(--ink2);margin-right:5px}
+.tag.sci{color:var(--ink3)}
+
+/* ---- 結果 ---- */
+.result-verdict{text-align:center;padding:12px 0 6px}
+.result-verdict .big{font-size:62px;font-weight:700;letter-spacing:-.045em;line-height:1;font-variant-numeric:tabular-nums}
+.result-verdict .sub{font-size:12px;color:var(--ink3);margin-top:10px}
+/* 正誤を点で（3問なら3つ） */
+.qdots{display:flex;gap:6px;justify-content:center;margin-top:10px}
+.qdots i{width:9px;height:9px;border-radius:50%;border:1.5px solid var(--border2);display:block}
+.qdots i.hit{background:var(--ink);border-color:var(--ink)}
+.qdots i.miss{background:none;border-color:var(--acc)}
+.compare-row{display:flex;justify-content:space-between;align-items:center;padding:11px 0;border-bottom:1px solid var(--border);font-size:13.5px;font-variant-numeric:tabular-nums}
 .compare-row:last-child{border-bottom:none}
-.compare-row .lab{color:var(--ink2)}
-table.hist{width:100%;border-collapse:collapse;font-size:13px}
-table.hist th{text-align:left;color:var(--ink3);font-weight:600;font-size:11px;padding:6px 4px;border-bottom:1px solid var(--border2)}
-table.hist td{padding:7px 4px;border-bottom:1px solid var(--border)}
-.muted{color:var(--ink2);font-size:13px}
-.small{font-size:12px;color:var(--ink3)}
-.celebrate{position:fixed;inset:0;background:rgba(246,247,249,.95);display:flex;align-items:center;justify-content:center;z-index:50;animation:fadein .3s}
+.compare-row .lab{color:var(--ink3);font-variant-numeric:normal}
+
+table.hist{width:100%;border-collapse:collapse;font-size:12.5px;font-variant-numeric:tabular-nums}
+table.hist th{text-align:left;color:var(--ink3);font-weight:600;font-size:9px;letter-spacing:.18em;text-transform:uppercase;padding:8px 4px;border-bottom:1px solid var(--border2)}
+table.hist td{padding:9px 4px;border-bottom:1px solid var(--border)}
+
+.muted{color:var(--ink2);font-size:12.5px}
+.small{font-size:11.5px;color:var(--ink3);line-height:1.6}
+
+.celebrate{position:fixed;inset:0;background:rgba(242,238,228,.96);display:flex;align-items:center;justify-content:center;z-index:50;animation:fadein .3s}
 @keyframes fadein{from{opacity:0}}
 .celebrate .inner{text-align:center;padding:30px}
-.celebrate .emoji{font-size:60px;animation:pop .5s}
-@keyframes pop{0%{transform:scale(.3)}70%{transform:scale(1.15)}100%{transform:scale(1)}}
-.celebrate h2{font-size:24px;margin:10px 0 6px}
-.bench-wrap{margin-top:8px}
-.bench-bar{position:relative;height:14px;background:var(--card2);border-radius:99px;overflow:visible}
-.bench-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--coral),var(--gold))}
-.bench-mark{position:absolute;top:-4px;width:2px;height:22px;background:var(--ink2)}
-.bench-labels{display:flex;justify-content:space-between;font-size:10px;color:var(--ink3);margin-top:6px}
-.genre-bar{display:flex;align-items:center;gap:8px;margin-bottom:7px;font-size:12px}
-.genre-bar .gname{width:62px;color:var(--ink2)}
-.genre-bar .gtrack{flex:1;height:9px;background:var(--card2);border-radius:99px;overflow:hidden}
-.genre-bar .gfill{height:100%;border-radius:99px}
-.genre-bar .gval{width:74px;text-align:right;font-variant-numeric:tabular-nums}
+.celebrate .emoji{color:var(--acc);animation:pop .5s;display:inline-flex}
+.celebrate .emoji svg.i{width:56px;height:56px;stroke-width:1.1}
+@keyframes pop{0%{transform:scale(.3)}70%{transform:scale(1.12)}100%{transform:scale(1)}}
+.celebrate h2{font-size:23px;font-weight:700;margin:16px 0 6px}
+
+.bench-wrap{margin-top:14px}
+.bench-bar{position:relative;height:2px;background:var(--card2);overflow:visible}
+.bench-fill{height:100%;background:var(--acc)}
+.bench-mark{position:absolute;top:-4px;width:1px;height:10px;background:var(--ink3)}
+.bench-labels{display:flex;justify-content:space-between;font-size:9px;color:var(--ink3);margin-top:8px;letter-spacing:.08em;font-variant-numeric:tabular-nums;text-transform:uppercase}
+.genre-bar{display:flex;align-items:center;gap:10px;margin-bottom:10px;font-size:11.5px}
+.genre-bar .gname{width:76px;color:var(--ink3)}
+.genre-bar .gtrack{flex:1;height:2px;background:var(--card2);overflow:hidden}
+.genre-bar .gfill{height:100%}
+.genre-bar .gval{width:66px;text-align:right;font-variant-numeric:tabular-nums;color:var(--ink2)}
 svg text{font-family:inherit}
-.footer-note{text-align:center;font-size:11px;color:var(--ink3);margin-top:24px}
-button{touch-action:manipulation}
-@media (max-width:480px){
-  #app{padding:12px 10px 60px}
-  .reading-text{font-size:17px;line-height:2.0}
-  .header-stats{gap:8px;font-size:11px}
-  .stat-box .v{font-size:18px}
-  .target-hero .num{font-size:36px}
-  .opt{padding:13px 12px}
+
+details.fold{border-top:1px solid var(--border);margin-top:4px}
+details.fold>summary{list-style:none;cursor:pointer;padding:12px 0 11px;font-size:12px;color:var(--ink2);display:flex;align-items:center;gap:7px}
+details.fold>summary::-webkit-details-marker{display:none}
+details.fold>summary::after{content:"＋";margin-left:auto;color:var(--ink3);font-size:12px}
+details.fold[open]>summary::after{content:"－"}
+details.fold[open]>summary{color:var(--ink)}
+
+.footer-note{text-align:center;font-size:8.5px;color:var(--ink3);letter-spacing:.28em;text-transform:uppercase;margin-top:36px}
+
+.fresh{display:flex;align-items:center;gap:10px;padding:9px 2px;margin-bottom:14px;font-size:12px;color:var(--ink3);border-bottom:1px solid var(--border)}
+.fresh .dot{width:7px;height:7px;border-radius:50%;flex:none;background:var(--ink3)}
+.fresh.ok .dot{background:var(--ink)}
+.fresh.stale .dot{background:var(--acc)}
+.fresh.err .dot{background:var(--acc)}
+.fresh-status{font-weight:600;color:var(--ink2);font-variant-numeric:tabular-nums}
+.fresh-sub{color:var(--ink3)}
+
+.toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);background:var(--ink);color:var(--washi);padding:11px 18px;border-radius:3px;font-size:12.5px;font-weight:600;z-index:60;box-shadow:0 6px 24px rgba(29,27,23,.22);animation:fadein .2s;display:flex;align-items:center;gap:7px;max-width:90vw}
+
+/* iPhone 13 mini (375pt) を基準に詰める */
+@media (max-width:430px){
+  #app{padding:16px 14px calc(72px + env(safe-area-inset-bottom));max-width:100%}
+  body{font-size:15px}
+  .logo{font-size:19px;letter-spacing:.16em}
+  .streak-dots i{width:6px;height:6px}
+  .streak-dots{gap:3.5px}
+  .pb{font-size:15px;margin-left:10px}
+  .nav button{font-size:12.5px;padding:11px 0 10px}
+  .card{padding:15px 14px}
+  .card-title{font-size:14px}
+  .gauge{gap:14px}
+  .target-hero .num{font-size:44px}
+  .reading-text{font-size:18px;line-height:2.05;text-align:left}
+  .stat-box{padding:12px 4px;min-height:60px}
+  .stat-box .v{font-size:19px}
+  .stat-box .l{font-size:8.5px;letter-spacing:.06em}
+  .result-verdict .big{font-size:50px}
+  .opt{padding:13px 12px;font-size:13.5px}
+  .btn{padding:15px 14px;font-size:15px}
+  table.hist td,table.hist th{padding:8px 2px}
+  .genre-bar .gname{width:66px}
+  .genre-bar .gval{width:58px}
+  .toast{bottom:calc(20px + env(safe-area-inset-bottom));font-size:12px}
 }
-.fresh{border-radius:12px;padding:14px 16px;margin-bottom:14px;border:1px solid var(--border2)}
-.fresh.ok{background:var(--green-dim);border-color:rgba(26,127,55,.35)}
-.fresh.stale{background:var(--gold-dim);border-color:rgba(154,103,0,.4)}
-.fresh.err{background:var(--coral-dim);border-color:rgba(224,73,47,.4)}
-.fresh-head{display:flex;align-items:center;justify-content:space-between;gap:10px}
-.fresh-status{font-size:15px;font-weight:800}
-.fresh-sub{font-size:12px;color:var(--ink2);margin-top:3px}
-.fresh-titles{margin-top:10px;border-top:1px dashed var(--border2);padding-top:8px}
-.fresh-titles .ft{display:flex;gap:8px;font-size:12px;padding:3px 0;color:var(--ink2)}
-.fresh-titles .ft b{color:var(--ink);font-weight:600}
-.recheck-btn{background:var(--card);border:1px solid var(--border2);color:var(--ink);border-radius:8px;padding:7px 12px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap}
-.recheck-btn:active{transform:scale(.97)}
-.toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 18px;border-radius:99px;font-size:13px;font-weight:700;z-index:60;box-shadow:0 4px 16px rgba(0,0,0,.25);animation:fadein .2s}
+@media (max-width:380px){
+  #app{padding-left:12px;padding-right:12px}
+  .card{padding:14px 12px}
+  .target-hero .num{font-size:40px}
+  .card-subtitle.up{letter-spacing:.16em}
+}
 </style>
 </head>
 <body>
@@ -285,7 +389,7 @@ function migrateFromV2() {
     // ペーサー初期値: 読速の110%（強制ペースで少し背伸び）
     s.pacerLevel = Math.round(med * 1.1);
     s.spanLevel = Math.min(9, Math.max(3, o.spanLevel || 4));
-    s.wins.push({ date: today(), ico: "📦", text: `Sokugan 1.0 から ${s.migratedSessions} セッション分の記録を引き継ぎ` });
+    s.wins.push({ date: today(), ico: "box", text: `Sokugan 1.0 から ${s.migratedSessions} セッション分の記録を引き継ぎ` });
     return s;
   } catch (e) { return null; }
 }
@@ -424,6 +528,47 @@ function importPersonalContent(data) {
   state.personalLibrary = unionBy(state.personalLibrary, items, p => p.id).slice(-120);
   saveState();
   return { count: items.length, availableOn };
+}
+// =============================================================
+// アイコン: 絵文字を使わず、線画SVG1系統に統一する（currentColor継承）
+// =============================================================
+const ICONS = {
+  check:   '<path d="M4 12.5l5 5L20 6.5"/>',
+  alert:   '<path d="M12 4l9 16H3z"/><path d="M12 10v4.5"/><circle cx="12" cy="17.6" r=".7" fill="currentColor" stroke="none"/>',
+  refresh: '<path d="M20 12a8 8 0 1 1-2.6-5.9"/><path d="M20 4v4.4h-4.4"/>',
+  target:  '<circle cx="12" cy="12" r="8.2"/><circle cx="12" cy="12" r="3.4"/><path d="M12 1.8v3M12 19.2v3M1.8 12h3M19.2 12h3"/>',
+  bolt:    '<path d="M13.4 2.5L4.8 13.6h6L10.6 21.5l8.6-11.1h-6z"/>',
+  lens:    '<circle cx="10.7" cy="10.7" r="6.7"/><path d="M15.6 15.6L21 21"/>',
+  book:    '<path d="M4 4.5h6a2.5 2.5 0 0 1 2.5 2.5v13A2 2 0 0 0 10.5 18H4z"/><path d="M20 4.5h-6A2.5 2.5 0 0 0 11.5 7v13A2 2 0 0 1 13.5 18H20z"/>',
+  leaf:    '<path d="M20 4C10 4 4.5 8 4.5 14.5A5.5 5.5 0 0 0 10 20c6.5 0 10-5.5 10-16z"/><path d="M4.5 20.5C7 15 12 11 17 9"/>',
+  compass: '<circle cx="12" cy="12" r="8.5"/><path d="M15.6 8.4l-2 5.2-5.2 2 2-5.2z"/>',
+  orbit:   '<circle cx="12" cy="12" r="3.6"/><ellipse cx="12" cy="12" rx="10" ry="4.6" transform="rotate(-28 12 12)"/>',
+  gift:    '<path d="M3.6 8.8h16.8v3.4H3.6z"/><path d="M5.2 12.2v8h13.6v-8"/><path d="M12 8.8v11.4"/><path d="M12 8.8S10.6 4 8.2 4a2.4 2.4 0 0 0 0 4.8zM12 8.8S13.4 4 15.8 4a2.4 2.4 0 0 1 0 4.8z"/>',
+  quote:   '<path d="M20 15.5a2.5 2.5 0 0 1-2.5 2.5H8.5L4 21.5V6.5A2.5 2.5 0 0 1 6.5 4h11A2.5 2.5 0 0 1 20 6.5z"/>',
+  copy:    '<rect x="8.5" y="8.5" width="11.5" height="11.5" rx="2"/><path d="M15.5 5.5a2 2 0 0 0-2-2H6a2.5 2.5 0 0 0-2.5 2.5v7.5a2 2 0 0 0 2 2"/>',
+  flag:    '<path d="M5.5 21V3.8"/><path d="M5.5 4.6h12.4l-2.4 4.2 2.4 4.2H5.5z"/>',
+  play:    '<rect x="2.8" y="5" width="18.4" height="14" rx="2.4"/><path d="M10.2 9.4l5 2.6-5 2.6z"/>',
+  news:    '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M6.5 9h7M6.5 12.5h7M6.5 16h4M16.5 9h1M16.5 12.5h1"/>',
+  eye:     '<path d="M2.2 12S5.8 5.5 12 5.5 21.8 12 21.8 12 18.2 18.5 12 18.5 2.2 12 2.2 12z"/><circle cx="12" cy="12" r="2.8"/>',
+  repeat:  '<path d="M4 9.5A4 4 0 0 1 8 5.5h12"/><path d="M16.6 2.2L20 5.5l-3.4 3.3"/><path d="M20 14.5a4 4 0 0 1-4 4H4"/><path d="M7.4 21.8L4 18.5l3.4-3.3"/>',
+  trend:   '<path d="M3 17.5l6-6 4 4 8-8"/><path d="M15.5 7.5H21v5.5"/>',
+  doc:     '<path d="M13.5 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8.5z"/><path d="M13.5 3v5.5H19"/><path d="M8.5 13h7M8.5 16.5h5"/>',
+  peak:    '<path d="M2.5 19.5L9 7l4 6.5 2.5-3.5 6 9.5z"/>',
+  link:    '<path d="M10 13.8a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1.6 1.6"/><path d="M14 10.2a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1.6-1.6"/>',
+  trophy:  '<path d="M7.5 4h9v5.5a4.5 4.5 0 0 1-9 0z"/><path d="M7.5 5.5H4.5V7a3 3 0 0 0 3 3M16.5 5.5h3V7a3 3 0 0 1-3 3"/><path d="M12 14v3.5M8.5 20.5h7"/>',
+  spark:   '<path d="M12 2.5l2.2 6.1 6.3 2.2-6.3 2.2L12 19.1 9.8 13 3.5 10.8 9.8 8.6z"/><path d="M19 17.5l.9 2.3 2.3.9-2.3.9-.9 2.3"/>',
+  box:     '<path d="M3.5 7.6L12 3.2l8.5 4.4v8.8L12 20.8l-8.5-4.4z"/><path d="M3.5 7.6L12 12l8.5-4.4M12 12v8.8"/>',
+  key:     '<circle cx="7.5" cy="12" r="4"/><path d="M11.5 12H21M18 12v3.4M14.8 12v2.6"/>',
+  mail:    '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3.6 6.2L12 12.6l8.4-6.4"/>',
+  buoy:    '<circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="3.6"/><path d="M6 6l3.5 3.5M18 6l-3.5 3.5M6 18l3.5-3.5M18 18l-3.5-3.5"/>',
+  plus:    '<path d="M12 5v14M5 12h14"/>',
+  dot:     '<circle cx="12" cy="12" r="3.2" fill="currentColor" stroke="none"/>'
+};
+// 旧データ（localStorage/クラウドに残る絵文字）も同じ線画へ寄せる
+const EMOJI_ICON = { "📦":"box","🛟":"buoy","👁":"eye","📚":"book","🔁":"repeat","📈":"trend","🏆":"trophy","🎯":"target","📑":"doc","🧗":"peak","🔗":"link","🏁":"flag","🚩":"flag","🛰":"orbit","💬":"quote","🎁":"gift","📰":"news","⚡":"bolt","🔍":"lens","🌿":"leaf","🧭":"compass","✅":"check","⚠":"alert","🔄":"refresh","🎬":"play","📋":"copy","🔑":"key","✉":"mail","🎉":"spark","🆕":"plus" };
+function ic(name, extra) {
+  const body = ICONS[name] || ICONS[EMOJI_ICON[name]] || ICONS.dot;
+  return `<svg class="i" viewBox="0 0 24 24" aria-hidden="true"${extra ? ' style="' + extra + '"' : ""}>${body}</svg>`;
 }
 function screen() { return document.getElementById("screen"); }
 function esc(t) { return String(t).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
@@ -807,13 +952,13 @@ function normalizeContentNumerals(c) {
 // =============================================================
 // ---- 曜日メニュー（変化で飽きを防ぎ、木曜は弱点集中） ----
 const MENUS = {
-  1: { id: "speed",    label: "⚡ 速度ストレッチの日", desc: "ペーサー+10%・反復読は+20%に挑戦" },
-  2: { id: "depth",    label: "🔍 深読みの日",       desc: "深層読解を本文①②の両方で実施" },
-  3: { id: "vocab",    label: "📚 語彙強化の日",      desc: "語彙道場が6語に増量（学校語彙を深く）" },
-  4: { id: "weak",     label: "🎯 弱点集中の日",      desc: "" },
-  5: { id: "transfer", label: "🛰 転移チェックの日",   desc: "週次アンカー測定に最適・総合バランス" },
-  6: { id: "light",    label: "🌿 軽めの日",         desc: "通常メニューを気楽に" },
-  0: { id: "free",     label: "🧭 自由の日",         desc: "通常メニュー" }
+  1: { id: "speed",    ico: "bolt",    label: "速度ストレッチの日", desc: "ペーサー+10%・反復読+20%" },
+  2: { id: "depth",    ico: "lens",    label: "深読みの日",       desc: "深層読解を本文①②で実施" },
+  3: { id: "vocab",    ico: "book",    label: "語彙強化の日",      desc: "語彙道場が6語に増量" },
+  4: { id: "weak",     ico: "target",  label: "弱点集中の日",      desc: "" },
+  5: { id: "transfer", ico: "orbit",   label: "転移チェックの日",   desc: "週次アンカー測定に最適" },
+  6: { id: "light",    ico: "leaf",    label: "軽めの日",         desc: "通常メニューを気楽に" },
+  0: { id: "free",     ico: "compass", label: "自由の日",         desc: "通常メニュー" }
 };
 const SKILL_LABELS = { speed: "読速", comp: "理解度", deep: "論理のつなぎ(深層読解)", vocab: "語彙の深さ", catch: "語形キャッチ" };
 function weakestSkill() {
@@ -854,7 +999,7 @@ function setGoal(target) {
   const whys = { 550: "会議資料を読む時間が今より2割縮む水準", 600: "母語話者平均超え。長文レポートを一往復で掴める", 650: "母語話者の上位帯。会議中に資料を読み切って先に問える" };
   state.goal = { target, baseline: Math.min(base, target - 30), setAt: today(), why: whys[target] || "難度補正速度で" + target + "字/分", hit: [] };
   stampField("goal");
-  saveState(); showToast("🎯 目標を設定: " + target + "字/分（難度補正）"); renderHome();
+  saveState(); showToast(ic("target") + " 目標を設定: " + target + "字/分（難度補正）"); renderHome();
 }
 function clearGoal() { if (confirm("目標をリセットしますか？")) { state.goal = null; stampField("goal"); saveState(); renderHome(); } }
 // ---- 持ち帰り（教えるつもり効果 g=0.50） ----
@@ -866,7 +1011,7 @@ function passageTakeaway(p) {
 async function copyTakeaways() {
   const t = state.lastTakeaways; if (!t) return;
   const txt = t.items.map(i => "・" + i.hook + (i.detail ? " — " + i.detail : "")).join("\n");
-  try { await navigator.clipboard.writeText(txt); showToast("📋 コピーしました。誰かに話そう"); } catch (e) { showToast("コピーできませんでした"); }
+  try { await navigator.clipboard.writeText(txt); showToast(ic("copy") + " コピーしました"); } catch (e) { showToast("コピーできませんでした"); }
 }
 // ---- 語彙道場（学校語彙を12歳の言葉で。深さ優先・自己説明） ----
 function sessionKeyTerms(n) {
@@ -983,7 +1128,7 @@ function relieveRatchetIfNeeded() {
     r.target = Math.round(r.target * RATCHET_RELIEF);
     r.lastRelief = today();
     if (old !== r.target) {
-      state.wins.push({ date: today(), ico: "🛟", text: `2日連続未達のため目標を ${old}→${r.target}字/分 に調整（再挑戦しやすく）` });
+      state.wins.push({ date: today(), ico: "buoy", text: `2日連続未達のため目標を ${old}→${r.target}字/分 に調整（再挑戦しやすく）` });
       saveState();
     }
   }
@@ -1007,15 +1152,34 @@ function render() {
   else { setRoute("home"); renderHome(); }
   window.scrollTo(0, 0);
 }
+// 直近7日の実施を点で見せる（読まなくても継続が分かる）
+function last7Dots() {
+  const out = [];
+  for (let i = 6; i >= 0; i--) {
+    const d = daysAgoStr(i);
+    const done = (state.history || []).some(h => h.date === d && h.mode !== "partial");
+    out.push(`<i class="${done ? "on" : ""}${i === 0 ? " today" : ""}"></i>`);
+  }
+  return `<span class="streak-dots" title="直近7日">${out.join("")}</span>`;
+}
+// 目標に対する到達度リング（%を読まなくても分かる）
+function targetRing(pct, size) {
+  const S = size || 62, r = (S - 6) / 2, c = 2 * Math.PI * r;
+  const v = Math.max(0, Math.min(100, pct || 0));
+  return `<svg width="${S}" height="${S}" viewBox="0 0 ${S} ${S}" aria-hidden="true">
+    <circle cx="${S/2}" cy="${S/2}" r="${r}" fill="none" stroke="var(--border2)" stroke-width="3"/>
+    ${v > 0 ? `<circle cx="${S/2}" cy="${S/2}" r="${r}" fill="${v >= 100 ? "var(--acc)" : "none"}" stroke="var(--acc)" stroke-width="3" stroke-linecap="round"
+      stroke-dasharray="${(c * v / 100).toFixed(1)} ${c.toFixed(1)}" transform="rotate(-90 ${S/2} ${S/2})"/>` : ""}
+    ${v >= 100 ? `<path d="M${(S/2-9).toFixed(1)},${(S/2).toFixed(1)} l6,6 l12,-13" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>` : ""}
+  </svg>`;
+}
 function renderHeader() {
-  const t = today();
   document.getElementById("header").innerHTML = `
     <div class="header">
       <div class="logo">速眼<small>SOKUGAN 3.5</small></div>
-      <div class="header-stats">
-        <div>連続 <b>${state.streak}</b>日</div>
-        <div>累計 <b>${totalTrainingDays()}</b>日</div>
-        <div>PB <b>${state.bestSpeed || "—"}</b><span style="font-size:10px">字/分</span></div>
+      <div style="display:flex;align-items:center">
+        ${last7Dots()}
+        <div class="pb"><s>PB</s>${state.bestSpeed || `<span style="color:var(--ink3)">—</span>`}</div>
       </div>
     </div>`;
 }
@@ -1037,11 +1201,8 @@ function renderHome() {
   const todayBest = dayBest(today());
   const clearedToday = state.ratchet.clearedDates.includes(today());
   const todaySess = ensureTodaySession();
-  const deltaVsYest = (todayBest && yestBest) ? todayBest - yestBest : null;
   const ma7 = movingAvg(7), ma30 = movingAvg(30);
   const adjMa7 = adjMovingAvg(7), adjMa30 = adjMovingAvg(30);
-  const wins = state.wins.slice(-3).reverse();
-  const deep = genreSpeed("deep"), news = genreSpeed("concrete");
   const fr = contentStatus();
   const menu = todayMenu();
   const gp = goalProgress();
@@ -1050,70 +1211,65 @@ function renderHome() {
   const unseenN = unseenPassages().length;
   const selectable = preferByFeedback(unseenPassages());
   const selectedIds = selectedPassageIds();
+  const ringPct = todayBest ? Math.min(100, Math.round(todayBest / t * 100)) : 0;
+  const slots = () => `<span class="slots" id="selection-slots">${[0,1].map(i => `<i class="${i < selectedIds.length ? "on" : ""}"></i>`).join("")}</span>`;
 
   screen().innerHTML = `
     ${renderFreshnessPanel(fr)}
-    ${anchorDue() && totalTrainingDays() >= 1 ? `<div class="fresh" style="background:var(--blue-dim);border-color:rgba(9,105,218,.35)"><div class="fresh-head"><div><div class="fresh-status">🛰 週次アンカー転移テストの時期です</div><div class="fresh-sub">訓練と別枠で、普通の文章を速く読めるようになったか（転移）を約3分で測定。目標やベストには影響しません。</div></div><button class="recheck-btn" onclick="startAnchor()">測定する</button></div></div>` : ""}
-    <div class="card" style="border-color:${clearedToday ? "var(--green)" : "var(--border2)"}">
-      <div style="margin-bottom:8px"><span class="tag" style="background:var(--gold-dim);color:var(--gold);font-size:12px">${menu.label}</span> <span class="small">${esc(menu.desc)}</span></div>
-      <div class="card-title">今日の目標 ${clearedToday ? '<span class="delta-chip up">クリア済</span>' : ""}</div>
-      <div class="card-subtitle">DAILY TARGET · 理解度60%以上での読速 · 今日の一歩が週目標につながる</div>
-      <div class="target-hero"><span class="num">${t}</span><span class="unit">字/分</span>
-        ${yestBest ? `<span class="delta-chip ${t > yestBest ? "up" : "flat"}">昨回実績 ${yestBest} 比 ${t - yestBest >= 0 ? "+" : ""}${t - yestBest}</span>` : ""}
+    ${anchorDue() && totalTrainingDays() >= 1 ? `<div class="card" style="display:flex;align-items:center;gap:12px;padding:14px 18px"><span style="color:var(--ink3);font-size:17px;line-height:0">${ic("orbit")}</span><div style="flex:1"><b style="font-size:13px">週次アンカー</b><div class="small">未訓練文で転移を測る · 3分</div></div><button class="recheck-btn" onclick="startAnchor()">測定</button></div>` : ""}
+    <div class="card">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;color:var(--ink3);font-size:11px">${ic(menu.ico || "dot")}<b style="color:var(--ink2);font-weight:700">${menu.label}</b><span>${esc(menu.desc)}</span></div>
+
+      <div class="gauge">
+        ${targetRing(ringPct)}
+        <div class="nums">
+          <div class="card-subtitle up" style="margin:0 0 4px">今日の目標${clearedToday ? " · 達成" : ""}</div>
+          <div class="target-hero"><span class="num">${t}</span><span class="unit">字/分</span></div>
+          ${todayBest ? `<div class="small" style="margin-top:5px;font-variant-numeric:tabular-nums">本日 <b style="color:var(--ink)">${todayBest}</b>${yestBest ? ` · 前回 ${yestBest}` : ""}</div>` : ""}
+        </div>
       </div>
-      ${todayBest ? `<p class="muted" style="margin:4px 0 10px">今日のベスト: <b style="color:var(--ink)">${todayBest}字/分</b>${deltaVsYest != null ? `（昨回比 ${deltaVsYest >= 0 ? "+" : ""}${deltaVsYest}）` : ""}</p>` : `<p class="muted" style="margin:4px 0 10px">クリアすると明日の目標が約2.5%上がります。昨日の自分が今日のライバルです。</p>`}
-      <div style="margin-top:10px"><div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:5px"><div class="small">今日、何を読む？ 日次記事・YouTube教材から2本</div><b id="selected-passage-count" style="font-size:12px;color:${selectedIds.length === 2 ? "var(--green)" : "var(--ink2)"}">${selectedIds.length}/2本</b></div>
-      <div id="passage-list" style="display:grid;gap:7px;max-height:306px;overflow:auto;padding-right:2px">${selectable.map(p => { const order = selectedIds.indexOf(p.id); const isYoutube = p.kind === "youtube" || /^youtube-/.test(p.id); const defaultLabel = isYoutube ? "YouTube教材" : esc(genreOf(p)); return `<button class="opt passage-choice ${order >= 0 ? "chosen" : ""}" data-passage-id="${encodeURIComponent(p.id)}" style="width:100%;min-height:0;text-align:left;padding:10px 12px" onclick="togglePassageSelection(decodeURIComponent('${encodeURIComponent(p.id)}'))"><div style="display:flex;gap:7px;align-items:center"><span class="tag" data-selection-label data-default-label="${defaultLabel}" style="font-size:10px">${order >= 0 ? `本文${order + 1}` : defaultLabel}</span>${isYoutube ? `<span class="small">${esc(genreOf(p))}</span>` : ""}</div><div style="font-size:13px;font-weight:700;line-height:1.45;margin-top:4px">${esc(p.title)}</div></button>`; }).join("") || `<p class="small">選べる未読教材がありません。</p>`}</div></div>
-      <div class="small" style="margin:8px 0 2px;padding:8px 10px;border-radius:8px;background:var(--blue-dim)">🎬 YouTube教材は、台本取得後にあなた専用ライブラリへ自動追加されます。${syncEnabled() && signedIn() ? "スマホではアプリを開くと自動同期します。" : "自動受取には「記録」から端末間同期を1回だけ設定してください。"}</div>
-      <div class="grid2" style="margin-top:8px">
-        <button id="start-full" class="btn ${fr.isStale ? "secondary" : ""}" onclick="guardedStart('full')" ${unseenN < 3 || selectedIds.length !== 2 ? "disabled" : ""}>選んだ2本で始める<br><span style="font-size:11px;font-weight:500">じっくり 12分</span></button>
-        <button id="start-short" class="btn secondary" onclick="guardedStart('short')" ${unseenN < 1 || selectedIds.length !== 1 ? "disabled" : ""}>1本でショート<br><span style="font-size:11px;font-weight:500">3〜5分</span></button>
+
+      <div style="margin-top:18px;display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <div class="card-subtitle" style="margin:0">今日、何を読む？ 日次記事・YouTube教材から2本</div>
+        ${slots()}
       </div>
-      <div id="short-selection-hint" class="small" style="margin-top:5px;${selectedIds.length === 2 ? "" : "display:none"}">ショート版は本文を1本だけ選んでください。</div>
-      ${unseenN < 1 ? `<div class="banner info" style="margin-top:8px">🏁 <b>本日分を完走</b>しました（未読0本）。既読を混ぜての再表示はしません。上の「更新を確認」で新着を待ってください。</div>` : unseenN < 3 ? `<div class="banner info" style="margin-top:8px">未読が${unseenN}本のため、ショート版で最後まで重複なく読めます。</div>` : ""}
-      ${fr.isStale ? `<p class="small" style="margin-top:8px;color:var(--gold)">⚠ 表示中のコンテンツは <b>${fr.date}</b> 分です。最新でない可能性があるため、上の「更新を確認」を押すか、開始時に確認します。</p>` : ""}
+      <div class="scrollwrap"><div id="passage-list" style="display:grid;gap:6px;max-height:258px;overflow:auto;padding:2px 2px 12px;border-top:1px solid var(--border)">${selectable.map(p => { const order = selectedIds.indexOf(p.id); const isYoutube = p.kind === "youtube" || /^youtube-/.test(p.id); const defaultLabel = isYoutube ? "YouTube教材" : esc(genreOf(p)); return `<button class="opt passage-choice ${order >= 0 ? "chosen" : ""}" data-passage-id="${encodeURIComponent(p.id)}" style="width:100%;min-height:0;text-align:left;padding:11px 12px" onclick="togglePassageSelection(decodeURIComponent('${encodeURIComponent(p.id)}'))"><div style="display:flex;gap:7px;align-items:center"><span class="tag" data-selection-label data-default-label="${defaultLabel}" style="font-size:9.5px">${order >= 0 ? `本文${order + 1}` : defaultLabel}</span>${isYoutube ? `<span class="small">${esc(genreOf(p))}</span>` : ""}</div><div style="font-size:13.5px;font-weight:700;line-height:1.5;margin-top:5px">${esc(p.title)}</div></button>`; }).join("") || `<p class="small">選べる未読教材がありません。</p>`}</div></div>
+
+      <button id="start-full" class="btn" style="margin-top:14px" onclick="guardedStart('full')" ${unseenN < 3 || selectedIds.length !== 2 ? "disabled" : ""}>選んだ2本で始める<span style="font-size:9.5px;font-weight:600;opacity:.65;letter-spacing:.18em;margin-left:10px">12 MIN</span></button>
+      <button id="start-short" class="btn secondary" style="margin-top:7px;padding:11px" onclick="guardedStart('short')" ${unseenN < 1 || selectedIds.length !== 1 ? "disabled" : ""}>1本でショート<span style="font-size:9.5px;font-weight:600;opacity:.55;letter-spacing:.18em;margin-left:10px">3-5 MIN</span></button>
+      <div id="short-selection-hint" class="small" style="margin-top:6px;${selectedIds.length === 2 ? "" : "display:none"}">ショート版は1本だけ選択</div>
+      ${unseenN < 1 ? `<div class="banner" style="margin-top:10px">${ic("flag")} <b>本日分を完走</b>。未読0本。</div>` : ""}
+      ${fr.isStale ? `<p class="small" style="margin-top:8px;color:var(--acc-ink)">${ic("alert")} 表示中は <b>${fr.date}</b> 分</p>` : ""}
+
       ${gp ? `
-      <div style="margin-top:14px;padding-top:12px;border-top:1px dashed var(--border2)">
-        <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:5px"><span>🎯 <b>${gp.g.target}字/分</b>（難度補正）への道 <span class="small">${esc(gp.g.why)}</span></span><b style="color:var(--coral)">${gp.pct}%</b></div>
-        <div class="timerbar" style="margin:0"><div class="fill" style="width:${gp.pct}%;background:linear-gradient(90deg,var(--coral),var(--gold))"></div></div>
-        <div class="small" style="margin-top:4px">${gp.g.baseline} → 現在 <b>${gp.cur}</b> → ${gp.g.target}字/分 ・ 一目量 ${gz || "—"}字/固視 <a href="javascript:clearGoal()" style="color:var(--ink3);font-size:10px;margin-left:8px">目標を変更</a></div>
+      <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border)">
+        <div style="display:flex;justify-content:space-between;align-items:center;font-size:12px;margin-bottom:7px"><span data-goal-progress style="display:flex;align-items:center;gap:7px;color:var(--ink3)">${ic("target")}<b style="color:var(--ink)">${gp.g.target}</b></span><b style="color:var(--acc);font-variant-numeric:tabular-nums">${gp.pct}%</b></div>
+        <div class="timerbar" style="margin:0"><div class="fill" style="width:${gp.pct}%;background:var(--acc)"></div></div>
+        <div class="small" style="margin-top:6px">${gp.g.baseline} → <b style="color:var(--ink2)">${gp.cur}</b> → ${gp.g.target} <a href="javascript:clearGoal()" style="color:var(--ink3);margin-left:6px">変更</a></div>
       </div>` : `
-      <div style="margin-top:14px;padding-top:12px;border-top:1px dashed var(--border2)">
-        <div style="font-size:13px;margin-bottom:8px">🎯 <b>目標を設定すると成長が物語になります</b>（具体的で少し難しい目標は成果d=0.42〜0.80）</div>
-        <div style="display:flex;gap:8px">
-          <button class="recheck-btn" onclick="setGoal(550)">550字/分<br><span style="font-weight:400;font-size:10px">資料読みが2割速く</span></button>
-          <button class="recheck-btn" onclick="setGoal(600)">600字/分<br><span style="font-weight:400;font-size:10px">母語話者平均超え</span></button>
-          <button class="recheck-btn" onclick="setGoal(650)">650字/分<br><span style="font-weight:400;font-size:10px">母語話者の上位帯</span></button>
+      <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border)">
+        <div style="font-size:11.5px;margin-bottom:9px;display:flex;align-items:center;gap:7px;color:var(--ink3)" data-goal-setter>${ic("target")}目標</div>
+        <div class="grid3">
+          <button class="stat-box" style="border:none;cursor:pointer;font-family:inherit;color:inherit" onclick="setGoal(550)"><div class="v">550</div><div class="l">資料が2割速く</div></button>
+          <button class="stat-box" style="border:none;cursor:pointer;font-family:inherit;color:inherit" onclick="setGoal(600)"><div class="v">600</div><div class="l">母語話者平均</div></button>
+          <button class="stat-box" style="border:none;cursor:pointer;font-family:inherit;color:inherit" onclick="setGoal(650)"><div class="v">650</div><div class="l">上位帯</div></button>
         </div>
       </div>`}
+      <details class="fold" style="margin-top:14px"><summary>${ic("play")} YouTube教材</summary><p class="small" style="padding-bottom:12px">台本取得後にあなた専用ライブラリへ自動追加されます。${syncEnabled() && signedIn() ? "" : "受取には「記録」で端末間同期を設定してください。"}</p></details>
     </div>
-    ${tk ? `<div class="card" style="border-color:var(--gold)"><div class="card-title">🎁 今日の持ち帰り</div><div class="card-subtitle">誰かに「実は…」と話したら定着完了</div>${tk.items.map(t => `<div class="win-item"><span class="ico">💬</span><div><b>${esc(t.hook)}</b></div></div>`).join("")}<button class="btn secondary small" style="margin-top:8px" onclick="copyTakeaways()">📋 コピー</button></div>` : ""}
+
+    ${tk ? `<div class="card"><div class="card-title">${ic("gift")}今日の持ち帰り</div><div class="card-subtitle up">Takeaways</div>${tk.items.map(t => `<div class="win-item"><span class="ico">${ic("quote")}</span><div><b>${esc(t.hook)}</b></div></div>`).join("")}<button class="btn secondary small" style="margin-top:10px" onclick="copyTakeaways()">${ic("copy")} コピー</button></div>` : ""}
 
     <div class="card">
       <div class="card-title">成長カーブ</div>
-      <div class="card-subtitle">PROGRESS · 直近30日 · 理解度ゲート通過分のみ</div>
+      <div class="card-subtitle up">Progress · 30 days</div>
       ${renderSparkline()}
-      <div class="grid3" style="margin-top:12px">
-        <div class="stat-box"><div class="v">${ma7 || "—"}</div><div class="l">7日平均 字/分（生）</div></div>
-        <div class="stat-box"><div class="v" style="color:var(--blue)">${adjMa7 || "—"}</div><div class="l">7日平均（難度補正）</div></div>
-        <div class="stat-box"><div class="v" style="color:var(--green)">${gz || "—"}</div><div class="l">一目量 字/固視</div></div>
+      <div class="grid3" style="margin-top:14px">
+        <div class="stat-box"><div class="v">${ma7 || "—"}</div><div class="l">7日平均</div></div>
+        <div class="stat-box"><div class="v">${adjMa7 || "—"}</div><div class="l">難度補正</div></div>
+        <div class="stat-box"><div class="v">${gz || "—"}</div><div class="l">一目量</div></div>
       </div>
-      ${adjMa7 && adjMa30 ? `<p class="small" style="margin-top:8px">難度補正の7日 vs 30日: <b style="color:${adjMa7 >= adjMa30 ? "var(--green)" : "var(--coral)"}">${adjMa7 >= adjMa30 ? "+" : ""}${Math.round((adjMa7 - adjMa30) / adjMa30 * 100)}%</b> — 生速度が横ばいでも、難しい文章を速く読めていれば実質成長です。</p>` : ""}
       ${renderBenchmark()}
-    </div>
-
-    <div class="card">
-      <div class="card-title">ジャンル別の読速</div>
-      <div class="card-subtitle">BY GENRE · 直近14日平均</div>
-      ${renderGenreBars(news, deep)}
-      <p class="small" style="margin-top:6px">論説・分析系（経営・組織・規制）は速報より遅くて正常。差が縮まること自体が汎用性の成長です。</p>
-    </div>
-    ${renderAnchorCard()}
-
-    <div class="card">
-      <div class="card-title">できるようになったこと</div>
-      <div class="card-subtitle">RECENT WINS</div>
-      ${wins.length ? wins.map(w => `<div class="win-item"><span class="ico">${w.ico}</span><div>${w.text}<div class="d">${w.date}</div></div></div>`).join("") : '<p class="muted">セッションを完了すると、成長の証跡がここに溜まっていきます。</p>'}
     </div>
     ${renderSyncLine()}`;
 }
@@ -1139,7 +1295,7 @@ function renderGenreBars(news, deep) {
 function renderAnchorCard() {
   const valids = (state.anchorHistory || []).filter(h => h.valid);
   if (!valids.length) {
-    return `<div class="card"><div class="card-title">転移（週次アンカー）</div><div class="card-subtitle">TRANSFER · 訓練が「普通の読み」に効いているかの検査</div><p class="muted">まだ測定がありません。週1回、訓練とは別の難度固定文で「未訓練の文章を速く読めるか」を測ります。${anchorDue() ? "上のカードから測定できます。" : ""}</p></div>`;
+    return `<div class="card"><div class="card-title">転移（週次アンカー）</div><div class="card-subtitle up">Transfer</div><p class="small">未測定。週1回、未訓練文で「普通の文章を速く読めるか」を測ります。${anchorDue() ? "ホームから測定できます。" : ""}</p></div>`;
   }
   const last = valids[valids.length - 1];
   const trend = valids.slice(-6).map(h => h.adjustedSpeed);
@@ -1147,7 +1303,7 @@ function renderAnchorCard() {
   const first = valids[0].adjustedSpeed, delta = last.adjustedSpeed - first;
   return `<div class="card">
     <div class="card-title">転移（週次アンカー） <span class="tag sci" style="margin-left:4px">${last.adjustedSpeed}字/分</span></div>
-    <div class="card-subtitle">TRANSFER · 難度補正・未訓練文 · 最新 ${last.date}</div>
+    <div class="card-subtitle up">Transfer · ${last.date}</div>
     <div style="display:flex;gap:6px;align-items:flex-end;height:64px;margin:10px 0">${trend.map(v => `<div style="flex:1;text-align:center"><div style="background:var(--blue);border-radius:4px 4px 0 0;height:${Math.round(v / mx * 50) + 4}px"></div><div class="small" style="margin-top:2px">${v}</div></div>`).join("")}</div>
     <p class="small">初回 ${first} → 最新 ${last.adjustedSpeed}字/分（${delta >= 0 ? "+" : ""}${delta}）。${valids.length < 2 ? "あと数回で転移の傾向が見えます。" : delta > 0 ? "訓練が未訓練の文章にも転移しています。" : "アプリ内の伸びが転移に届いていない可能性。傾向で判断します。"}</p>
   </div>`;
@@ -1172,29 +1328,40 @@ function renderSparkline() {
   const pts = days.map(d => ({ d, v: dayBest(d) }));
   const valid = pts.filter(p => p.v);
   if (valid.length < 2) return '<p class="muted">あと数セッションでグラフが描かれます。</p>';
-  const W = 700, H = 170, PAD = 34;
+  const W = 700, H = 250, PAD = 26;
   const vs = valid.map(p => p.v);
   const target = currentTarget();
   let lo = Math.min(...vs, target) - 30, hi = Math.max(...vs, target, NATIVE_AVG * 0.9) + 30;
   const x = i => PAD + i * (W - PAD - 10) / 29;
-  const y = v => H - 24 - (v - lo) / (hi - lo) * (H - 44);
+  const y = v => H - 34 - (v - lo) / (hi - lo) * (H - 62);
   // 7日移動平均
   const maPts = [];
   for (let i = 0; i < 30; i++) {
     const win = pts.slice(Math.max(0, i - 6), i + 1).filter(p => p.v).map(p => p.v);
     if (win.length) maPts.push({ i, v: win.reduce((a,b)=>a+b,0) / win.length });
   }
-  const maPath = maPts.map((p, j) => `${j ? "L" : "M"}${x(p.i).toFixed(1)},${y(p.v).toFixed(1)}`).join("");
-  const dots = pts.map((p, i) => p.v ? `<circle cx="${x(i).toFixed(1)}" cy="${y(p.v).toFixed(1)}" r="3.4" fill="var(--coral)"/>` : "").join("");
+  // 近似曲線は Catmull-Rom → 3次ベジエで滑らかにつなぐ
+  const P = maPts.map(p => [x(p.i), y(p.v)]);
+  let maPath = "";
+  if (P.length === 1) maPath = `M${P[0][0].toFixed(1)},${P[0][1].toFixed(1)}`;
+  for (let i = 0; i < P.length - 1; i++) {
+    const p0 = P[i - 1] || P[i], p1 = P[i], p2 = P[i + 1], p3 = P[i + 2] || P[i + 1];
+    const c1x = p1[0] + (p2[0] - p0[0]) / 6, c1y = p1[1] + (p2[1] - p0[1]) / 6;
+    const c2x = p2[0] - (p3[0] - p1[0]) / 6, c2y = p2[1] - (p3[1] - p1[1]) / 6;
+    if (!i) maPath += `M${p1[0].toFixed(1)},${p1[1].toFixed(1)}`;
+    maPath += `C${c1x.toFixed(1)},${c1y.toFixed(1)} ${c2x.toFixed(1)},${c2y.toFixed(1)} ${p2[0].toFixed(1)},${p2[1].toFixed(1)}`;
+  }
+  const areaPath = P.length > 1 ? `${maPath}L${P[P.length-1][0].toFixed(1)},${H-34}L${P[0][0].toFixed(1)},${H-34}Z` : "";
+  const dots = pts.map((p, i) => p.v ? `<circle cx="${x(i).toFixed(1)}" cy="${y(p.v).toFixed(1)}" r="5.5" fill="var(--acc)" stroke="var(--card)" stroke-width="2"/>` : "").join("");
   const ty = y(target);
-  return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto">
-    <line x1="${PAD}" y1="${ty}" x2="${W-10}" y2="${ty}" stroke="var(--gold)" stroke-dasharray="5 4" stroke-width="1.4"/>
-    <text x="${W-12}" y="${ty - 6}" text-anchor="end" font-size="11" fill="var(--gold)">目標 ${target}</text>
-    <path d="${maPath}" fill="none" stroke="var(--green)" stroke-width="2.2" opacity=".9"/>
+  return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;display:block;margin:2px 0 6px" role="img" aria-label="直近30日の読速と7日移動平均">
+    ${areaPath ? `<path d="${areaPath}" fill="var(--ink)" opacity=".045"/>` : ""}
+    <line x1="${PAD}" y1="${ty}" x2="${W-10}" y2="${ty}" stroke="var(--ink3)" stroke-dasharray="5 6" stroke-width="1.4"/>
+    <text x="${W-10}" y="${ty - 9}" text-anchor="end" font-size="17" fill="var(--ink3)">目標 ${target}</text>
+    <path d="${maPath}" fill="none" stroke="var(--ink)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
     ${dots}
-    <text x="${PAD}" y="${H-6}" font-size="10" fill="var(--ink3)">${days[0].slice(5)}</text>
-    <text x="${W-12}" y="${H-6}" text-anchor="end" font-size="10" fill="var(--ink3)">${days[29].slice(5)}</text>
-    <text x="${PAD}" y="14" font-size="10" fill="var(--green)">— 7日移動平均</text>
+    <text x="${PAD}" y="${H-6}" font-size="17" fill="var(--ink3)">${days[0].slice(5)}</text>
+    <text x="${W-10}" y="${H-6}" text-anchor="end" font-size="17" fill="var(--ink3)">${days[29].slice(5)}</text>
   </svg>`;
 }
 // =============================================================
@@ -1235,8 +1402,10 @@ function patchPassageSelectionUi() {
     const label = btn.querySelector("[data-selection-label]");
     if (label) label.textContent = order >= 0 ? `本文${order + 1}` : (label.getAttribute("data-default-label") || "教材");
   });
-  const count = document.getElementById("selected-passage-count");
-  if (count) { count.textContent = `${ids.length}/2本`; count.style.color = ids.length === 2 ? "var(--green)" : "var(--ink2)"; }
+  const slotWrap = document.getElementById("selection-slots");
+  if (slotWrap && slotWrap.querySelectorAll) {
+    slotWrap.querySelectorAll("i").forEach((el, i) => el.classList.toggle("on", i < ids.length));
+  }
   const full = document.getElementById("start-full");
   if (full) full.disabled = ids.length !== 2 || unseenPassages().length < 3;
   const short = document.getElementById("start-short");
@@ -1250,7 +1419,7 @@ function togglePassageSelection(id) {
   const pos = ids.indexOf(id);
   if (pos >= 0) ids.splice(pos, 1);
   else if (ids.length < 2) ids.push(id);
-  else { showToast("読む本文は2本まで選べます。選択済みをもう一度タップすると外せます"); return; }
+  else { showToast("2本まで。もう一度タップで外せます"); return; }
   ui.selectionDraft = ids;
   saveUiState();
   // 選択だけでは同期しない。PCで一覧を先頭へ戻さず、ネットワーク遅延にも影響されない。
@@ -1289,32 +1458,23 @@ function contentStatus() {
   return { date: d, isToday, isAhead, isStale, source: contentSource, genTxt, trainedToday, titles };
 }
 function renderFreshnessPanel(fr) {
-  let cls, icon, status, sub;
+  // 状態は色付きの点で示し、文字は日付だけに絞る
+  let cls, status, sub;
   if (fr.source === "fallback") {
-    cls = "err"; icon = "⚠"; status = "コンテンツ未読込";
-    sub = "daily-content.json を読み込めず内蔵教材で表示中。<code>start.command</code> から localhost 経由で開いてください。";
-  } else if (fr.isToday) {
-    cls = "ok"; icon = "✅"; status = `今日（${fr.date}）の最新コンテンツ`;
-    sub = `${fr.genTxt ? fr.genTxt + " · " : ""}${fr.trainedToday ? "本日トレーニング済 — 追加セッションも可" : "🆕 本日まだ未トレーニング"}`;
-  } else if (fr.isAhead) {
-    cls = "ok"; icon = "✅"; status = `最新コンテンツ準備済み（${fr.date} 分・先取り生成）`;
-    sub = `${fr.genTxt ? fr.genTxt + " · " : ""}今夜分を前倒しで用意済み。今すぐ練習できます。`;
+    cls = "err"; status = "未読込"; sub = "内蔵教材で表示中";
+  } else if (fr.isToday || fr.isAhead) {
+    cls = "ok"; status = fr.date; sub = fr.trainedToday ? "本日実施済" : "";
   } else if (fr.isStale) {
-    cls = "stale"; icon = "⚠"; status = `表示中は ${fr.date} 分（今日は ${today()}）`;
-    sub = "最新ではありません。「更新を確認」を押す→反映されなければ生成待ち（毎夕18:00自動）。";
+    cls = "stale"; status = fr.date; sub = `今日 ${today()}`;
   } else {
-    cls = "stale"; icon = "⚠"; status = "コンテンツ日付が不明";
-    sub = "「更新を確認」を押してください。";
+    cls = "stale"; status = "日付不明"; sub = "";
   }
   return `
     <div class="fresh ${cls}">
-      <div class="fresh-head">
-        <div>
-          <div class="fresh-status">${icon} ${status}</div>
-          <div class="fresh-sub">${sub}</div>
-        </div>
-        <button class="recheck-btn" id="recheck-btn" onclick="recheckContent()">🔄 更新を確認</button>
-      </div>
+      <span class="dot"></span>
+      <span class="fresh-status">${status}</span>
+      <span class="fresh-sub">${sub}</span>
+      <button class="icon-btn" id="recheck-btn" style="margin-left:auto" onclick="recheckContent()" title="更新を確認" aria-label="更新を確認">${ic("refresh")}</button>
     </div>`;
 }
 function showToast(msg) {
@@ -1332,14 +1492,14 @@ async function recheckContent() {
   await loadClarityAudit();
   const fr = contentStatus();
   if (content.date !== prevDate || contentSignature() !== prevSig) {
-    if (fr.isToday) showToast(`✅ 最新になりました（${fr.date}）`);
+    if (fr.isToday) showToast(ic("check") + ` 最新になりました（${fr.date}）`);
     else showToast(`コンテンツを更新（${fr.date}）`);
   } else if (fr.isToday) {
-    showToast(`✅ すでに今日（${fr.date}）の最新です`);
+    showToast(ic("check") + ` すでに今日（${fr.date}）の最新です`);
   } else if (fr.source === "fallback") {
-    showToast(`⚠ まだ読み込めません（内蔵教材）`);
+    showToast(ic("alert") + ` まだ読み込めません（内蔵教材）`);
   } else {
-    showToast(`⚠ まだ ${fr.date} 分のままです（生成待ち）`);
+    showToast(ic("alert") + ` まだ ${fr.date} 分のままです（生成待ち）`);
   }
   if (view === "home") renderHome();
 }
@@ -1357,7 +1517,7 @@ function guardedStart(mode = "full") {
 function startSession(mode = "full", selectedIds) {
   const picked = pickSessionPassages(mode, selectedIds);
   if (!picked) {
-    showToast(mode === "full" ? "未読が3本未満です。ショート版か次の更新をお待ちください" : "🏁 本日分を完走しました。次の更新をお待ちください");
+    showToast(mode === "full" ? "未読が3本未満です。ショート版か次の更新をお待ちください" : ic("flag") + " 本日分を完走しました。次の更新をお待ちください");
     if (ui.route === "home" && !sess) renderHome();
     return;
   }
@@ -1400,10 +1560,10 @@ function renderShortIntro() {
   screen().innerHTML = `
     <div class="card" style="border-color:var(--blue)">
       <div class="card-title">ショート版 <span class="tag sci">約3〜5分</span></div>
-      <div class="card-subtitle">QUICK READ · 初見1本を計測 → 設問3問 → 「実は…」を1つ持ち帰る</div>
-      <p class="muted" style="margin-bottom:10px">隙間時間でも、速度だけでなく理解度60%のゲートはそのままです。今日すでに読んだ本文は出ません。</p>
-      <div class="win-item"><span class="ico">📰</span><div><b>${esc(p.title)}</b><div class="d">${esc(genreOf(p))} · ${charCount(p.text)}字</div></div></div>
-      <div style="display:flex;gap:8px;margin-top:12px"><button class="btn" onclick="renderRead(1)">始める</button><button class="btn secondary small" onclick="abortSession()">中断</button></div>
+      <div class="card-subtitle up">Quick read</div>
+      <p class="small" style="margin-bottom:14px">初見1本を計測 → 設問3問</p>
+      <div class="win-item"><span class="ico">${ic("news")}</span><div><b>${esc(p.title)}</b><div class="d">${esc(genreOf(p))} · ${charCount(p.text)}字</div></div></div>
+      <div style="display:flex;gap:8px;margin-top:14px"><button class="btn" onclick="renderRead(1)">始める</button><button class="btn secondary" style="width:auto;flex:none;padding:13px 18px" onclick="abortSession()">中断</button></div>
     </div>`;
 }
 function abortSession() {
@@ -1446,12 +1606,12 @@ function renderPacer() {
     ${phaseDots(phaseIdx("ペーサー"))}
     <div class="card">
       <div class="card-title">チャンクペーサー <span class="tag">${wpm}字/分</span></div>
-      <div class="card-subtitle">IN-TEXT CHUNK PACER · 実文の文節ハイライトを目で追う · 連続3成功で+5%</div>
-      <p class="muted" style="margin-bottom:10px">ハイライトの移動に合わせて<b>文節のかたまりごと</b>に読み進めてください。読み終えたら内容確認が1問あります。声に出さず、意味を取りながら。</p>
+      <div class="card-subtitle up">In-text chunk pacer</div>
+      <p class="small" style="margin-bottom:14px">ハイライトに合わせて文節ごとに。読了後に1問。</p>
       <div class="reading-text" id="pacer-text">${chunks.map((c, i) => `<span class="chunk" id="ck${i}">${esc(c)}</span>`).join("")}</div>
       <div style="margin-top:14px;display:flex;gap:8px">
         <button class="btn" id="pacer-start" onclick="runPacer()">スタート</button>
-        <button class="btn secondary small" onclick="abortSession()">中断</button>
+        <button class="btn secondary" style="width:auto;flex:none;padding:13px 18px" onclick="abortSession()">中断</button>
       </div>
     </div>`;
 }
@@ -1482,7 +1642,7 @@ function renderPacerQuiz() {
     ${phaseDots(phaseIdx("確認"))}
     <div class="card">
       <div class="card-title">ペース内で意味は取れたか</div>
-      <div class="card-subtitle">PACER CHECK · 1問</div>
+      <div class="card-subtitle up">Pacer check</div>
       <p style="font-weight:700;margin-bottom:12px">${esc(q.q)}</p>
       ${q.opts.map((o, i) => `<button class="opt" id="po${i}" onclick="answerPacer(${i})">${esc(o)}</button>`).join("")}
       <div id="pacer-fb"></div>
@@ -1582,7 +1742,7 @@ function renderSpanIntro() {
     ${phaseDots(phaseIdx("キャッチ"))}
     <div class="card">
       <div class="card-title">瞬間キャッチ <span class="tag">現在の視幅 ${state.spanLevel}字</span></div>
-      <div class="card-subtitle">FLASH CATCH v3 · ${SPAN_EXPOSURE}ms呈示→マスク · <b>書き出しが同じ語</b>が並ぶ＝語尾まで一目で取る · 3連続正解で視幅+1字</div>
+      <div class="card-subtitle up">Flash catch</div><p class="small" style="margin:-6px 0 14px">${SPAN_EXPOSURE}ms呈示 → マスク → 似た語から選ぶ</p>
       <p class="muted" style="margin-bottom:10px">中央の<span style="color:var(--coral)">●</span>を凝視。語が一瞬光りすぐ<b>マスク</b>で隠れます。選択肢は<b>書き出しが同じで語尾だけ違う</b>ため、最初の数文字では当てられません。語全体を一目で取る訓練です（全${(sess && sess.spanN) || SPAN_TRIALS}回）。視幅が上がると字数も選択肢の紛らわしさも増します。</p>
       <button class="btn" onclick="runSpanTrial(0,0)">スタート</button>
     </div>`;
@@ -1635,7 +1795,7 @@ function answerSpan(idx, score, i) {
     if (state.spanStreak >= 3 && state.spanLevel < 9) {
       const old = state.spanLevel;
       state.spanLevel += 1; state.spanStreak = 0; stampField("spanLevel");
-      state.wins.push({ date: today(), ico: "👁", text: `瞬間キャッチの視幅が拡大: ${old}字 → ${state.spanLevel}字（選択肢 ${spanOptCount(old)}→${spanOptCount(state.spanLevel)}択）` });
+      state.wins.push({ date: today(), ico: "eye", text: `瞬間キャッチの視幅が拡大: ${old}字 → ${state.spanLevel}字（選択肢 ${spanOptCount(old)}→${spanOptCount(state.spanLevel)}択）` });
     } else if (state.spanStreak >= 3) {
       state.spanStreak = 0; // 上限9字では維持
     }
@@ -1658,7 +1818,7 @@ function renderVocabIntro() {
     ${phaseDots(phaseIdx("語彙"))}
     <div class="card">
       <div class="card-title">語彙道場 <span class="tag">${sess.vocabTerms.length}語</span></div>
-      <div class="card-subtitle">LEXICON DOJO · 今日の本文に出る用語を「12歳にもわかる言葉」で · 深く知る語ほど速く読める</div>
+      <div class="card-subtitle up">Lexicon dojo</div><p class="small" style="margin:-6px 0 14px">用語を「12歳にもわかる言葉」で</p>
       <p class="muted" style="margin-bottom:10px">まず<b>自分の言葉で12歳に説明するつもりで</b>頭の中で言ってみてから、最も本質を突いた説明を選んでください。読解分散の約6割は語彙の「深さ」で説明されます。</p>
       <button class="btn" onclick="runVocabTrial(0,0)">はじめる</button>
     </div>`;
@@ -1672,7 +1832,7 @@ function runVocabTrial(idx, score) {
     ${phaseDots(phaseIdx("語彙"))}
     <div class="card">
       <div class="card-title">語彙道場 ${idx + 1}/${sess.vocabTerms.length}</div>
-      <div class="card-subtitle">頭の中で「12歳への説明」を言ってから選ぶ</div>
+      <div class="card-subtitle">頭の中で説明してから選ぶ</div>
       <div style="text-align:center;font-size:26px;font-weight:900;margin:16px 0">${esc(t.term)}</div>
       ${opts.map((o, i) => `<button class="opt" id="vo${i}" onclick="answerVocab(${idx},${score},${i})">${esc(o.s)}</button>`).join("")}
       <div id="vocab-fb"></div>
@@ -1696,11 +1856,15 @@ function answerVocab(idx, score, i) {
 function finishVocab(score, total) {
   sess.vocabResult = { score, total };
   const mastered = (state.vocabBook || []).filter(v => v.level >= 3).length;
-  if (mastered > 0 && mastered % 25 === 0) state.wins.push({ date: today(), ico: "📚", text: `習得語彙が${mastered}語に到達 — 学校語彙の地層が厚くなっている` });
+  if (mastered > 0 && mastered % 25 === 0) state.wins.push({ date: today(), ico: "book", text: `習得語彙が${mastered}語に到達 — 学校語彙の地層が厚くなっている` });
   renderRead(1);
 }
 // ---------- 初読（計測） ----------
 let readTimer = null, readStart = 0;
+// 出典からURLを落とし、媒体名と日付だけ残す（読書面に不要な情報を出さない）
+function sourceLabel(p) {
+  return String((p && p.source) || "").replace(/https?:\/\/\S+/g, "").replace(/[（(]\s*[）)]/g, "").trim();
+}
 function renderRead(which) {
   const p = which === 1 ? sess.p1 : sess.p2;
   const phase = which === 1 ? phaseIdx("本文①") : phaseIdx("本文②");
@@ -1708,14 +1872,14 @@ function renderRead(which) {
   screen().innerHTML = `
     ${phaseDots(phase)}
     <div class="card">
-      <div><span class="tag ${isDeep(p) ? "sci" : ""}">${esc(genreOf(p))}</span><span class="small">${esc(p.source || "")}</span></div>
+      <div><span class="tag ${isDeep(p) ? "sci" : ""}">${esc(genreOf(p))}</span><span class="small">${esc(sourceLabel(p))}</span></div>
       <div class="card-title" style="margin-top:6px">${esc(p.title)}</div>
-      <div class="card-subtitle">本文${which === 1 ? "①" : "②"} 初読 · ${n}字 · 読了後に設問3問 · 理解度60%未満は記録無効</div>
+      <div class="card-subtitle">本文${which === 1 ? "①" : "②"} 初読 · ${n}字 · 読了後に設問3問</div>
       <div class="bigtime" id="read-clock">00:00</div>
       <div class="reading-text hidden-text" id="read-text">${esc(p.text)}</div>
       <div style="margin-top:14px;display:flex;gap:8px">
-        <button class="btn" id="read-btn" onclick="startReading(${which})">表示して計測開始</button>
-        <button class="btn secondary small" onclick="abortSession()">中断</button>
+        <button class="btn" id="read-btn" onclick="startReading(${which})">計測開始</button>
+        <button class="btn secondary" style="width:auto;flex:none;padding:15px 18px" onclick="abortSession()">中断</button>
       </div>
     </div>`;
 }
@@ -1755,7 +1919,7 @@ function renderQuiz(which, qi, answers) {
       <p style="font-weight:700;margin-bottom:12px">${esc(q.q)}</p>
       ${q.opts.map((o, i) => `<button class="opt" id="qo${i}" onclick="answerQuiz(${which},${qi},${i})">${esc(o)}</button>`).join("")}
       <div id="quiz-fb"></div>
-      <div style="text-align:right;margin-top:6px"><button id="clarity-flag" class="recheck-btn" style="font-size:11px;padding:5px 10px" onclick="flagQuestion(${which},${qi})">⚠ この設問はわかりにくい</button></div>
+      <div style="text-align:right;margin-top:6px"><button id="clarity-flag" class="recheck-btn" style="font-size:11px;padding:5px 10px" onclick="flagQuestion(${which},${qi})">${ic("alert")}この設問はわかりにくい</button></div>
       <div style="text-align:right;margin-top:8px"><button class="btn ghost small" onclick="abortSession()">中断</button></div>
     </div>`;
   window._quizAnswers = answers;
@@ -1768,7 +1932,7 @@ function flagQuestion(which, qi) {
   (state.clarityFlags = state.clarityFlags || []).push({ date: today(), genre: genreOf(p), title: p.title, q: q.q, opts: q.opts });
   saveState();
   const btn = document.getElementById("clarity-flag");
-  if (btn) { btn.textContent = "✓ 報告しました（改善に反映）"; btn.disabled = true; }
+  if (btn) { btn.innerHTML = ic("check") + " 報告しました"; btn.disabled = true; }
   showToast("報告ありがとう。記録タブから書き出してClaudeに渡すと設問が改善されます");
 }
 function answerQuiz(which, qi, i) {
@@ -1812,7 +1976,7 @@ function renderDeepCloze() {
     ${phaseDots(phaseIdx("設問②"))}
     <div class="card">
       <div class="card-title">深層読解 — 論理のつなぎを読む</div>
-      <div class="card-subtitle">DEEP CLOZE · 空所に入る接続表現は？（速読しても文の論理関係を取れているかの確認）</div>
+      <div class="card-subtitle up">Deep cloze</div><p class="small" style="margin:-6px 0 14px">空所に入る接続表現は？</p>
       <div class="reading-text" style="font-size:17px;background:var(--card2);border-radius:10px;padding:12px 14px;margin-bottom:12px">${esc(dc.prompt)}</div>
       ${dc.opts.map((o, i) => `<button class="opt" id="dco${i}" onclick="answerDeepCloze(${i})">${esc(o)}</button>`).join("")}
       <div id="dc-fb"></div>
@@ -1845,7 +2009,7 @@ function renderReread() {
     ${phaseDots(phaseIdx("反復①"))}
     <div class="card">
       <div class="card-title">反復読 — 5分前の自分に勝つ</div>
-      <div class="card-subtitle">REPEATED READING · 同じ文章を初読の${Math.round(((sess.rereadFactor||REREAD_FACTOR)-1)*100)}%増しの速度で · 反復読みは未読文章にも転移します</div>
+      <div class="card-subtitle up">Repeated reading</div><p class="small" style="margin:-6px 0 14px">初読の${Math.round(((sess.rereadFactor||REREAD_FACTOR)-1)*100)}%増しの速度で</p>
       <div class="grid2" style="margin-bottom:10px">
         <div class="stat-box"><div class="v">${init.speed}</div><div class="l">初読 字/分</div></div>
         <div class="stat-box"><div class="v" style="color:var(--coral)">${targetSpeed}</div><div class="l">目標 字/分（${fmtTime(targetTime)}以内）</div></div>
@@ -1878,7 +2042,7 @@ function finishReread(targetTime) {
   const speed = Math.round(sess.p1Init.chars / time * 60);
   const beat = time <= targetTime * 1.02;
   sess.p1Re = { time, speed, beat };
-  if (beat) state.wins.push({ date: today(), ico: "🔁", text: `反復読で初読比 +${Math.round((speed / sess.p1Init.speed - 1) * 100)}%（${sess.p1Init.speed}→${speed}字/分）` });
+  if (beat) state.wins.push({ date: today(), ico: "repeat", text: `反復読で初読比 +${Math.round((speed / sess.p1Init.speed - 1) * 100)}%（${sess.p1Init.speed}→${speed}字/分）` });
   saveState();
   renderRead(2);
 }
@@ -1902,7 +2066,7 @@ function checkWeeklyWin() {
     const a = last7.reduce((x,y)=>x+y,0) / last7.length;
     const b = prev7.reduce((x,y)=>x+y,0) / prev7.length;
     const pct = Math.round((a - b) / b * 100);
-    if (pct >= 3) state.wins.push({ date: today(), ico: "📈", text: `今週の平均読速が先週比 +${pct}%（${Math.round(b)}→${Math.round(a)}字/分）` });
+    if (pct >= 3) state.wins.push({ date: today(), ico: "trend", text: `今週の平均読速が先週比 +${pct}%（${Math.round(b)}→${Math.round(a)}字/分）` });
   }
 }
 function storeTakeaways(passages) {
@@ -1924,11 +2088,11 @@ function contentFeedbackControls(p, feedback) {
   const questionFit = feedback && feedback.questionFit;
   const passageId = encodeURIComponent(String(p.id)).replace(/'/g, "%27");
   const questionFits = [["easy", "易しい"], ["just_right", "ちょうどよい"], ["hard", "難しい"], ["unclear", "分かりにくい"]];
-  const contentStatus = rating ? `✓ 内容 ${rating}/5 を保存済み。${esc(genreOf(p))}の選定優先度に反映します。` : "1:浅い  5:人に話したい";
-  const questionStatus = questionFit ? `✓ 設問「${esc(questionFits.find(x => x[0] === questionFit)[1])}」を保存済み。次回の設問設計に反映します。` : "問題文と選択肢の体感を選んでください";
+  const contentStatus = rating ? `内容 ${rating}/5 を保存済み` : "";
+  const questionStatus = questionFit ? `保存済み` : "";
   return `<div style="display:grid;gap:8px;width:100%">
-    <div><div class="small" style="margin-bottom:4px">内容はどうだった？</div><div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center">${[1,2,3,4,5].map(n => `<button class="recheck-btn" aria-label="内容評価 ${n}/5" aria-pressed="${rating === n ? "true" : "false"}" style="padding:6px 9px;${rating === n ? "border-color:var(--gold);background:var(--gold-dim)" : ""}" onclick="recordContentFeedbackById(decodeURIComponent('${passageId}'),${n})">${n}</button>`).join("")}<span class="small" style="color:${rating ? "var(--green)" : ""}">${contentStatus}</span></div></div>
-    <div><div class="small" style="margin-bottom:4px">問題はどうだった？</div><div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center">${questionFits.map(([value, label]) => `<button class="recheck-btn" aria-pressed="${questionFit === value ? "true" : "false"}" style="padding:6px 9px;${questionFit === value ? "border-color:var(--blue);background:var(--blue-dim)" : ""}" onclick="recordQuestionFeedbackById(decodeURIComponent('${passageId}'),'${value}')">${label}</button>`).join("")}<span class="small" style="color:${questionFit ? "var(--green)" : ""}">${questionStatus}</span></div></div>
+    <div><div class="small" style="margin-bottom:5px">内容はどうだった？ <span style="opacity:.7">浅い → 話したい</span></div><div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center">${[1,2,3,4,5].map(n => `<button class="recheck-btn" aria-label="内容評価 ${n}/5" aria-pressed="${rating === n ? "true" : "false"}" style="padding:6px 11px;${rating === n ? "border-color:var(--acc);color:var(--acc);background:var(--acc-dim)" : ""}" onclick="recordContentFeedbackById(decodeURIComponent('${passageId}'),${n})">${n}</button>`).join("")}<span class="small">${contentStatus}</span></div></div>
+    <div><div class="small" style="margin-bottom:5px">問題はどうだった？</div><div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center">${questionFits.map(([value, label]) => `<button class="recheck-btn" aria-pressed="${questionFit === value ? "true" : "false"}" style="padding:6px 11px;${questionFit === value ? "border-color:var(--acc);color:var(--acc);background:var(--acc-dim)" : ""}" onclick="recordQuestionFeedbackById(decodeURIComponent('${passageId}'),'${value}')">${label}</button>`).join("")}<span class="small">${questionStatus}</span></div></div>
   </div>`;
 }
 function recordContentFeedbackById(passageId, rating) { recordContentFeedback(findPassageById(passageId), rating); }
@@ -1960,12 +2124,17 @@ function recordQuestionFeedback(p, questionFit) {
 function renderContentFeedback(p) {
   if (!p) return "";
   const prev = contentFeedbackFor(p);
-  return `<div class="card" style="border-color:var(--gold)">
+  return `<div class="card">
     <div class="card-title">今回のコンテンツを評価</div>
-    <div class="card-subtitle">CONTENT & QUESTION FIT · 内容は次回の素材選び、設問は日次教材の問題設計に反映します</div>
-    <div class="small" style="margin-bottom:8px">${esc(p.title)}</div>
+    <div class="card-subtitle up">Content &amp; question fit</div>
     <div id="content-feedback-${esc(p.id)}">${contentFeedbackControls(p, prev)}</div>
   </div>`;
+}
+// 設問の正誤を点で表す（n問中いくつ取れたかを一目で）
+function qDots(correct, total) {
+  const out = [];
+  for (let i = 0; i < total; i++) out.push(`<i class="${i < correct ? "hit" : "miss"}"></i>`);
+  return `<div class="qdots">${out.join("")}</div>`;
 }
 function renderShortResult() {
   const p = sess.p1Init;
@@ -1997,11 +2166,12 @@ function renderShortResult() {
   renderHeader(); renderNav();
   screen().innerHTML = `
     <div class="card"><div class="result-verdict">
-      <div class="card-subtitle">SHORT SESSION COMPLETE · ${esc(title)}</div>
-      <div class="big" style="color:${valid ? "var(--green)" : "var(--ink3)"}">${p.speed}<span style="font-size:18px;color:var(--ink2)"> 字/分</span></div>
-      <div class="sub">理解度 ${Math.round(comp * 100)}% ${valid ? "✓ 記録対象" : "— 60%未満のため速度は記録対象外"}</div>
+      <div class="card-subtitle up">SHORT SESSION COMPLETE</div><div class="card-subtitle">${esc(title)}</div>
+      <div class="big" style="color:${valid ? "var(--ink)" : "var(--ink3)"}">${p.speed}<span style="font-size:14px;color:var(--ink3);letter-spacing:.16em"> 字/分</span></div>
+      ${qDots(Math.round(comp * 3), 3)}
+      <div class="sub">${valid ? "" : "理解度60%未満 — 速度は記録対象外"}</div>
     </div></div>
-    <div class="card" style="border-color:var(--gold)"><div class="card-title">💬 1つ持ち帰る</div><div class="card-subtitle">次の会話で「実は…」から話せる発見</div><div class="win-item"><span class="ico">🎁</span><div><b>${esc(take.hook)}</b>${take.detail ? `<div class="small">${esc(take.detail)}</div>` : ""}</div></div></div>
+    <div class="card"><div class="card-title">${ic("quote")}1つ持ち帰る</div><div class="card-subtitle up">Takeaway</div><div class="win-item"><span class="ico">${ic("gift")}</span><div><b>${esc(take.hook)}</b>${take.detail ? `<div class="small">${esc(take.detail)}</div>` : ""}</div></div></div>
     ${renderContentFeedback(completedPassage)}
     <div style="display:flex;gap:8px"><button class="btn secondary" onclick="go('home')">ホームへ</button><button class="btn" onclick="startSession('short')">もう1本</button></div>`;
 }
@@ -2021,19 +2191,19 @@ function renderResult() {
   let pbUpdated = false;
   if (valid && sessSpeed > state.bestSpeed) {
     state.bestSpeed = sessSpeed; pbUpdated = true;
-    state.wins.push({ date: today(), ico: "🏆", text: `自己ベスト更新: ${prevPB || "—"} → ${sessSpeed}字/分（理解度${Math.round(comp*100)}%）` });
+    state.wins.push({ date: today(), ico: "trophy", text: `自己ベスト更新: ${prevPB || "—"} → ${sessSpeed}字/分（理解度${Math.round(comp*100)}%）` });
   }
-  if (valid && p1.comp === 1 && p2.comp === 1) state.wins.push({ date: today(), ico: "🎯", text: "全6問正解 — 速度と理解の両立" });
+  if (valid && p1.comp === 1 && p2.comp === 1) state.wins.push({ date: today(), ico: "target", text: "全6問正解 — 速度と理解の両立" });
   if (valid && isDeep(sess.p2)) {
     const deepPB = Math.max(0, ...state.history.filter(h => h.valid && h.genreSpeeds).flatMap(h => h.genreSpeeds.filter(g => (GENRES[g.genre]||"concrete") === "deep").map(g => g.speed)));
-    if (p2.speed > deepPB && deepPB > 0) state.wins.push({ date: today(), ico: "📑", text: `論説系の自己ベスト: ${deepPB} → ${p2.speed}字/分` });
+    if (p2.speed > deepPB && deepPB > 0) state.wins.push({ date: today(), ico: "doc", text: `論説系の自己ベスト: ${deepPB} → ${p2.speed}字/分` });
   }
   // 難度補正での自己ベスト（生速度が横ばいでも難しい文で伸びれば成長として検出）
   const prevAdjBest = Math.max(0, ...state.history.filter(h => h.valid && h.adjustedSpeed).map(h => h.adjustedSpeed));
   if (valid && adjSpeed > prevAdjBest && prevAdjBest > 0)
-    state.wins.push({ date: today(), ico: "🧗", text: `難度補正の自己ベスト: ${prevAdjBest} → ${adjSpeed}字/分（難しい文章を速く読めた）` });
+    state.wins.push({ date: today(), ico: "peak", text: `難度補正の自己ベスト: ${prevAdjBest} → ${adjSpeed}字/分（難しい文章を速く読めた）` });
   if (valid && sess.deepCloze && sess.deepCloze.correct)
-    state.wins.push({ date: today(), ico: "🔗", text: `深層読解（${sess.deepCloze.type}）正解 — 速度を保って論理のつなぎも取れた` });
+    state.wins.push({ date: today(), ico: "link", text: `深層読解（${sess.deepCloze.type}）正解 — 速度を保って論理のつなぎも取れた` });
   // 記録
   state.history.push({
     sessionId: newSessionId(),
@@ -2058,7 +2228,7 @@ function renderResult() {
     for (const th of [25, 50, 75, 100]) {
       if (gp0.pct >= th && !(state.goal.hit || []).includes(th)) {
         (state.goal.hit = state.goal.hit || []).push(th);
-        state.wins.push({ date: today(), ico: th === 100 ? "🏁" : "🚩", text: `目標${state.goal.target}字/分への到達度が${th}%に（現在${gp0.cur}字/分）` });
+        state.wins.push({ date: today(), ico: "flag", text: `目標${state.goal.target}字/分への到達度が${th}%に（現在${gp0.cur}字/分）` });
       }
     }
   }
@@ -2089,17 +2259,18 @@ function renderResult() {
     ${phaseDots(phaseIdx("結果"))}
     <div class="card">
       <div class="result-verdict">
-        <div class="big" style="color:${valid ? (rat.cleared ? "var(--green)" : "var(--ink)") : "var(--ink3)"}">${sessSpeed}<span style="font-size:18px;color:var(--ink2)"> 字/分</span></div>
-        <div class="sub">理解度 ${compPct}% ${valid ? "" : "— 60%未満のため速度は記録対象外（速さより理解の回復を優先）"}</div>
+        <div class="big" style="color:${valid ? "var(--ink)" : "var(--ink3)"}">${sessSpeed}<span style="font-size:14px;color:var(--ink3);letter-spacing:.16em"> 字/分</span></div>
+        ${qDots(Math.round(compPct / 100 * 6), 6)}
+        <div class="sub">${valid ? "" : "理解度60%未満 — 速度は記録対象外"}</div>
         ${valid ? (rat.cleared
-          ? `<div class="banner ok" style="margin-top:12px;text-align:left">🎉 目標 ${rat.oldTarget}字/分 をクリア。明日の目標は <b>${rat.newTarget}字/分</b>（+${rat.newTarget - rat.oldTarget}）。昨日の自分をまた一歩引き離しました。</div>`
-          : `<div class="banner warn" style="margin-top:12px;text-align:left">目標 ${target}字/分 まであと <b>${Math.max(0, target - sessSpeed)}字/分</b>。今日中の再挑戦でクリア可能です。</div>`)
+          ? `<div class="banner ok" style="margin-top:14px;text-align:left">${ic("spark")} 目標クリア。明日は <b>${rat.newTarget}字/分</b>（+${rat.newTarget - rat.oldTarget}）。</div>`
+          : `<div class="banner" style="margin-top:14px;text-align:left">目標まで <b>${Math.max(0, target - sessSpeed)}字/分</b>。今日中の再挑戦でクリア可能。</div>`)
           : `<div class="banner warn" style="margin-top:12px;text-align:left">理解度ゲート未通過。次のセッションでは少しだけ速度を落として、設問を意識しながら読んでみてください。</div>`}
       </div>
     </div>
     <div class="card">
       <div class="card-title">今日の中身</div>
-      <div class="card-subtitle">SESSION BREAKDOWN</div>
+      <div class="card-subtitle up">Session breakdown</div>
       <div class="compare-row"><span class="lab">本文①（${esc(g1)}）初読</span><span><b>${p1.speed}</b> 字/分 · 理解 ${Math.round(p1.comp*100)}%</span></div>
       <div class="compare-row"><span class="lab">本文① 反復読</span><span>${re ? `<b>${re.speed}</b> 字/分 ${re.beat ? '<span class="delta-chip up">+15%達成</span>' : '<span class="delta-chip flat">目標未達</span>'}` : "—"}</span></div>
       <div class="compare-row"><span class="lab">本文②（${esc(g2)}）初読</span><span><b>${p2.speed}</b> 字/分 · 理解 ${Math.round(p2.comp*100)}%</span></div>
@@ -2112,9 +2283,9 @@ function renderResult() {
       <div class="compare-row"><span class="lab">昨回ベスト比</span><span>${yestBest ? `${yestBest} → <b>${valid ? sessSpeed : "—"}</b> ${valid && sessSpeed - yestBest !== 0 ? `<span class="delta-chip ${sessSpeed >= yestBest ? "up" : "down"}">${sessSpeed >= yestBest ? "+" : ""}${sessSpeed - yestBest}</span>` : ""}` : "初回基準日"}</span></div>
       <div class="compare-row"><span class="lab">30日平均比</span><span>${ma30 && valid ? `<span class="delta-chip ${sessSpeed >= ma30 ? "up" : "down"}">${sessSpeed >= ma30 ? "+" : ""}${Math.round((sessSpeed - ma30) / ma30 * 100)}%</span>` : "—"}</span></div>
     </div>
-    ${takeItems.length ? `<div class="card" style="border-color:var(--gold)"><div class="card-title">🎁 今日の持ち帰り — 誰かに話したくなったら合格</div><div class="card-subtitle">TAKEAWAYS · 「実は…」と雑談や会議で使えるネタ · 話すつもりで覚えると記憶に残る(g=0.50)</div>${takeItems.map(t => `<div class="win-item"><span class="ico">💬</span><div><b>${esc(t.hook)}</b>${t.detail ? `<div class="small" style="margin-top:2px">${esc(t.detail)}</div>` : ""}<div class="d">${esc(t.genre)}</div></div></div>`).join("")}<button class="btn secondary small" style="margin-top:10px" onclick="copyTakeaways()">📋 コピーして誰かに話す</button></div>` : ""}
+    ${takeItems.length ? `<div class="card"><div class="card-title">${ic("gift")}今日の持ち帰り</div><div class="card-subtitle up">Takeaways</div>${takeItems.map(t => `<div class="win-item"><span class="ico">${ic("quote")}</span><div><b>${esc(t.hook)}</b>${t.detail ? `<div class="small" style="margin-top:2px">${esc(t.detail)}</div>` : ""}<div class="d">${esc(t.genre)}</div></div></div>`).join("")}<button class="btn secondary small" style="margin-top:10px" onclick="copyTakeaways()">${ic("copy")} コピー</button></div>` : ""}
     ${completedPassages.map(renderContentFeedback).join("")}
-    ${newWins.length ? `<div class="card"><div class="card-title">今日できるようになったこと</div><div class="card-subtitle">TODAY'S WINS</div>${newWins.map(w => `<div class="win-item"><span class="ico">${w.ico}</span><div>${w.text}</div></div>`).join("")}</div>` : ""}
+    ${newWins.length ? `<div class="card"><div class="card-title">今日できるようになったこと</div><div class="card-subtitle up">Today's wins</div>${newWins.map(w => `<div class="win-item"><span class="ico">${ic(w.ico)}</span><div>${w.text}</div></div>`).join("")}</div>` : ""}
     <div style="display:flex;gap:8px">
       <button class="btn secondary" onclick="go('home')">ホームへ</button>
       <button class="btn" onclick="startSession('full')">もう1セッション</button>
@@ -2125,7 +2296,7 @@ function showCelebrate(pb, rat) {
   const div = document.createElement("div");
   div.className = "celebrate";
   div.innerHTML = `<div class="inner">
-    <div class="emoji">${pb ? "🏆" : "🎉"}</div>
+    <div class="emoji">${pb ? ic("trophy") : ic("spark")}</div>
     <h2>${pb ? "自己ベスト更新" : "今日の基準クリア"}</h2>
     <p class="muted">${pb ? `理解度を保ったままの最高速度です` : `明日の目標は ${rat.newTarget}字/分。階段は確実に上がっています`}</p>
     <button class="btn small" style="margin-top:18px;width:auto" onclick="this.closest('.celebrate').remove()">閉じる</button>
@@ -2163,7 +2334,7 @@ function renderAnchorIntro() {
   screen().innerHTML = `
     <div class="card">
       <div class="card-title">週次アンカー転移テスト</div>
-      <div class="card-subtitle">WEEKLY ANCHOR · 訓練とは別の「実力測定」。難度固定の未訓練文を読みます</div>
+      <div class="card-subtitle up">Weekly anchor</div><p class="small" style="margin:-6px 0 14px">難度固定の未訓練文で実力を測る</p>
       <p class="muted" style="margin-bottom:10px">これは練習ではなく<b>検査</b>です。毎日の本文と違い、難度を一定に保った文章を読み、<b>普通の読みが本当に速くなっているか（転移）</b>を測ります。結果は目標やベストには影響しません。落ち着いて、いつもの読み方で。</p>
       <button class="btn" onclick="renderAnchorRead()">測定をはじめる（約3分）</button>
       <button class="btn secondary small" style="margin-top:8px" onclick="go('home')">今日はあとで</button>
@@ -2175,7 +2346,7 @@ function renderAnchorRead() {
     <div class="card">
       <div><span class="tag sci">アンカー</span><span class="small">難度固定・未訓練</span></div>
       <div class="card-title" style="margin-top:6px">${esc(a.title)}</div>
-      <div class="card-subtitle">読了後に設問3問 · これは検査（記録は転移指標として別管理）</div>
+      <div class="card-subtitle">読了後に設問3問 · 記録は別管理</div>
       <div class="bigtime" id="anc-clock">00:00</div>
       <div class="reading-text hidden-text" id="anc-text">${esc(a.text)}</div>
       <div style="margin-top:14px"><button class="btn" id="anc-btn" onclick="startAnchorRead()">表示して計測開始</button></div>
@@ -2233,7 +2404,7 @@ function finishAnchor() {
   const prev = state.anchorHistory.slice(0, -1).filter(h => h.valid);
   const prevAvg = prev.length ? Math.round(prev.reduce((s, h) => s + h.adjustedSpeed, 0) / prev.length) : null;
   if (valid && prevAvg && adj > prevAvg)
-    state.wins.push({ date: today(), ico: "🛰", text: `転移確認: アンカー速度が過去平均 ${prevAvg} → ${adj}字/分（訓練が普通の読みに効いている）` });
+    state.wins.push({ date: today(), ico: "orbit", text: `転移確認: アンカー速度が過去平均 ${prevAvg} → ${adj}字/分（訓練が普通の読みに効いている）` });
   saveState();
   anchorState = null;
   renderHeader(); renderNav();
@@ -2248,7 +2419,7 @@ function finishAnchor() {
           : `<div class="banner info" style="margin-top:12px;text-align:left">初回のアンカー基準を記録しました。来週以降、この値からの伸びで「転移」を測ります。</div>`) : ""}
       </div>
     </div>
-    ${trend.length >= 2 ? `<div class="card"><div class="card-title">転移トレンド</div><div class="card-subtitle">直近の有効アンカー（難度補正速度）</div><div style="display:flex;gap:6px;align-items:flex-end;height:70px;margin-top:8px">${trend.map(v => { const mx = Math.max(...trend); return `<div style="flex:1;text-align:center"><div style="background:var(--blue);border-radius:4px 4px 0 0;height:${Math.round(v / mx * 56) + 4}px"></div><div class="small" style="margin-top:3px">${v}</div></div>`; }).join("")}</div></div>` : ""}
+    ${trend.length >= 2 ? `<div class="card"><div class="card-title">転移トレンド</div><div class="card-subtitle up">Anchor trend</div><div style="display:flex;gap:6px;align-items:flex-end;height:70px;margin-top:8px">${trend.map(v => { const mx = Math.max(...trend); return `<div style="flex:1;text-align:center"><div style="background:var(--blue);border-radius:4px 4px 0 0;height:${Math.round(v / mx * 56) + 4}px"></div><div class="small" style="margin-top:3px">${v}</div></div>`; }).join("")}</div></div>` : ""}
     <button class="btn" onclick="go('home')">ホームへ戻る</button>`;
 }
 // =============================================================
@@ -2259,12 +2430,18 @@ function renderHistory() {
   screen().innerHTML = `
     <div class="card">
       <div class="card-title">成長カーブ（30日）</div>
-      <div class="card-subtitle">理解度60%以上のセッションのみ表示</div>
+      <div class="card-subtitle up">Progress</div>
       ${renderSparkline()}
     </div>
     <div class="card">
+      <div class="card-title">ジャンル別の読速</div>
+      <div class="card-subtitle up">By genre · 14 days</div>
+      ${renderGenreBars(genreSpeed("concrete"), genreSpeed("deep"))}
+    </div>
+    ${renderAnchorCard()}
+    <div class="card">
       <div class="card-title">セッション履歴</div>
-      <div class="card-subtitle">直近40件 ${state.migratedFromV2 ? `· うち1.0から引き継いだ記録を含む` : ""}</div>
+      <div class="card-subtitle">直近40件${state.migratedFromV2 ? `· 1.0からの引き継ぎを含む` : ""}</div>
       <table class="hist">
         <tr><th>日付</th><th>字/分</th><th>理解度</th><th>判定</th></tr>
         ${rows.map(h => `<tr>
@@ -2276,20 +2453,22 @@ function renderHistory() {
       </table>
     </div>
     <div class="card">
-      <div class="card-title">できるようになったこと（全履歴）</div>
-      ${state.wins.slice(-20).reverse().map(w => `<div class="win-item"><span class="ico">${w.ico}</span><div>${w.text}<div class="d">${w.date}</div></div></div>`).join("") || '<p class="muted">まだありません。</p>'}
+      <div class="card-title">できるようになったこと</div>
+      <div class="card-subtitle up">All wins</div>
+      ${state.wins.slice(-20).reverse().map(w => `<div class="win-item"><span class="ico">${ic(w.ico)}</span><div>${w.text}<div class="d">${w.date}</div></div></div>`).join("") || '<p class="muted">まだありません。</p>'}
     </div>
     ${renderSyncCard()}
     <div class="card">
-      <div class="card-title">データ管理（非常用のバックアップ）</div>
-      ${(state.clarityFlags || []).length ? `<p class="small" style="margin:2px 0 8px">⚠ 「わかりにくい」報告: <b>${state.clarityFlags.length}件</b> — バックアップを書き出してClaudeに渡すと、該当設問を平易に直せます。</p>` : ""}
+      <div class="card-title">データ管理</div>
+      <div class="card-subtitle up">Backup</div>
+      ${(state.clarityFlags || []).length ? `<p class="small" style="margin:2px 0 8px">${ic("alert")} 「わかりにくい」報告 <b>${state.clarityFlags.length}件</b> — 書き出してClaudeに渡すと修正できます。</p>` : ""}
       <div style="display:flex;gap:8px;margin-top:8px">
-        <button class="btn secondary small" onclick="exportData()">バックアップを書き出し</button>
-        <button class="btn secondary small" onclick="document.getElementById('import-file').click()">バックアップを読み込み</button>
-        <button class="btn ghost small" onclick="confirmReset()">全データ初期化</button>
+        <button class="btn secondary small" onclick="exportData()">書き出し</button>
+        <button class="btn secondary small" onclick="document.getElementById('import-file').click()">読み込み</button>
+        <button class="btn ghost small" onclick="confirmReset()">初期化</button>
       </div>
       <input type="file" id="import-file" accept=".json,application/json" style="display:none" onchange="handleImportFile(this)">
-      <p class="small" style="margin-top:8px">端末を替えるとき（Mac→スマホ等）は、旧端末で「書き出し」→ 新端末で「読み込み」。進捗・習得語彙・目標がそのまま移ります。</p>
+      <p class="small" style="margin-top:10px">端末を替えるときは、旧端末で書き出し → 新端末で読み込み。</p>
     </div>`;
 }
 function exportData() {
@@ -2306,13 +2485,13 @@ function handleImportFile(input) {
   reader.onload = () => {
     try {
       const data = JSON.parse(reader.result);
-      if (!data || !Array.isArray(data.history)) { showToast("⚠ SOKUGANのバックアップではありません"); return; }
+      if (!data || !Array.isArray(data.history)) { showToast(ic("alert") + " SOKUGANのバックアップではありません"); return; }
       const days = new Set(data.history.map(x => x.date)).size;
       if (!confirm(`このバックアップを読み込みますか？\n・記録: ${data.history.length}セッション / ${days}日分\n・習得語彙: ${(data.vocabBook||[]).filter(v=>v.level>=3).length}語\n※ この端末の現在のデータは上書きされます`)) return;
       localStorage.setItem(KEY, JSON.stringify(data));
-      showToast("✅ 読み込みました。再起動します");
+      showToast(ic("check") + " 読み込みました。再起動します");
       setTimeout(() => location.reload(), 800);
-    } catch (e) { showToast("⚠ 読み込みに失敗: " + e.message); }
+    } catch (e) { showToast(ic("alert") + " 読み込みに失敗: " + e.message); }
   };
   reader.readAsText(f);
   input.value = "";
@@ -2324,9 +2503,9 @@ function handlePersonalContentFile(input) {
   reader.onload = () => {
     try {
       const result = importPersonalContent(JSON.parse(reader.result));
-      showToast(`✅ ${result.count}本を取り込みました。${result.availableOn}から選べます`);
+      showToast(ic("check") + ` ${result.count}本を取り込みました。${result.availableOn}から選べます`);
       renderHome();
-    } catch (e) { showToast("⚠ 取り込み失敗: " + e.message); }
+    } catch (e) { showToast(ic("alert") + " 取り込み失敗: " + e.message); }
   };
   reader.readAsText(f); input.value = "";
 }
@@ -2342,8 +2521,9 @@ function renderAbout() {
   screen().innerHTML = `
     <div class="card">
       <div class="card-title">Sokugan 2.0 の設計思想</div>
-      <div class="card-subtitle">EVIDENCE-BASED DESIGN · 2026-06 リサーチ反映</div>
-      <p class="muted" style="margin-bottom:10px">1.0のドリル群は再設計しました。「ページ全体を周辺視で読む」式の視野拡大やサブボーカリゼーション除去には根拠がありませんが（Rayner et al. 2016）、以下は効果が支持されています。</p>
+      <div class="card-subtitle up">Evidence-based design</div>
+      <p class="small" style="margin-bottom:4px">「ページ全体を周辺視で読む」式の視野拡大やサブボーカリゼーション除去には根拠がない（Rayner et al. 2016）。以下は効果が支持されている設計。</p>
+      <details class="fold"><summary>14の設計原則</summary>
       <div class="win-item"><span class="ico">①</span><div><b>理解度ゲート付き速度がKPI</b> — 理解60%未満の速度は無効。速度と理解のトレードオフを直視する設計。</div></div>
       <div class="win-item"><span class="ico">②</span><div><b>昨日比ラチェット</b> — クリアごとに目標+2.5%。Timed reading研究では13週で+25〜40%の向上と未読文章への転移が確認されている（Chang 2010; Tran & Nation 2014）。</div></div>
       <div class="win-item"><span class="ico">③</span><div><b>反復読（Repeated Reading）</b> — 同一文章の高速再読は確実な成功体験を生み、効果は新しい文章にも転移する。</div></div>
@@ -2355,19 +2535,21 @@ function renderAbout() {
       <div class="win-item"><span class="ico">⑨</span><div><b>深層読解（Deep Cloze）</b> — 本文の接続表現を空所化し、論理関係（逆接/因果/換言…）を取れているかを1問で測る。速く読んでも文と文のつなぎ目を理解できているかを、理解度MCQとは別に可視化する。</div></div>
       <div class="win-item"><span class="ico">⑩</span><div><b>週次アンカー転移テスト</b> — 訓練とは別枠で、週1回・難度固定の<b>未訓練文</b>を測定。アプリ内の速度向上が「普通の文章を速く読む力」に本当に転移しているかを検証する（目標やベストには影響させない）。</div></div>
       <div class="win-item"><span class="ico">⑪</span><div><b>語彙道場（3.0）</b> — 本文の「学校語彙」（利回り・系統連系など日本の中高で覚える類の用語）を<b>12歳にわかる言葉</b>で説明できるまで深掘り。語彙の深さは読解分散の約59%を説明し（Qian 2002）、自己説明はg=0.55（Bisra 2018）。後から日本語を習得した学習者が教育あるネイティブを超える主戦場。</div></div>
-      <div class="win-item"><span class="ico">⑫</span><div><b>曜日メニュー（3.0）</b> — 月:速度⚡/火:深読み🔍/水:語彙📚/木:弱点集中🎯/金:転移🛰。交互配置は識別学習でg=0.42（Brunmair 2019）。飽きを防ぎつつ、木曜は直近14日の最弱スキルを自動で重点化。</div></div>
+      <div class="win-item"><span class="ico">⑫</span><div><b>曜日メニュー（3.0）</b> — 月:速度 / 火:深読み / 水:語彙 / 木:弱点集中 / 金:転移。交互配置は識別学習でg=0.42（Brunmair 2019）。飽きを防ぎつつ、木曜は直近14日の最弱スキルを自動で重点化。</div></div>
       <div class="win-item"><span class="ico">⑬</span><div><b>持ち帰り＆教えるつもり（3.0）</b> — 「読了後に誰かへ話す」前提で読む（教える期待でg=0.50、Kobayashi 2019）。毎日の持ち帰りフックをコピーして雑談・会議で使えば定着完了。</div></div>
-      <div class="win-item"><span class="ico">⑭</span><div><b>週次目標と一目量（3.0）</b> — 具体的で少し難しい目標は成果d=0.42〜0.80（Locke & Latham）。近接サブゴールだけが内発的興味を生む（Bandura & Schunk 1981）。一目量（字/固視）は語彙自動化の従属変数として成長を映す。</div></div>
+      <div class="win-item" style="border-bottom:none"><span class="ico">⑭</span><div><b>週次目標と一目量（3.0）</b> — 具体的で少し難しい目標は成果d=0.42〜0.80（Locke & Latham）。近接サブゴールだけが内発的興味を生む（Bandura & Schunk 1981）。一目量（字/固視）は語彙自動化の従属変数として成長を映す。</div></div>
+      </details>
     </div>
     <div class="card">
-      <div class="card-title">1日の流れ（約12分）</div>
+      <div class="card-title">1日の流れ</div>
+      <div class="card-subtitle up">12 min</div>
       <div class="win-item"><span class="ico">1</span><div><b>チャンクペーサー</b>（約1.5分）— 適応速度で文節ハイライトを追い、1問で確認</div></div>
       <div class="win-item"><span class="ico">2</span><div><b>瞬間キャッチ</b>（約2分）— 160ms呈示→マスク、似た語から選択。視幅を漸進拡大（8試行）</div></div>
       <div class="win-item"><span class="ico">3</span><div><b>本文① ニュース初読</b>(約2分）— 計測読み + 設問3問</div></div>
       <div class="win-item"><span class="ico">4</span><div><b>本文① 反復読</b>（約1.5分）— 初読の15%増しに挑戦</div></div>
       <div class="win-item"><span class="ico">5</span><div><b>本文② 経営・論説 初読</b>（約2.5分）— 計測読み + 設問3問</div></div>
       <div class="win-item"><span class="ico">6</span><div><b>結果</b> — 昨日比・目標判定・今日のWins</div></div>
-      <p class="small" style="margin-top:10px">コンテンツは毎夕18時に翌日分が自動生成されます。テーマはCEOが見逃せないトップイシュー: スタートアップ／AI・技術／市場・経済／経営・組織／規制・環境。</p>
+      <p class="small" style="margin-top:12px">毎夕18時に翌日分を自動生成。テーマは スタートアップ／AI・技術／市場・経済／経営・組織／規制・環境。</p>
     </div>`;
 }
 /*__SYNC_START__ 端末間同期（3.2）。この区間は qa/harness.js がネットワークmockでE2Eテストする。 */
@@ -2708,14 +2890,14 @@ function flushSyncQueue(reason) {
 }
 function syncStatusText() {
   if (!syncEnabled()) return { ico: "○", label: "同期未設定", cls: "muted", sub: "この端末内だけに保存されています" };
-  if (!signedIn()) return { ico: "🔑", label: "要ログイン", cls: "gold", sub: "メールでログインするとスマホとPCの記録が1つになります" };
+  if (!signedIn()) return { ico: "key", label: "要ログイン", cls: "gold", sub: "メールでログインするとスマホとPCの記録が1つになります" };
   if (syncState.status === "syncing") return { ico: "⟳", label: "同期中…", cls: "blue", sub: "" };
-  if (syncState.status === "offline") return { ico: "⚠", label: "オフライン（未送信あり）", cls: "gold", sub: "オンライン復帰時に自動送信します" };
-  if (syncState.status === "error") return { ico: "⚠", label: "同期エラー", cls: "coral", sub: syncState.error || "" };
+  if (syncState.status === "offline") return { ico: "alert", label: "オフライン（未送信あり）", cls: "gold", sub: "オンライン復帰時に自動送信します" };
+  if (syncState.status === "error") return { ico: "alert", label: "同期エラー", cls: "coral", sub: syncState.error || "" };
   if (syncState.lastSyncedAt) {
     const d = new Date(syncState.lastSyncedAt);
     const hh = String(d.getHours()).padStart(2, "0"), mm = String(d.getMinutes()).padStart(2, "0");
-    return { ico: "✅", label: "同期済み " + hh + ":" + mm, cls: "green", sub: syncEmail() || "" };
+    return { ico: "check", label: "同期済み " + hh + ":" + mm, cls: "green", sub: syncEmail() || "" };
   }
   return { ico: "•", label: "同期待ち", cls: "muted", sub: syncEmail() || "" };
 }
@@ -2723,7 +2905,7 @@ function renderSyncStatus() {
   const el = document.getElementById("sync-line");
   if (!el) return;
   const s = syncStatusText();
-  el.innerHTML = `<span>${s.ico} ${esc(s.label)}</span>` +
+  el.innerHTML = `<span>${ic(s.ico)} ${esc(s.label)}</span>` +
     (syncEnabled() && signedIn() ? ` <button class="recheck-btn" style="padding:2px 8px;font-size:11px" onclick="syncNow('manual')">今すぐ同期</button>` : "");
 }
 // ホーム最下部に出す1行ステータス（詳細と操作はデータ管理タブ）
@@ -2731,7 +2913,7 @@ function renderSyncLine() {
   const s = syncStatusText();
   return `<div class="card" style="padding:10px 14px">
     <div id="sync-line" style="display:flex;align-items:center;gap:8px;font-size:12px;justify-content:space-between">
-      <span>${s.ico} ${esc(s.label)}</span>
+      <span>${ic(s.ico)} ${esc(s.label)}</span>
       ${syncEnabled() && signedIn() ? `<button class="recheck-btn" style="padding:2px 8px;font-size:11px" onclick="syncNow('manual')">今すぐ同期</button>` : `<a href="javascript:go('history')" style="font-size:11px;color:var(--blue)">${syncEnabled() ? "ログインして同期" : "同期の設定"}</a>`}
     </div>
     ${s.sub ? `<div class="small" style="margin-top:3px">${esc(s.sub)}</div>` : ""}
@@ -2743,36 +2925,33 @@ function renderSyncCard() {
   if (!syncEnabled()) {
     return `<div class="card">
       <div class="card-title">端末間同期</div>
-      <div class="card-subtitle">CROSS-DEVICE SYNC · 未設定</div>
-      <p class="muted" style="margin-bottom:8px">現在この端末のブラウザ内（localStorage）だけに保存されています。スマホとPCで記録が分かれるのはこのためです。</p>
-      <p class="small">有効にするには <code>sokugan-config.js</code> に Supabase の URL と anon key を設定してください（手順: <code>supabase/セットアップ手順.md</code>）。設定するまで、下のバックアップ書き出し／読み込みで移行できます。</p>
+      <div class="card-subtitle up">Cross-device sync · 未設定</div>
+      <p class="small">この端末のブラウザ内だけに保存中。有効化には <code>sokugan-config.js</code> に Supabase の URL と anon key を設定（手順: <code>supabase/セットアップ手順.md</code>）。</p>
     </div>`;
   }
   if (!signedIn()) {
-    return `<div class="card" style="border-color:var(--blue)">
+    return `<div class="card">
       <div class="card-title">端末間同期</div>
-      <div class="card-subtitle">CROSS-DEVICE SYNC · ログインすると全端末で記録が1つになります</div>
-      <p class="muted" style="margin-bottom:8px">メールリンクは使いません。最初にメールアドレスと専用パスワードを登録してください。以後はスマホとPCで同じ組合せを使えば、履歴・語彙・目標・既読がまとまります。</p>
+      <div class="card-subtitle up">Cross-device sync</div>
+      <p class="small" style="margin-bottom:12px">メールアドレスと専用パスワードを登録。以後は同じ組合せで、履歴・語彙・目標・既読が全端末でまとまります。</p>
       <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
-        <input id="sync-email" type="email" inputmode="email" autocomplete="email" placeholder="you@example.com"
-          style="flex:1;min-width:180px;padding:8px 10px;border:1px solid var(--border2);border-radius:8px;font-size:14px">
-        <input id="sync-password" type="password" autocomplete="current-password" placeholder="専用パスワード（12字以上）"
-          style="flex:1;min-width:180px;padding:8px 10px;border:1px solid var(--border2);border-radius:8px;font-size:14px">
+        <input id="sync-email" type="email" inputmode="email" autocomplete="email" placeholder="you@example.com" style="flex:1;min-width:170px">
+        <input id="sync-password" type="password" autocomplete="current-password" placeholder="専用パスワード（12字以上）" style="flex:1;min-width:170px">
         <button class="btn secondary small" onclick="uiPasswordAuth('signup')">はじめて登録</button>
         <button class="btn small" onclick="uiPasswordAuth('signin')">ログイン</button>
       </div>
       <div id="sync-msg" class="small" style="margin-top:8px"></div>
     </div>`;
   }
-  return `<div class="card" style="border-color:var(--green)">
-    <div class="card-title">端末間同期 <span class="tag" style="background:var(--green-dim);color:var(--green)">有効</span></div>
-    <div class="card-subtitle">CROSS-DEVICE SYNC · ${esc(syncEmail() || "")}</div>
+  return `<div class="card">
+    <div class="card-title">端末間同期 <span class="tag">有効</span></div>
+    <div class="card-subtitle up">Cross-device sync · ${esc(syncEmail() || "")}</div>
     <div id="sync-line" style="display:flex;align-items:center;gap:8px;font-size:13px;margin-bottom:6px">
-      <span>${s.ico} ${esc(s.label)}</span>
+      <span>${ic(s.ico)} ${esc(s.label)}</span>
       <button class="recheck-btn" style="padding:2px 8px;font-size:11px" onclick="syncNow('manual')">今すぐ同期</button>
     </div>
     ${s.sub && s.cls !== "green" ? `<p class="small" style="margin-bottom:6px">${esc(s.sub)}</p>` : ""}
-    <p class="small">スマホとPCの両方で進めた分はどちらも残ります（履歴・既読・語彙は結合、自己ベストは最大値、設定は新しい方）。オフラインでも練習でき、復帰時に自動送信します。</p>
+    <p class="small">両端末の記録は結合され、自己ベストは最大値を採用。オフラインでも練習でき、復帰時に自動送信します。</p>
     <button class="btn ghost small" style="margin-top:8px" onclick="syncSignOut()">この端末からログアウト</button>
   </div>`;
 }
@@ -2780,12 +2959,12 @@ async function uiSendCode() {
   const el = document.getElementById("sync-email");
   const msg = document.getElementById("sync-msg");
   const email = (el && el.value || "").trim();
-  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { if (msg) msg.innerHTML = "⚠ メールアドレスの形式を確認してください"; return; }
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { if (msg) msg.innerHTML = ic("alert") + " メールアドレスの形式を確認してください"; return; }
   if (msg) msg.innerHTML = "送信中…";
   try {
     await syncSendCode(email);
-    if (msg) msg.innerHTML = `✉️ ${esc(email)} にログインメールを送りました。メールの「Sign in」をタップしてください。`;
-  } catch (e) { if (msg) msg.innerHTML = "⚠ " + esc(String(e.message || e)); }
+    if (msg) msg.innerHTML = ic("mail") + ` ${esc(email)} にログインメールを送りました。メールの「Sign in」をタップしてください。`;
+  } catch (e) { if (msg) msg.innerHTML = ic("alert") + " " + esc(String(e.message || e)); }
 }
 async function uiVerifyCode() {
   const email = (document.getElementById("sync-email") || {}).value || "";
@@ -2794,26 +2973,26 @@ async function uiVerifyCode() {
   if (msg) msg.innerHTML = "確認中…";
   try {
     await syncVerifyCode(email.trim(), code);
-    if (msg) msg.innerHTML = "✅ ログインしました。同期します…";
+    if (msg) msg.innerHTML = ic("check") + " ログインしました。同期します…";
     const r = await syncNow("signin");
-    showToast(r.ok ? (r.migrated ? "✅ この端末の記録をクラウドへ移行しました" : "✅ 同期しました") : "⚠ 同期は後で自動再試行します");
+    showToast(r.ok ? (ic("check") + (r.migrated ? " この端末の記録をクラウドへ移行しました" : " 同期しました")) : ic("alert") + " 同期は後で自動再試行します");
     render();
-  } catch (e) { if (msg) msg.innerHTML = "⚠ " + esc(String(e.message || e)); }
+  } catch (e) { if (msg) msg.innerHTML = ic("alert") + " " + esc(String(e.message || e)); }
 }
 async function uiPasswordAuth(mode) {
   const email = ((document.getElementById("sync-email") || {}).value || "").trim();
   const password = (document.getElementById("sync-password") || {}).value || "";
   const msg = document.getElementById("sync-msg");
-  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { if (msg) msg.innerHTML = "⚠ メールアドレスの形式を確認してください"; return; }
-  if (password.length < 12) { if (msg) msg.innerHTML = "⚠ 専用パスワードは12文字以上にしてください"; return; }
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { if (msg) msg.innerHTML = ic("alert") + " メールアドレスの形式を確認してください"; return; }
+  if (password.length < 12) { if (msg) msg.innerHTML = ic("alert") + " 専用パスワードは12文字以上にしてください"; return; }
   if (msg) msg.innerHTML = mode === "signup" ? "登録中…" : "ログイン中…";
   try {
     const created = await syncWithPassword(email, password, mode);
     const r = await syncNow(mode === "signup" ? "signup" : "signin");
-    if (msg) msg.innerHTML = created ? "✅ 登録して同期を有効にしました" : "✅ ログインして同期を有効にしました";
-    showToast(r.ok ? "✅ 端末間同期を開始しました" : "⚠ 同期は後で自動再試行します");
+    if (msg) msg.innerHTML = ic("check") + (created ? " 登録して同期を有効にしました" : " ログインして同期を有効にしました");
+    showToast(r.ok ? ic("check") + " 端末間同期を開始しました" : ic("alert") + " 同期は後で自動再試行します");
     render();
-  } catch (e) { if (msg) msg.innerHTML = "⚠ " + esc(String(e.message || e)); }
+  } catch (e) { if (msg) msg.innerHTML = ic("alert") + " " + esc(String(e.message || e)); }
 }
 /*__SYNC_END__*/
 // =============================================================
@@ -2829,7 +3008,7 @@ async function uiPasswordAuth(mode) {
   // バナーは移行通知（初回のみ）に限定する。
   if (state.migratedFromV2 && !sessionStorage.getItem("migNoticeShown")) {
     sessionStorage.setItem("migNoticeShown", "1");
-    showBanner(`📦 Sokugan 1.0 から <b>${state.migratedSessions}セッション</b>分の記録を引き継ぎました。目標・ペーサー速度はあなたの実績から自動設定済みです。`, "info");
+    showBanner(ic("box") + ` Sokugan 1.0 から <b>${state.migratedSessions}セッション</b>分の記録を引き継ぎました。目標・ペーサー速度はあなたの実績から自動設定済みです。`, "info");
   }
   render();
   // ---- 端末間同期: 起動時に1回、その後は復帰・フォーカス・保存時に走らせる ----
@@ -2848,7 +3027,7 @@ async function uiPasswordAuth(mode) {
       }
     } catch (e) {}
   }
-  if (signedInFromLink) showToast("✅ ログインしました。端末間同期を開始します");
+  if (signedInFromLink) showToast(ic("check") + " ログインしました。端末間同期を開始します");
   // PWA: Service Worker登録（GitHub Pages等のhttps配信時。鮮度はネットワーク優先で担保）
   try {
     if (typeof navigator !== "undefined" && "serviceWorker" in navigator &&
