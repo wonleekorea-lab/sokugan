@@ -3,13 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Sokugan 3.5 — Reading Fluency Lab</title>
+<title>Sokugan — Reading Fluency Lab</title>
 <meta name="theme-color" content="#f2eee4">
 <link rel="manifest" href="./manifest.json">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="速眼">
+<meta name="apple-mobile-web-app-title" content="Sokugan">
 <link rel="apple-touch-icon" href="./icons/icon-180.png">
 <!-- 外部サービス設定（公開して安全な anon key のみ）。未設定でもアプリは動く。 -->
 <script src="./sokugan-config.js"></script>
@@ -253,7 +253,7 @@ details.fold[open]>summary{color:var(--ink)}
   <div id="nav"></div>
   <div id="banner"></div>
   <div id="screen"></div>
-  <div class="footer-note">Sokugan 3.5 · cross-device synced reading fluency lab</div>
+  <div class="footer-note">SOKUGAN 3.5</div>
 </div>
 <script>
 // =============================================================
@@ -1176,7 +1176,7 @@ function targetRing(pct, size) {
 function renderHeader() {
   document.getElementById("header").innerHTML = `
     <div class="header">
-      <div class="logo">速眼<small>SOKUGAN 3.5</small></div>
+      <div class="logo">SOKUGAN<small>速眼</small></div>
       <div style="display:flex;align-items:center">
         ${last7Dots()}
         <div class="pb"><s>PB</s>${state.bestSpeed || `<span style="color:var(--ink3)">—</span>`}</div>
