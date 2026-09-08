@@ -3067,11 +3067,15 @@ function renderSyncCard() {
       <p class="small" style="margin-bottom:12px">メールアドレスと専用パスワードを登録。以後は同じ組合せで、履歴・語彙・目標・既読が全端末でまとまります。</p>
       <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
         <input id="sync-email" type="email" inputmode="email" autocomplete="email" placeholder="you@example.com" style="flex:1;min-width:170px">
-        <input id="sync-password" type="password" autocomplete="current-password" placeholder="専用パスワード（12字以上）" style="flex:1;min-width:170px">
+        <input id="sync-password" type="password" autocomplete="current-password" placeholder="専用パスワード（英数字8字以上）" style="flex:1;min-width:170px">
         <button class="btn secondary small" onclick="uiPasswordAuth('signup')">はじめて登録</button>
         <button class="btn small" onclick="uiPasswordAuth('signin')">ログイン</button>
       </div>
       <div id="sync-msg" class="small" style="margin-top:8px"></div>
+      <details class="fold" style="margin-top:10px"><summary>${ic("key")} パスワードが分からない</summary>
+        <p class="small" style="padding-bottom:10px">上にメールアドレスだけ入れて押してください。届いたリンクを開けば、パスワード無しでこの端末に記録が戻ります。</p>
+        <button class="recheck-btn" style="margin-bottom:12px" onclick="uiSendMagicLink()">ログイン用リンクを送る</button>
+      </details>
     </div>`;
   }
   return `<div class="card">
@@ -3083,6 +3087,13 @@ function renderSyncCard() {
     </div>
     ${s.sub && s.cls !== "green" ? `<p class="small" style="margin-bottom:6px">${esc(s.sub)}</p>` : ""}
     <p class="small">両端末の記録は結合され、自己ベストは最大値を採用。オフラインでも練習でき、復帰時に自動送信します。</p>
+    <details class="fold" style="margin-top:10px"><summary>${ic("key")} パスワードを変更する</summary>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;padding-bottom:12px">
+        <input id="new-password" type="password" autocomplete="new-password" placeholder="新しいパスワード（英数字8字以上）" style="flex:1;min-width:190px">
+        <button class="recheck-btn" onclick="uiSetPassword()">設定</button>
+      </div>
+      <div id="sync-msg" class="small" style="padding-bottom:12px"></div>
+    </details>
     <button class="btn ghost small" style="margin-top:8px" onclick="syncSignOut()">この端末からログアウト</button>
   </div>`;
 }
@@ -3110,12 +3121,44 @@ async function uiVerifyCode() {
     render();
   } catch (e) { if (msg) msg.innerHTML = ic("alert") + " " + esc(String(e.message || e)); }
 }
+// 専用パスワードの要件。RLSで自分の行しか触れず、鍵はこの端末にしか残らないため、
+// 覚えられない長さを強いるより、毎日開ける長さにする方が実質的に安全（使われない同期は同期でない）。
+const PASSWORD_RE = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$/;
+const PASSWORD_HINT = "専用パスワードは英字と数字を含む8文字以上にしてください";
+// パスワードを忘れたとき: メールのリンクでそのまま入る（パスワードを再入力させない）
+async function uiSendMagicLink() {
+  const email = ((document.getElementById("sync-email") || {}).value || "").trim();
+  const msg = document.getElementById("sync-msg");
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { if (msg) msg.innerHTML = ic("alert") + " メールアドレスの形式を確認してください"; return; }
+  if (msg) msg.innerHTML = "送信中…";
+  try {
+    await syncSendCode(email);
+    if (msg) msg.innerHTML = ic("mail") + ` ${esc(email)} にログイン用リンクを送りました。メールのリンクを開くと、パスワード無しでこの端末に記録が戻ります。`;
+  } catch (e) { if (msg) msg.innerHTML = ic("alert") + " " + esc(String(e.message || e)); }
+}
+// ログイン後に新しいパスワードを決める
+async function uiSetPassword() {
+  const el = document.getElementById("new-password");
+  const msg = document.getElementById("sync-msg");
+  const pw = (el && el.value) || "";
+  if (!PASSWORD_RE.test(pw)) { if (msg) msg.innerHTML = ic("alert") + " " + PASSWORD_HINT; return; }
+  if (msg) msg.innerHTML = "設定中…";
+  try {
+    const res = await sbFetch("/auth/v1/user", { method: "PUT", body: JSON.stringify({ password: pw }) });
+    if (!res.ok) {
+      let detail = ""; try { detail = (await res.json()).message || ""; } catch (e) {}
+      throw new Error("設定に失敗しました" + (detail ? "（" + detail + "）" : ""));
+    }
+    if (el) el.value = "";
+    if (msg) msg.innerHTML = ic("check") + " 次回からこのパスワードでログインできます";
+  } catch (e) { if (msg) msg.innerHTML = ic("alert") + " " + esc(String(e.message || e)); }
+}
 async function uiPasswordAuth(mode) {
   const email = ((document.getElementById("sync-email") || {}).value || "").trim();
   const password = (document.getElementById("sync-password") || {}).value || "";
   const msg = document.getElementById("sync-msg");
   if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { if (msg) msg.innerHTML = ic("alert") + " メールアドレスの形式を確認してください"; return; }
-  if (password.length < 12) { if (msg) msg.innerHTML = ic("alert") + " 専用パスワードは12文字以上にしてください"; return; }
+  if (!PASSWORD_RE.test(password)) { if (msg) msg.innerHTML = ic("alert") + " " + PASSWORD_HINT; return; }
   if (msg) msg.innerHTML = mode === "signup" ? "登録中…" : "ログイン中…";
   try {
     const created = await syncWithPassword(email, password, mode);
