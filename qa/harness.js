@@ -108,7 +108,7 @@ const _si = global.setInterval;
 global.setInterval = (f, d) => _si(f, Math.max(1, Math.min(d || 0, 5)));
 
 // ---------- アプリ実コードを実行 ----------
-eval(js + "\nglobal.__app = { get state(){return state}, set state(v){state=v}, get ui(){return ui}, get sess(){return sess}, get view(){return view}, get content(){return content}, get syncState(){return syncState}, DEFAULT_CONTENT, ANCHOR_POOL, chunkText, getChunks, validChunks, chunkPool, spanTrialSet, pickSessionPassages, selectedPassageIds, togglePassageSelection, patchPassageSelectionUi, startSession, abortSession, renderShortIntro, renderShortResult, unseenPassages, allPassages, personalPassages, normalizePersonalPassage, importPersonalContent, daysFromToday, passageKey, passageKeys, isPassageSeen, markPassagesSeen, markPassageRead, textFingerprint, sourceUrlKey, renderHome, renderHistory, contentStatus, renderFreshnessPanel, guardedStart, renderPacer, renderPacerQuiz, answerPacer, renderSpanIntro, answerSpan, finishSpan, renderRead, startReading, finishReading, renderQuiz, finishQuiz, renderReread, startReread, finishReread, renderResult, textStats, adjustSpeed, makeDeepCloze, answerDeepCloze, normalizeNumerals, parseKanjiNum, startAnchor, renderAnchorRead, startAnchorRead, finishAnchorRead, renderAnchorQuiz, answerAnchor, anchorDue, todayMenu, goalProgress, gazeSpan, sessionKeyTerms, passageTakeaway, finishVocab, proceedAfterCloze1, weakestSkill, feedbackGenreScore, preferByFeedback, recordContentFeedback, recordContentFeedbackById, recordQuestionFeedback, recordQuestionFeedbackById, renderContentFeedback, contentFeedbackFor, contentFeedbackKey, findPassageById, defaultState, newSessionId, stampField, saveState, mergeStates, syncableState, unionBy, mergeContentFeedback, recordContentNote, recordContentNoteById, renderRestoreCard, restoreFromCloud, PASSWORD_RE, uiSendMagicLink, uiSetPassword, histKey, syncCfg, syncEnabled, signedIn, loadAuth, saveAuth, syncNow, pullRemote, pushRemote, scheduleSync, flushSyncQueue, syncStatusText, renderSyncCard, renderSyncLine, syncSignOut, KEY, AUTH_KEY, UI_KEY };");
+eval(js + "\nglobal.__app = { get state(){return state}, set state(v){state=v}, get ui(){return ui}, get sess(){return sess}, get view(){return view}, get content(){return content}, get syncState(){return syncState}, DEFAULT_CONTENT, ANCHOR_POOL, chunkText, getChunks, validChunks, chunkPool, spanTrialSet, pickSessionPassages, selectedPassageIds, togglePassageSelection, patchPassageSelectionUi, startSession, abortSession, renderShortIntro, renderShortResult, unseenPassages, allPassages, personalPassages, normalizePersonalPassage, importPersonalContent, daysFromToday, passageKey, passageKeys, isPassageSeen, markPassagesSeen, markPassageRead, textFingerprint, sourceUrlKey, renderHome, renderHistory, contentStatus, renderFreshnessPanel, guardedStart, renderPacer, renderPacerQuiz, answerPacer, renderSpanIntro, answerSpan, finishSpan, renderRead, startReading, finishReading, renderQuiz, finishQuiz, renderReread, startReread, finishReread, renderResult, textStats, adjustSpeed, makeDeepCloze, answerDeepCloze, normalizeNumerals, parseKanjiNum, startAnchor, renderAnchorRead, startAnchorRead, finishAnchorRead, renderAnchorQuiz, answerAnchor, anchorDue, todayMenu, goalProgress, gazeSpan, sessionKeyTerms, passageTakeaway, finishVocab, proceedAfterCloze1, weakestSkill, feedbackGenreScore, preferByFeedback, recordContentFeedback, recordContentFeedbackById, recordQuestionFeedback, recordQuestionFeedbackById, renderContentFeedback, contentFeedbackFor, contentFeedbackKey, findPassageById, defaultState, newSessionId, stampField, saveState, mergeStates, syncableState, unionBy, mergeContentFeedback, recordContentNote, recordContentNoteById, renderRestoreCard, restoreFromCloud, PASSWORD_RE, uiSendMagicLink, uiSetPassword, uiPasteAuthLink, authParamsFrom, applyAuthTokens, histKey, syncCfg, syncEnabled, signedIn, loadAuth, saveAuth, syncNow, pullRemote, pushRemote, scheduleSync, flushSyncQueue, syncStatusText, renderSyncCard, renderSyncLine, syncSignOut, KEY, AUTH_KEY, UI_KEY };");
 
 (async () => {
   await new Promise(r => _st(r, 80)); // init完了待ち
@@ -813,6 +813,19 @@ eval(js + "\nglobal.__app = { get state(){return state}, set state(v){state=v}, 
     "8字英数字");
   check("F13c パスワードが分からなくてもメールのリンクで戻れる導線がある",
     pwCard.includes("パスワードが分からない") && pwCard.includes("uiSendMagicLink"), pwCard.includes("uiSendMagicLink") ? "あり" : "ない");
+  // F13d: iOSはメールのリンクをSafariで開くため、ホーム画面アプリとは別の保存領域に
+  // ログインが入る。リンクを貼り付けてアプリ内で認証を完了できる経路を必ず残す。
+  check("F13d リンクを貼り付けてアプリ内でログインできる",
+    pwCard.includes("uiPasteAuthLink") && pwCard.includes("auth-link"), pwCard.includes("uiPasteAuthLink") ? "あり" : "ない");
+  // F13e: リンクの形が変わっても取りこぼさない（#access_token / ?token_hash / #error）
+  const pHash = A.authParamsFrom("https://x/#access_token=aaa&refresh_token=bbb&type=magiclink");
+  const pQuery = A.authParamsFrom("https://x/?token_hash=pkce_abc&type=recovery");
+  const pErr = A.authParamsFrom("https://x/#error=access_denied&error_description=Email+link+is+invalid+or+has+expired");
+  check("F13e リンクのハッシュ・クエリ・エラーをすべて解釈できる",
+    pHash.access_token === "aaa" && pHash.refresh_token === "bbb"
+    && pQuery.token_hash === "pkce_abc" && pQuery.type === "recovery"
+    && pErr.error === "access_denied" && /expired/.test(pErr.error_description),
+    JSON.stringify(pQuery));
 
   // ---- 設定・SQLの安全性 ----
   const cfgSrc = fs.readFileSync(path.join(ROOT, "sokugan-config.js"), "utf8");

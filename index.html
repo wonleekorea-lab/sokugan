@@ -2898,17 +2898,66 @@ async function syncWithPassword(email, password, mode) {
   saveAuth({ access_token: j.access_token, refresh_token: j.refresh_token, user_id: j.user.id, email: j.user.email || email });
   return isSignup;
 }
+// メールのリンクは環境によって形が変わる（#access_token / ?token_hash / #error）。
+// どれで来ても拾い、拾えなかった理由は黙って捨てずに画面へ出す。
+function authParamsFrom(str) {
+  const out = {};
+  for (const part of [String(str || "").split("#")[1] || "", String(str || "").split("#")[0].split("?")[1] || ""]) {
+    for (const [k, v] of new URLSearchParams(part)) if (!(k in out)) out[k] = v;
+  }
+  return out;
+}
+let authLinkError = "";
+function applyAuthTokens(accessToken, refreshToken) {
+  const payload = JSON.parse(atob(accessToken.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")));
+  if (!payload || !payload.sub) return false;
+  saveAuth({ access_token: accessToken, refresh_token: refreshToken || "", user_id: payload.sub, email: payload.email || "" });
+  return true;
+}
 function authFromMagicLink() {
   try {
-    const h = new URLSearchParams(String(location.hash || "").replace(/^#/, ""));
-    const accessToken = h.get("access_token"), refreshToken = h.get("refresh_token");
-    if (!accessToken || !refreshToken) return false;
-    const payload = JSON.parse(atob(accessToken.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")));
-    if (!payload || !payload.sub) return false;
-    saveAuth({ access_token: accessToken, refresh_token: refreshToken, user_id: payload.sub, email: payload.email || "" });
-    history.replaceState(null, "", location.pathname + location.search);
-    return true;
+    const q = authParamsFrom(location.href);
+    if (q.error || q.error_description) {
+      authLinkError = decodeURIComponent(q.error_description || q.error).replace(/\+/g, " ");
+      history.replaceState(null, "", location.pathname);
+      return false;
+    }
+    if (!q.access_token) return false;
+    const ok = applyAuthTokens(q.access_token, q.refresh_token);
+    if (ok) history.replaceState(null, "", location.pathname);
+    return ok;
   } catch (e) { return false; }
+}
+// メールのリンクをコピーして貼ってもらう経路。
+// iOSはメールのリンクをSafariで開くため、ホーム画面アプリとは別の保存領域に
+// ログインが入ってしまう。貼り付けならアプリの中で認証を完了できる。
+async function uiPasteAuthLink() {
+  const el = document.getElementById("auth-link");
+  const msg = document.getElementById("sync-msg");
+  const raw = ((el && el.value) || "").trim();
+  if (!raw) { if (msg) msg.innerHTML = ic("alert") + " メールのリンクを貼り付けてください"; return; }
+  const q = authParamsFrom(raw);
+  if (msg) msg.innerHTML = "確認中…";
+  try {
+    if (q.access_token && applyAuthTokens(q.access_token, q.refresh_token)) {
+      // そのままトークンが入っている形
+    } else if (q.token_hash || q.token) {
+      const res = await sbFetch("/auth/v1/verify", { method: "POST", body: JSON.stringify({
+        type: q.type || "magiclink", token_hash: q.token_hash || q.token
+      }) });
+      if (!res.ok) throw new Error("リンクが期限切れか、すでに使われています");
+      const j = await res.json();
+      if (!j.access_token) throw new Error("ログイン情報を受け取れませんでした");
+      saveAuth({ access_token: j.access_token, refresh_token: j.refresh_token, user_id: j.user && j.user.id, email: (j.user && j.user.email) || "" });
+    } else {
+      throw new Error("このリンクからはログイン情報を読み取れませんでした");
+    }
+    const r = await syncNow("signin");
+    const n = (state.history || []).length;
+    if (msg) msg.innerHTML = ic("check") + ` ログインしました。記録 ${n}件を取得。`;
+    showToast(r.ok ? ic("check") + " 記録を取得しました" : ic("alert") + " 同期は後で自動再試行します");
+    render();
+  } catch (e) { if (msg) msg.innerHTML = ic("alert") + " " + esc(String(e.message || e)); }
 }
 async function syncVerifyCode(email, code) {
   const res = await sbFetch("/auth/v1/verify", {
@@ -3072,9 +3121,15 @@ function renderSyncCard() {
         <button class="btn small" onclick="uiPasswordAuth('signin')">ログイン</button>
       </div>
       <div id="sync-msg" class="small" style="margin-top:8px"></div>
+      ${authLinkError ? `<p class="small" style="color:var(--acc-ink);margin-top:6px">${ic("alert")} リンクのエラー: ${esc(authLinkError)}</p>` : ""}
       <details class="fold" style="margin-top:10px"><summary>${ic("key")} パスワードが分からない</summary>
-        <p class="small" style="padding-bottom:10px">上にメールアドレスだけ入れて押してください。届いたリンクを開けば、パスワード無しでこの端末に記録が戻ります。</p>
-        <button class="recheck-btn" style="margin-bottom:12px" onclick="uiSendMagicLink()">ログイン用リンクを送る</button>
+        <p class="small" style="padding-bottom:8px">上にメールアドレスだけ入れて「リンクを送る」。届いたメールの<b>リンクを長押ししてコピー</b>し、下に貼り付けて「このリンクでログイン」を押してください。</p>
+        <p class="small" style="padding-bottom:10px">リンクをそのままタップするとSafariが開き、ホーム画面アプリとは別の保存領域にログインしてしまいます。貼り付けならこのアプリの中で完了します。</p>
+        <button class="recheck-btn" style="margin-bottom:10px" onclick="uiSendMagicLink()">リンクを送る</button>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;padding-bottom:12px">
+          <input id="auth-link" type="url" inputmode="url" autocomplete="off" placeholder="メールのリンクを貼り付け" style="flex:1;min-width:190px">
+          <button class="recheck-btn" onclick="uiPasteAuthLink()">このリンクでログイン</button>
+        </div>
       </details>
     </div>`;
   }
