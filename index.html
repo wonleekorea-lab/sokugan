@@ -517,6 +517,56 @@ function daysBetween(d1, d2) {
   return Math.round((b - a) / 86400000);
 }
 function fmtTime(s) { return `${String(Math.floor(s/60)).padStart(2,"0")}:${String(Math.floor(s%60)).padStart(2,"0")}`; }
+// セッション開始から採点までの実所要（秒）。中断・再開の実時間をそのまま数える
+function sessionElapsed() { return sess && sess.startedAt ? Math.max(0, Math.round((Date.now() - sess.startedAt) / 1000)) : null; }
+// 同じモードの直近の所要から中央値を取る（外れ値に引っ張られないため平均でなく中央値）
+function medianDuration(mode, exclude) {
+  const xs = (state.history || [])
+    .filter(h => h.mode === mode && h.durationSec > 0 && h.sessionId !== exclude)
+    .slice(-8).map(h => h.durationSec).sort((a, b) => a - b);
+  if (!xs.length) return null;
+  const m = Math.floor(xs.length / 2);
+  return xs.length % 2 ? xs[m] : Math.round((xs[m - 1] + xs[m]) / 2);
+}
+function medianOf(xs) {
+  if (!xs.length) return null;
+  const a = [...xs].sort((x, y) => x - y), m = Math.floor(a.length / 2);
+  return a.length % 2 ? a[m] : Math.round((a[m - 1] + a[m]) / 2);
+}
+// 直近8回とその前の8回を比べる。所要が縮むほど、習慣として軽くなっている
+function durationTrend(mode) {
+  const xs = (state.history || []).filter(h => h.mode === mode && h.durationSec > 0).map(h => h.durationSec);
+  if (!xs.length) return null;
+  const recent = xs.slice(-8), prev = xs.slice(-16, -8);
+  return { n: xs.length, med: medianOf(recent), prevMed: prev.length >= 3 ? medianOf(prev) : null };
+}
+function renderDurationCard() {
+  const modes = [["full", "じっくり"], ["short", "ショート"]].map(([m, label]) => [m, label, durationTrend(m)]).filter(x => x[2]);
+  if (!modes.length) return "";
+  return `<div class="card">
+    <div class="card-title">所要時間</div>
+    <div class="card-subtitle up">Time per session</div>
+    <div class="grid${modes.length === 1 ? "3" : "2"}" style="${modes.length === 1 ? "" : "gap:1px;background:var(--border);border:1px solid var(--border);border-radius:3px;overflow:hidden"}">
+      ${modes.map(([m, label, t]) => {
+        const d = t.prevMed != null ? t.med - t.prevMed : null;
+        return `<div class="stat-box"><div class="v">${fmtTime(t.med)}</div><div class="l">${label} 中央値</div>${
+          d != null ? `<div style="margin-top:6px"><span class="delta-chip ${d < 0 ? "up" : "flat"}">${d < 0 ? "−" : "+"}${fmtTime(Math.abs(d))}</span></div>` : ""
+        }</div>`;
+      }).join("")}
+    </div>
+    <p class="small" style="margin-top:10px">同じ内容を短い時間で終えられるほど、習慣として続けやすい。</p>
+  </div>`;
+}
+// 所要の表示。前回までの中央値より短ければ緑（習慣として軽くなっている合図）
+function durationRow(sec, mode, exclude) {
+  if (sec == null) return "";
+  const med = medianDuration(mode, exclude);
+  const diff = med ? sec - med : null;
+  const faster = diff != null && diff < 0;
+  return `<div class="compare-row"><span class="lab">所要</span><span><b>${fmtTime(sec)}</b>${
+    diff != null ? ` <span class="delta-chip ${faster ? "up" : "flat"}">${faster ? "−" : "+"}${fmtTime(Math.abs(diff))}</span>` : ""
+  }</span></div>`;
+}
 function charCount(t) { return (t || "").replace(/\s/g, "").length; }
 function normalizePersonalPassage(p, i, availableOn) {
   const text = String((p && p.text) || "").trim();
@@ -1551,6 +1601,7 @@ function startSession(mode = "full", selectedIds) {
   const menu = todayMenu();
   sess = {
     num: ts.count, mode, p1, p2, menu,
+    startedAt: Date.now(),          // 開始から採点までの実所要（習慣化の指標）
     warm, warmChunks: warm ? getChunks(warm) : [],
     warmQ: wq ? shuffleQuestionOptions(wq) : null,
     pacerResult: null, pacerLeveledUp: false,
@@ -1605,6 +1656,7 @@ function abortSession() {
     state.history.push({
       sessionId: newSessionId(), date: today(), mode: "partial", completed: false,
       speed, comprehension: comp, valid: false, partialReason: "aborted",
+      durationSec: sessionElapsed(),
       passagesRead: reads.length, questionsAnswered: knownAnswers,
       genreSpeeds: reads.map(x => ({ genre: genreOf(x.passage), speed: x.rec.speed, comp: x.rec.comp ?? null, readability: textStats(x.passage.text).readability })),
       pacerLevel: state.pacerLevel, spanLevel: state.spanLevel,
@@ -2190,9 +2242,13 @@ function renderShortResult() {
     state.bestSpeed = p.speed;
     state.wins.push({ date: today(), ico: "⚡", text: `ショート版で自己ベスト: ${p.speed}字/分（理解度${Math.round(comp * 100)}%）` });
   }
+  const shortSessionId = newSessionId();
+  const shortElapsed = sessionElapsed();
+  const shortMedianBefore = medianDuration("short");
   state.history.push({
-    sessionId: newSessionId(),
+    sessionId: shortSessionId,
     date: today(), mode: "short", speed: p.speed, comprehension: comp, valid,
+    durationSec: shortElapsed,
     target, targetMet: rat.cleared, adjustedSpeed, readability: stats.readability,
     genreSpeeds: [{ genre: genreOf(sess.p1), speed: p.speed, comp, readability: stats.readability }],
     deepCloze: null, reread: null, pacerLevel: state.pacerLevel,
@@ -2212,7 +2268,9 @@ function renderShortResult() {
       <div class="big" style="color:${valid ? "var(--ink)" : "var(--ink3)"}">${p.speed}<span style="font-size:14px;color:var(--ink3);letter-spacing:.16em"> 字/分</span></div>
       ${qDots(Math.round(comp * 3), 3)}
       <div class="sub">${valid ? "" : "理解度60%未満 — 速度は記録対象外"}</div>
-    </div></div>
+    </div>
+    ${shortElapsed != null ? `<div style="margin-top:6px">${durationRow(shortElapsed, "short", shortSessionId)}</div>` : ""}
+    </div>
     <div class="card"><div class="card-title">${ic("quote")}1つ持ち帰る</div><div class="card-subtitle up">Takeaway</div><div class="win-item"><span class="ico">${ic("gift")}</span><div><b>${esc(take.hook)}</b>${take.detail ? `<div class="small">${esc(take.detail)}</div>` : ""}</div></div></div>
     ${renderContentFeedback(completedPassage)}
     <div style="display:flex;gap:8px"><button class="btn secondary" onclick="go('home')">ホームへ</button><button class="btn" onclick="startSession('short')">もう1本</button></div>`;
@@ -2247,9 +2305,12 @@ function renderResult() {
   if (valid && sess.deepCloze && sess.deepCloze.correct)
     state.wins.push({ date: today(), ico: "link", text: `深層読解（${sess.deepCloze.type}）正解 — 速度を保って論理のつなぎも取れた` });
   // 記録
+  const fullSessionId = newSessionId();
+  const fullElapsed = sessionElapsed();
   state.history.push({
-    sessionId: newSessionId(),
+    sessionId: fullSessionId,
     date: today(), mode: "full", speed: sessSpeed, comprehension: comp, valid,
+    durationSec: fullElapsed,
     target, targetMet: rat.cleared,
     adjustedSpeed: adjSpeed, readability: sessReadability,
     genreSpeeds: [
@@ -2313,10 +2374,11 @@ function renderResult() {
     <div class="card">
       <div class="card-title">今日の中身</div>
       <div class="card-subtitle up">Session breakdown</div>
+      ${durationRow(fullElapsed, "full", fullSessionId)}
       <div class="compare-row"><span class="lab">本文①（${esc(g1)}）初読</span><span><b>${p1.speed}</b> 字/分 · 理解 ${Math.round(p1.comp*100)}%</span></div>
       <div class="compare-row"><span class="lab">本文① 反復読</span><span>${re ? `<b>${re.speed}</b> 字/分 ${re.beat ? '<span class="delta-chip up">+15%達成</span>' : '<span class="delta-chip flat">目標未達</span>'}` : "—"}</span></div>
       <div class="compare-row"><span class="lab">本文②（${esc(g2)}）初読</span><span><b>${p2.speed}</b> 字/分 · 理解 ${Math.round(p2.comp*100)}%</span></div>
-      <div class="compare-row" style="background:var(--blue-dim);border-radius:8px;padding-left:8px;padding-right:8px"><span class="lab">難度補正速度 <span class="small">（難度${sessReadability}）</span></span><span><b style="color:var(--blue)">${adjSpeed}</b> 字/分 ${valid && adjSpeed > sessSpeed ? `<span class="delta-chip up">生速度+${adjSpeed - sessSpeed}</span>` : ""}</span></div>
+      <div class="compare-row" style="background:var(--card2);border-radius:3px;padding-left:8px;padding-right:8px"><span class="lab">難度補正速度 <span class="small">（難度${sessReadability}）</span></span><span><b>${adjSpeed}</b> 字/分 ${valid && adjSpeed > sessSpeed ? `<span class="delta-chip up">生速度+${adjSpeed - sessSpeed}</span>` : ""}</span></div>
       <div class="compare-row"><span class="lab">深層読解（接続）</span><span>${[dc1Res, dcRes].filter(Boolean).map(d => `${d.correct ? '<span class="delta-chip up">正解</span>' : '<span class="delta-chip down">不正解</span>'} ${esc(d.type)}`).join(" · ") || "—"}</span></div>
       <div class="compare-row"><span class="lab">語彙道場</span><span>${vres ? `<b>${vres.score}</b>/${vres.total} 語 · 習得計 ${(state.vocabBook || []).filter(v => v.level >= 3).length}語` : "—"}</span></div>
       <div class="compare-row" style="background:var(--green-dim);border-radius:8px;padding-left:8px;padding-right:8px"><span class="lab">推定 一目量 <span class="small">（1固視で読める文字数）</span></span><span><b style="color:var(--green)">${gazeSpan(adjSpeed) || "—"}</b> 字/固視</span></div>
@@ -2481,6 +2543,7 @@ function renderHistory() {
       ${renderGenreBars(genreSpeed("concrete"), genreSpeed("deep"))}
     </div>
     ${renderAnchorCard()}
+    ${renderDurationCard()}
     <div class="card">
       <div class="card-title">セッション履歴</div>
       <div class="card-subtitle">直近40件${state.migratedFromV2 ? `· 1.0からの引き継ぎを含む` : ""}</div>

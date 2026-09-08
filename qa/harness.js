@@ -382,9 +382,12 @@ eval(js + "\nglobal.__app = { get state(){return state}, set state(v){state=v}, 
   check("B16b 結果に難度補正速度を表示", resHtml.includes("難度補正速度"));
   check("B16c 結果に一目量を表示", resHtml.includes("一目量"));
   check("B16d 結果に持ち帰りカード", resHtml.includes("持ち帰り"));
+  // B16e: セッション所要。短くなるほど習慣として続く指標なので、毎回目に入る位置に出す
+  check("B16e 結果に所要時間を表示", resHtml.includes("所要") && /\d\d:\d\d/.test(resHtml));
   const last = A.state.history[A.state.history.length - 1];
   check("B17 履歴記録 (速度・理解度・ジャンル別・視幅)", last && last.speed > 0 && last.comprehension > 0 && (last.genreSpeeds || []).length === 2 && typeof last.spanLevel === "number");
   check("B17b 履歴に難度補正速度・難度を記録", last && typeof last.adjustedSpeed === "number" && typeof last.readability === "number");
+  check("B17c 履歴に所要秒を記録（習慣化の追跡に使う）", last && typeof last.durationSec === "number" && last.durationSec >= 0, last && last.durationSec + "秒");
   const seenBeforeShort = new Set(A.state.seenPassageKeys || []);
   const shortPick = A.pickSessionPassages("short");
   A.startSession("short");
@@ -393,6 +396,8 @@ eval(js + "\nglobal.__app = { get state(){return state}, set state(v){state=v}, 
   A.renderRead(1); A.startReading(1); await new Promise(r => _st(r, 12)); A.finishReading(1); A.finishQuiz(1, [true, true, true]);
   const shortLast = A.state.history[A.state.history.length - 1];
   check("B18c ショート版: 1本文＋3問で結果・履歴まで完走", shortLast && shortLast.mode === "short" && screenEl().includes("SHORT SESSION COMPLETE"));
+  check("B18c2 ショート版の結果にも所要を出し、履歴へ残す",
+    shortLast && typeof shortLast.durationSec === "number" && screenEl().includes("所要"), shortLast && shortLast.durationSec + "秒");
   check("B18d 既読キーを端末履歴へ永続化", (A.state.seenPassageKeys || []).length >= 4, `${(A.state.seenPassageKeys || []).length}本`);
 
   // B18g-1: 1本文3問で1問不正解でも、2/3=66%は記録対象にする
