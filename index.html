@@ -21,7 +21,8 @@
   --acc:#c8452b; --acc-dim:rgba(200,69,43,.10); --acc-ink:#a83a24;
   /* 旧トークン互換（全部この3系統へ畳む） */
   --coral:var(--acc); --coral-dim:var(--acc-dim);
-  --green:var(--ink); --green-dim:rgba(29,27,23,.06);
+  /* 正解・達成だけに使う控えめな緑（苔色）。朱は「今ここ」と「未達」に限る */
+  --green:#4b7a51; --green-dim:rgba(75,122,81,.11);
   --gold:var(--ink2); --gold-dim:rgba(29,27,23,.05);
   --blue:var(--ink2); --blue-dim:rgba(29,27,23,.04);
   --purple:var(--ink2);
@@ -74,7 +75,7 @@ svg.i{width:1em;height:1em;flex:none;vertical-align:-.13em;stroke:currentColor;f
 .card-subtitle.up{font-size:9px;letter-spacing:.24em;text-transform:uppercase}
 .banner{padding:11px 14px;border-radius:3px;font-size:12.5px;margin-bottom:12px;border:1px solid var(--border2);background:var(--card);color:var(--ink2)}
 .banner b{color:var(--ink)}
-.banner.ok{border-left:2px solid var(--acc)}
+.banner.ok{border-left:2px solid var(--green)}
 
 /* ---- ボタン ---- */
 .btn{display:inline-block;background:var(--acc);color:#fff;border:1px solid var(--acc);border-radius:3px;padding:15px 20px;font-size:15px;font-weight:700;letter-spacing:.04em;cursor:pointer;font-family:inherit;width:100%;text-align:center;transition:opacity .12s}
@@ -101,7 +102,7 @@ code{background:var(--card2);border:1px solid var(--border);border-radius:2px;pa
 .target-hero .num{font-size:50px;font-weight:700;letter-spacing:-.04em;line-height:1;font-variant-numeric:tabular-nums}
 .target-hero .unit{font-size:9.5px;color:var(--ink3);letter-spacing:.16em;text-transform:uppercase}
 .delta-chip{display:inline-block;font-size:11px;font-weight:600;padding:2px 8px;border-radius:2px;border:1px solid var(--border2);color:var(--ink2);font-variant-numeric:tabular-nums}
-.delta-chip.up{border-color:var(--acc);color:var(--acc)}
+.delta-chip.up{border-color:var(--green);color:var(--green)}
 
 /* ---- 選択スロット（何本選んだかを枠で見せる） ---- */
 .slots{display:flex;gap:5px;align-items:center}
@@ -142,7 +143,7 @@ code{background:var(--card2);border:1px solid var(--border);border-radius:2px;pa
 .opt:hover{border-color:var(--ink3)}
 .opt:focus{outline:none}
 .opt:focus-visible{outline:2px solid var(--blue);outline-offset:2px;border-color:var(--blue)}
-.opt.correct{border-color:var(--green);background:var(--green-dim)}
+.opt.correct{border-color:var(--green);background:var(--green-dim);color:var(--ink)}
 .opt.wrong{border-color:var(--acc);background:var(--acc-dim)}
 .opt:disabled{cursor:default;opacity:.85}
 .passage-choice{margin-bottom:0;background:none;border-color:var(--border)}
@@ -164,7 +165,7 @@ code{background:var(--card2);border:1px solid var(--border);border-radius:2px;pa
 /* 正誤を点で（3問なら3つ） */
 .qdots{display:flex;gap:6px;justify-content:center;margin-top:10px}
 .qdots i{width:9px;height:9px;border-radius:50%;border:1.5px solid var(--border2);display:block}
-.qdots i.hit{background:var(--ink);border-color:var(--ink)}
+.qdots i.hit{background:var(--green);border-color:var(--green)}
 .qdots i.miss{background:none;border-color:var(--acc)}
 .compare-row{display:flex;justify-content:space-between;align-items:center;padding:11px 0;border-bottom:1px solid var(--border);font-size:13.5px;font-variant-numeric:tabular-nums}
 .compare-row:last-child{border-bottom:none}
@@ -1169,9 +1170,10 @@ function last7Dots() {
 function targetRing(pct, size) {
   const S = size || 62, r = (S - 6) / 2, c = 2 * Math.PI * r;
   const v = Math.max(0, Math.min(100, pct || 0));
+  const col = v >= 100 ? "var(--green)" : "var(--acc)";
   return `<svg width="${S}" height="${S}" viewBox="0 0 ${S} ${S}" aria-hidden="true">
     <circle cx="${S/2}" cy="${S/2}" r="${r}" fill="none" stroke="var(--border2)" stroke-width="3"/>
-    ${v > 0 ? `<circle cx="${S/2}" cy="${S/2}" r="${r}" fill="${v >= 100 ? "var(--acc)" : "none"}" stroke="var(--acc)" stroke-width="3" stroke-linecap="round"
+    ${v > 0 ? `<circle cx="${S/2}" cy="${S/2}" r="${r}" fill="${v >= 100 ? col : "none"}" stroke="${col}" stroke-width="3" stroke-linecap="round"
       stroke-dasharray="${(c * v / 100).toFixed(1)} ${c.toFixed(1)}" transform="rotate(-90 ${S/2} ${S/2})"/>` : ""}
     ${v >= 100 ? `<path d="M${(S/2-9).toFixed(1)},${(S/2).toFixed(1)} l6,6 l12,-13" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>` : ""}
   </svg>`;
@@ -1343,7 +1345,7 @@ function renderSparkline() {
   for (let i = 29; i >= 0; i--) days.push(daysAgoStr(i));
   const pts = days.map(d => ({ d, v: dayBest(d) }));
   const valid = pts.filter(p => p.v);
-  if (valid.length < 2) return '<p class="muted">あと数セッションでグラフが描かれます。</p>';
+  if (!valid.length) return '<p class="small">最初のセッションを終えると、ここに日々の点と近似曲線が描かれます。</p>';
   const W = 700, H = 250, PAD = 26;
   const vs = valid.map(p => p.v);
   const target = currentTarget();
@@ -2104,11 +2106,22 @@ function contentFeedbackControls(p, feedback) {
   const questionFit = feedback && feedback.questionFit;
   const passageId = encodeURIComponent(String(p.id)).replace(/'/g, "%27");
   const questionFits = [["easy", "易しい"], ["just_right", "ちょうどよい"], ["hard", "難しい"], ["unclear", "分かりにくい"]];
+  const note = (feedback && feedback.note) || "";
+  const noteId = "content-note-" + encodeURIComponent(String(p.id)).replace(/%/g, "_");
   const contentStatus = rating ? `内容 ${rating}/5 を保存済み` : "";
   const questionStatus = questionFit ? `保存済み` : "";
+  const noteStatus = note ? `次回の素材選びに反映します` : "";
   return `<div style="display:grid;gap:8px;width:100%">
-    <div><div class="small" style="margin-bottom:5px">内容はどうだった？ <span style="opacity:.7">浅い → 話したい</span></div><div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center">${[1,2,3,4,5].map(n => `<button class="recheck-btn" aria-label="内容評価 ${n}/5" aria-pressed="${rating === n ? "true" : "false"}" style="padding:6px 11px;${rating === n ? "border-color:var(--acc);color:var(--acc);background:var(--acc-dim)" : ""}" onclick="recordContentFeedbackById(decodeURIComponent('${passageId}'),${n})">${n}</button>`).join("")}<span class="small">${contentStatus}</span></div></div>
-    <div><div class="small" style="margin-bottom:5px">問題はどうだった？</div><div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center">${questionFits.map(([value, label]) => `<button class="recheck-btn" aria-pressed="${questionFit === value ? "true" : "false"}" style="padding:6px 11px;${questionFit === value ? "border-color:var(--acc);color:var(--acc);background:var(--acc-dim)" : ""}" onclick="recordQuestionFeedbackById(decodeURIComponent('${passageId}'),'${value}')">${label}</button>`).join("")}<span class="small">${questionStatus}</span></div></div>
+    <div><div class="small" style="margin-bottom:5px">内容はどうだった？ <span style="opacity:.7">浅い → 話したい</span></div><div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center">${[1,2,3,4,5].map(n => `<button class="recheck-btn" aria-label="内容評価 ${n}/5" aria-pressed="${rating === n ? "true" : "false"}" style="padding:6px 11px;${rating === n ? "border-color:var(--green);color:var(--green);background:var(--green-dim)" : ""}" onclick="recordContentFeedbackById(decodeURIComponent('${passageId}'),${n})">${n}</button>`).join("")}<span class="small">${contentStatus}</span></div></div>
+    <div><div class="small" style="margin-bottom:5px">問題はどうだった？</div><div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center">${questionFits.map(([value, label]) => `<button class="recheck-btn" aria-pressed="${questionFit === value ? "true" : "false"}" style="padding:6px 11px;${questionFit === value ? "border-color:var(--green);color:var(--green);background:var(--green-dim)" : ""}" onclick="recordQuestionFeedbackById(decodeURIComponent('${passageId}'),'${value}')">${label}</button>`).join("")}<span class="small">${questionStatus}</span></div></div>
+    <div style="margin-top:2px">
+      <div class="small" style="margin-bottom:5px">ひとこと <span style="opacity:.7">次に読みたいもの・合わなかったところ</span></div>
+      <textarea id="${noteId}" rows="2" maxlength="${NOTE_MAX}" placeholder="例: 現場の運用が変わった話をもっと読みたい" style="width:100%;resize:vertical;line-height:1.6">${esc(note)}</textarea>
+      <div style="display:flex;align-items:center;gap:8px;margin-top:6px">
+        <button class="recheck-btn" onclick="submitContentNote(decodeURIComponent('${passageId}'),'${noteId}')">保存</button>
+        <span class="small" ${note ? 'style="color:var(--green)"' : ""}>${noteStatus}</span>
+      </div>
+    </div>
   </div>`;
 }
 function recordContentFeedbackById(passageId, rating) { recordContentFeedback(findPassageById(passageId), rating); }
@@ -2130,6 +2143,19 @@ function recordContentFeedback(p, rating) {
   if (!p || !Number.isInteger(rating) || rating < 1 || rating > 5) return;
   saveContentFeedback(p, { rating });
   showToast(`コンテンツ評価 ${rating}/5 を保存しました`);
+}
+// 自由記述。次回の素材選びへ本人の言葉をそのまま渡すための欄
+const NOTE_MAX = 200;
+function recordContentNote(p, note) {
+  if (!p) return;
+  const text = String(note == null ? "" : note).trim().slice(0, NOTE_MAX);
+  saveContentFeedback(p, { note: text });
+  showToast(text ? ic("check") + " メモを保存しました" : ic("check") + " メモを削除しました");
+}
+function recordContentNoteById(passageId, note) { recordContentNote(findPassageById(passageId), note); }
+function submitContentNote(passageId, elId) {
+  const el = document.getElementById(elId);
+  recordContentNoteById(passageId, el ? el.value : "");
 }
 function recordQuestionFeedback(p, questionFit) {
   if (!p || !["easy", "just_right", "hard", "unclear"].includes(questionFit)) return;
@@ -2279,7 +2305,7 @@ function renderResult() {
         ${qDots(Math.round(compPct / 100 * 6), 6)}
         <div class="sub">${valid ? "" : "理解度60%未満 — 速度は記録対象外"}</div>
         ${valid ? (rat.cleared
-          ? `<div class="banner ok" style="margin-top:14px;text-align:left">${ic("spark")} 目標クリア。明日は <b>${rat.newTarget}字/分</b>（+${rat.newTarget - rat.oldTarget}）。</div>`
+          ? `<div class="banner ok" style="margin-top:14px;text-align:left"><span style="color:var(--green)">${ic("spark")}</span> 目標クリア。明日は <b>${rat.newTarget}字/分</b>（+${rat.newTarget - rat.oldTarget}）。</div>`
           : `<div class="banner" style="margin-top:14px;text-align:left">目標まで <b>${Math.max(0, target - sessSpeed)}字/分</b>。今日中の再挑戦でクリア可能。</div>`)
           : `<div class="banner warn" style="margin-top:12px;text-align:left">理解度ゲート未通過。次のセッションでは少しだけ速度を落として、設問を意識しながら読んでみてください。</div>`}
       </div>
@@ -2623,6 +2649,7 @@ function mergeContentFeedback(local, remote) {
     const merged = Object.assign({}, older, newer);
     if (newer.rating == null && older.rating != null) merged.rating = older.rating;
     if (!newer.questionFit && older.questionFit) merged.questionFit = older.questionFit;
+    if (!newer.note && older.note) merged.note = older.note;
     byKey.set(key, merged);
   }
   return [...byKey.values()].sort((a, b) => String(a.date || "").localeCompare(String(b.date || ""))).slice(-300);

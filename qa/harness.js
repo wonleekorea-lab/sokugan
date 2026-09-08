@@ -26,6 +26,34 @@ function charOverlap(a, b) {
   let common = 0; for (const c of sa) if (sb.has(c)) common++;
   return common / Math.max(sa.size, sb.size, 1);
 }
+// ---- タイトルの機械リンター ----
+// タイトルは「読むかどうか」を決める。要約でなく、具体的事実＋意外な含意を一文に収める。
+// ここでは主観に踏み込まず、日本語として不自然になる型だけを機械的に落とす。
+const TITLE_ABSTRACT_TAIL = /(こと|化|性|という点|に関して|について)$/;
+const TITLE_PARTICLE_TAIL = /[はがをにへとでもやのか]$/;
+function titleLint(title) {
+  const t = String(title || "").trim();
+  const issues = [];
+  const len = [...t].length;
+  if (len < 18 || len > 36) issues.push(`長さ${len}字(18-36)`);
+  const commas = (t.match(/、/g) || []).length;
+  if (commas > 1) issues.push(`読点${commas}個`);
+  // 桁区切りの生数字（1,000以上）は日本語のタイトルとして読めない。万・億で書く
+  const bigRaw = t.match(/\d{1,3}(,\d{3})+/g) || [];
+  if (bigRaw.length) issues.push(`桁区切りの生数字: ${bigRaw[0]}`);
+  const noCount = (t.match(/の/g) || []).length;
+  if (noCount >= 4) issues.push(`『の』${noCount}個`);
+  if (TITLE_ABSTRACT_TAIL.test(t)) issues.push("抽象名詞で終わる");
+  if (TITLE_PARTICLE_TAIL.test(t)) issues.push("助詞で終わる");
+  return issues;
+}
+// 同じ構文の使い回しを1日単位で検出する（型が透けると読む気が落ちる）
+function titlePatternCounts(titles) {
+  const pats = { "AではなくB": /ではなく/, "AよりB": /より[、,]?/, "〜だけでなく": /だけでなく/ };
+  const out = {};
+  for (const [name, re] of Object.entries(pats)) out[name] = titles.filter(t => re.test(t)).length;
+  return out;
+}
 function clarityLint(q) {
   const issues = [];
   const stem = (q.q || "").split(": ").slice(1).join(": ") || (q.q || "");
@@ -80,7 +108,7 @@ const _si = global.setInterval;
 global.setInterval = (f, d) => _si(f, Math.max(1, Math.min(d || 0, 5)));
 
 // ---------- アプリ実コードを実行 ----------
-eval(js + "\nglobal.__app = { get state(){return state}, set state(v){state=v}, get ui(){return ui}, get sess(){return sess}, get view(){return view}, get content(){return content}, get syncState(){return syncState}, DEFAULT_CONTENT, ANCHOR_POOL, chunkText, getChunks, validChunks, chunkPool, spanTrialSet, pickSessionPassages, selectedPassageIds, togglePassageSelection, patchPassageSelectionUi, startSession, abortSession, renderShortIntro, renderShortResult, unseenPassages, allPassages, personalPassages, normalizePersonalPassage, importPersonalContent, daysFromToday, passageKey, passageKeys, isPassageSeen, markPassagesSeen, markPassageRead, textFingerprint, sourceUrlKey, renderHome, renderHistory, contentStatus, renderFreshnessPanel, guardedStart, renderPacer, renderPacerQuiz, answerPacer, renderSpanIntro, answerSpan, finishSpan, renderRead, startReading, finishReading, renderQuiz, finishQuiz, renderReread, startReread, finishReread, renderResult, textStats, adjustSpeed, makeDeepCloze, answerDeepCloze, normalizeNumerals, parseKanjiNum, startAnchor, renderAnchorRead, startAnchorRead, finishAnchorRead, renderAnchorQuiz, answerAnchor, anchorDue, todayMenu, goalProgress, gazeSpan, sessionKeyTerms, passageTakeaway, finishVocab, proceedAfterCloze1, weakestSkill, feedbackGenreScore, preferByFeedback, recordContentFeedback, recordContentFeedbackById, recordQuestionFeedback, recordQuestionFeedbackById, renderContentFeedback, contentFeedbackFor, contentFeedbackKey, findPassageById, defaultState, newSessionId, stampField, saveState, mergeStates, syncableState, unionBy, mergeContentFeedback, histKey, syncCfg, syncEnabled, signedIn, loadAuth, saveAuth, syncNow, pullRemote, pushRemote, scheduleSync, flushSyncQueue, syncStatusText, renderSyncCard, renderSyncLine, syncSignOut, KEY, AUTH_KEY, UI_KEY };");
+eval(js + "\nglobal.__app = { get state(){return state}, set state(v){state=v}, get ui(){return ui}, get sess(){return sess}, get view(){return view}, get content(){return content}, get syncState(){return syncState}, DEFAULT_CONTENT, ANCHOR_POOL, chunkText, getChunks, validChunks, chunkPool, spanTrialSet, pickSessionPassages, selectedPassageIds, togglePassageSelection, patchPassageSelectionUi, startSession, abortSession, renderShortIntro, renderShortResult, unseenPassages, allPassages, personalPassages, normalizePersonalPassage, importPersonalContent, daysFromToday, passageKey, passageKeys, isPassageSeen, markPassagesSeen, markPassageRead, textFingerprint, sourceUrlKey, renderHome, renderHistory, contentStatus, renderFreshnessPanel, guardedStart, renderPacer, renderPacerQuiz, answerPacer, renderSpanIntro, answerSpan, finishSpan, renderRead, startReading, finishReading, renderQuiz, finishQuiz, renderReread, startReread, finishReread, renderResult, textStats, adjustSpeed, makeDeepCloze, answerDeepCloze, normalizeNumerals, parseKanjiNum, startAnchor, renderAnchorRead, startAnchorRead, finishAnchorRead, renderAnchorQuiz, answerAnchor, anchorDue, todayMenu, goalProgress, gazeSpan, sessionKeyTerms, passageTakeaway, finishVocab, proceedAfterCloze1, weakestSkill, feedbackGenreScore, preferByFeedback, recordContentFeedback, recordContentFeedbackById, recordQuestionFeedback, recordQuestionFeedbackById, renderContentFeedback, contentFeedbackFor, contentFeedbackKey, findPassageById, defaultState, newSessionId, stampField, saveState, mergeStates, syncableState, unionBy, mergeContentFeedback, recordContentNote, recordContentNoteById, histKey, syncCfg, syncEnabled, signedIn, loadAuth, saveAuth, syncNow, pullRemote, pushRemote, scheduleSync, flushSyncQueue, syncStatusText, renderSyncCard, renderSyncLine, syncSignOut, KEY, AUTH_KEY, UI_KEY };");
 
 (async () => {
   await new Promise(r => _st(r, 80)); // init完了待ち
@@ -138,6 +166,20 @@ eval(js + "\nglobal.__app = { get state(){return state}, set state(v){state=v}, 
     check(`A10 [${id}] 15字超の複合チャンクなし（長い単一語のみ許容）`, tooLong === 0, `${tooLong}個`);
   }
   check("A11 ans分布の極端な偏りなし (各<=12)", ansDist.every(n => n <= 12), JSON.stringify(ansDist));
+
+  // ---------- A16. タイトルの日本語（読む気が起きる形になっているか） ----------
+  const titles = (daily.passages || []).map(p => String(p.title || ""));
+  const titleIssues = [];
+  for (const p of (daily.passages || [])) {
+    const iss = titleLint(p.title);
+    if (iss.length) titleIssues.push(`[${p.id}] ${iss.join("/")}`);
+  }
+  check("A16 タイトルの機械リンター（長さ・読点・桁区切り数字・語尾）", titleIssues.length === 0, titleIssues.slice(0, 3).join(" "));
+  const patCounts = titlePatternCounts(titles);
+  const overused = Object.entries(patCounts).filter(([, n]) => n > 2).map(([k, n]) => `${k}=${n}`);
+  check("A16b 同じ構文のタイトルが3本以上ない（型の使い回し）", overused.length === 0, overused.join(" ") || JSON.stringify(patCounts));
+  const dupTitleToday = titles.filter((t, i) => titles.findIndex(x => charOverlap(x, t) >= 0.8) !== i);
+  check("A16c 当日10本のタイトルが互いに似すぎない", dupTitleToday.length === 0, dupTitleToday.slice(0, 2).join(" / "));
 
   // ---------- A4c. 漢数字の数量表記が残っていないか（正規化の回帰防止） ----------
   // 数字始まり・長さ2以上の漢数字連（六千三百/二千二十四 等）は算用数字へ正規化されるべき
@@ -394,6 +436,28 @@ eval(js + "\nglobal.__app = { get state(){return state}, set state(v){state=v}, 
   )[0];
   check("B18h2 端末間で内容・設問評価を別々に保存しても両方を残す",
     mergedFeedback && mergedFeedback.rating === 5 && mergedFeedback.questionFit === "hard");
+
+  // B18j: 自由記述。選択式では拾えない「次に読みたいもの」を本人の言葉で残し、
+  // 次回の素材選びへ渡す。ここが切れると評価ループが選択肢の範囲に閉じる。
+  A.recordContentNote(rated, "  現場の運用が変わった話をもっと読みたい  ");
+  const noted = A.state.contentFeedback.find(x => x.passageId === rated.id);
+  const notedHtml = A.renderContentFeedback(rated);
+  check("B18j 自由記述メモを保存し、保存済み表示に反映",
+    noted && noted.note === "現場の運用が変わった話をもっと読みたい"
+    && notedHtml.includes("submitContentNote") && notedHtml.includes("現場の運用が変わった話をもっと読みたい")
+    && notedHtml.includes("次回の素材選びに反映します"), noted && noted.note);
+  const longNote = "あ".repeat(400);
+  A.recordContentNote(rated, longNote);
+  const notedLong = A.state.contentFeedback.find(x => x.passageId === rated.id);
+  check("B18j2 自由記述は上限で切り詰める（同期ペイロードの肥大を防ぐ）",
+    notedLong && [...notedLong.note].length === 200, notedLong && [...notedLong.note].length + "字");
+  const mergedNote = A.mergeContentFeedback(
+    [{ date: "2026-09-04", passageId: rated.id, genre: rated.genre, note: "現場の話が読みたい", updatedAt: "2026-09-04T09:00:00.000Z" }],
+    [{ date: "2026-09-04", passageId: rated.id, genre: rated.genre, rating: 4, updatedAt: "2026-09-04T09:01:00.000Z" }]
+  )[0];
+  check("B18j3 端末間マージで自由記述が消えない",
+    mergedNote && mergedNote.note === "現場の話が読みたい" && mergedNote.rating === 4);
+  A.recordContentNote(rated, "");
 
   // B18i: YouTubeの本人用教材でも評価ボタンが対象本文を解決し、画面を更新する
   A.state = A.defaultState();
@@ -755,6 +819,16 @@ eval(js + "\nglobal.__app = { get state(){return state}, set state(v){state=v}, 
     /sokugan-content-feedback-profile-v1/.test(feedbackProfileSrc) && /minimumSamplesPerSignal/.test(feedbackProfileSrc)
     && /本文、タイトル、ユーザーIDは出力しない/.test(feedbackProfileSrc) && /export-content-feedback-profile\.js/.test(dailyGuide)
     && /questionFit\.instruction/.test(dailyGuide), fs.existsSync(feedbackProfileTool) ? "匿名集計ツール＋日次指示" : "評価集計ツールがない");
+  // F16e: 自由記述が生成側へ届いているか。ここが切れると書いても何も変わらない
+  const notesProfile = require(feedbackProfileTool).buildProfile([
+    { date: "2026-09-05", genre: "社会・価値観", rating: 5, note: "現場の運用が変わった話" },
+    { date: "2026-09-04", genre: "社会・価値観", rating: 4 }
+  ]);
+  check("F16e 自由記述が評価プロファイルに載り、日次の選定指示が参照する",
+    Array.isArray(notesProfile.notes) && notesProfile.notes.length === 1
+    && notesProfile.notes[0].note === "現場の運用が変わった話"
+    && /notes/.test(dailyGuide) && /自由記述/.test(dailyGuide),
+    `notes=${(notesProfile.notes || []).length}`);
 
   // ========== H. PWA・自動更新の配線 ==========
   const swSrc = fs.readFileSync(path.join(ROOT, "sw.js"), "utf8");
