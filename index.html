@@ -1206,6 +1206,29 @@ function render() {
   else { setRoute("home"); renderHome(); }
   window.scrollTo(0, 0);
 }
+// この端末に記録が無いとき、クラウドに残っている記録へ戻る道を必ず見せる。
+// iOSはホーム画面アプリを入れ直すと保存領域が変わり、記録が消えたように見えるため。
+function renderRestoreCard() {
+  if ((state.history || []).length > 0) return "";
+  if (!syncEnabled()) return "";
+  const signed = signedIn();
+  return `<div class="card" data-restore style="border-color:var(--acc)">
+    <div class="card-title">${ic("box")}この端末に記録がありません</div>
+    <div class="card-subtitle">${signed ? "クラウドから取得すると、これまでの記録が戻ります。" : "ログインすると、これまでの記録がこの端末に戻ります。端末を替えたり、ホーム画面に入れ直すと保存領域が変わります。"}</div>
+    <button class="btn" onclick="${signed ? "restoreFromCloud()" : "go('history')"}">${signed ? "クラウドから取得" : "ログインして記録を戻す"}</button>
+  </div>`;
+}
+async function restoreFromCloud() {
+  showToast("取得中…");
+  try {
+    const r = await syncNow("restore");
+    const n = (state.history || []).length;
+    showToast(n ? ic("check") + ` ${n}件の記録を取得しました` : ic("alert") + " クラウドにも記録がありませんでした");
+  } catch (e) {
+    showToast(ic("alert") + " 取得に失敗: " + String(e.message || e));
+  }
+  render();
+}
 // 直近7日の実施を点で見せる（読まなくても継続が分かる）
 function last7Dots() {
   const out = [];
@@ -1284,6 +1307,7 @@ function renderHome() {
 
   screen().innerHTML = `
     ${renderFreshnessPanel(fr)}
+    ${renderRestoreCard()}
     ${anchorDue() && totalTrainingDays() >= 1 ? `<div class="card" style="display:flex;align-items:center;gap:12px;padding:14px 18px"><span style="color:var(--ink3);font-size:17px;line-height:0">${ic("orbit")}</span><div style="flex:1"><b style="font-size:13px">週次アンカー</b><div class="small">未訓練文で転移を測る · 3分</div></div><button class="recheck-btn" onclick="startAnchor()">測定</button></div>` : ""}
     <div class="card">
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;color:var(--ink3);font-size:11px">${ic(menu.ico || "dot")}<b style="color:var(--ink2);font-weight:700">${menu.label}</b><span>${esc(menu.desc)}</span></div>
@@ -2532,6 +2556,7 @@ function finishAnchor() {
 function renderHistory() {
   const rows = state.history.slice(-40).reverse();
   screen().innerHTML = `
+    ${renderRestoreCard()}
     <div class="card">
       <div class="card-title">成長カーブ（30日）</div>
       <div class="card-subtitle up">Progress</div>

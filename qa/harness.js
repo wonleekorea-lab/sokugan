@@ -108,7 +108,7 @@ const _si = global.setInterval;
 global.setInterval = (f, d) => _si(f, Math.max(1, Math.min(d || 0, 5)));
 
 // ---------- アプリ実コードを実行 ----------
-eval(js + "\nglobal.__app = { get state(){return state}, set state(v){state=v}, get ui(){return ui}, get sess(){return sess}, get view(){return view}, get content(){return content}, get syncState(){return syncState}, DEFAULT_CONTENT, ANCHOR_POOL, chunkText, getChunks, validChunks, chunkPool, spanTrialSet, pickSessionPassages, selectedPassageIds, togglePassageSelection, patchPassageSelectionUi, startSession, abortSession, renderShortIntro, renderShortResult, unseenPassages, allPassages, personalPassages, normalizePersonalPassage, importPersonalContent, daysFromToday, passageKey, passageKeys, isPassageSeen, markPassagesSeen, markPassageRead, textFingerprint, sourceUrlKey, renderHome, renderHistory, contentStatus, renderFreshnessPanel, guardedStart, renderPacer, renderPacerQuiz, answerPacer, renderSpanIntro, answerSpan, finishSpan, renderRead, startReading, finishReading, renderQuiz, finishQuiz, renderReread, startReread, finishReread, renderResult, textStats, adjustSpeed, makeDeepCloze, answerDeepCloze, normalizeNumerals, parseKanjiNum, startAnchor, renderAnchorRead, startAnchorRead, finishAnchorRead, renderAnchorQuiz, answerAnchor, anchorDue, todayMenu, goalProgress, gazeSpan, sessionKeyTerms, passageTakeaway, finishVocab, proceedAfterCloze1, weakestSkill, feedbackGenreScore, preferByFeedback, recordContentFeedback, recordContentFeedbackById, recordQuestionFeedback, recordQuestionFeedbackById, renderContentFeedback, contentFeedbackFor, contentFeedbackKey, findPassageById, defaultState, newSessionId, stampField, saveState, mergeStates, syncableState, unionBy, mergeContentFeedback, recordContentNote, recordContentNoteById, histKey, syncCfg, syncEnabled, signedIn, loadAuth, saveAuth, syncNow, pullRemote, pushRemote, scheduleSync, flushSyncQueue, syncStatusText, renderSyncCard, renderSyncLine, syncSignOut, KEY, AUTH_KEY, UI_KEY };");
+eval(js + "\nglobal.__app = { get state(){return state}, set state(v){state=v}, get ui(){return ui}, get sess(){return sess}, get view(){return view}, get content(){return content}, get syncState(){return syncState}, DEFAULT_CONTENT, ANCHOR_POOL, chunkText, getChunks, validChunks, chunkPool, spanTrialSet, pickSessionPassages, selectedPassageIds, togglePassageSelection, patchPassageSelectionUi, startSession, abortSession, renderShortIntro, renderShortResult, unseenPassages, allPassages, personalPassages, normalizePersonalPassage, importPersonalContent, daysFromToday, passageKey, passageKeys, isPassageSeen, markPassagesSeen, markPassageRead, textFingerprint, sourceUrlKey, renderHome, renderHistory, contentStatus, renderFreshnessPanel, guardedStart, renderPacer, renderPacerQuiz, answerPacer, renderSpanIntro, answerSpan, finishSpan, renderRead, startReading, finishReading, renderQuiz, finishQuiz, renderReread, startReread, finishReread, renderResult, textStats, adjustSpeed, makeDeepCloze, answerDeepCloze, normalizeNumerals, parseKanjiNum, startAnchor, renderAnchorRead, startAnchorRead, finishAnchorRead, renderAnchorQuiz, answerAnchor, anchorDue, todayMenu, goalProgress, gazeSpan, sessionKeyTerms, passageTakeaway, finishVocab, proceedAfterCloze1, weakestSkill, feedbackGenreScore, preferByFeedback, recordContentFeedback, recordContentFeedbackById, recordQuestionFeedback, recordQuestionFeedbackById, renderContentFeedback, contentFeedbackFor, contentFeedbackKey, findPassageById, defaultState, newSessionId, stampField, saveState, mergeStates, syncableState, unionBy, mergeContentFeedback, recordContentNote, recordContentNoteById, renderRestoreCard, restoreFromCloud, histKey, syncCfg, syncEnabled, signedIn, loadAuth, saveAuth, syncNow, pullRemote, pushRemote, scheduleSync, flushSyncQueue, syncStatusText, renderSyncCard, renderSyncLine, syncSignOut, KEY, AUTH_KEY, UI_KEY };");
 
 (async () => {
   await new Promise(r => _st(r, 80)); // init完了待ち
@@ -596,6 +596,11 @@ eval(js + "\nglobal.__app = { get state(){return state}, set state(v){state=v}, 
   // F1: 既定（設定なし）ではアプリは同期抜きで完全に動く
   check("F1 設定が無ければ同期は無効・localStorage単独で動作",
     A.syncEnabled() === false && A.syncStatusText().label === "同期未設定");
+  // F1c/F1d: 端末を替える・ホーム画面に入れ直すと iOS では保存領域が変わり、
+  // 記録が消えたように見える。クラウドに残っている記録へ戻る道を必ず画面に出す。
+  const noSyncRestore = A.renderRestoreCard();
+  check("F1c 同期が未設定なら復元導線は出さない（戻る先が無いため）", noSyncRestore === "", noSyncRestore.slice(0, 40));
+
   check("F1b 未設定でもデータ管理UIが描画できる（壊れない）",
     A.renderSyncCard().includes("未設定") && A.renderSyncLine().includes("同期"));
 
@@ -701,6 +706,15 @@ eval(js + "\nglobal.__app = { get state(){return state}, set state(v){state=v}, 
   const mk1 = installSyncMock({ row: null });
   A.saveAuth(AUTH);
   check("F9pre 設定＋ログイン後は同期が有効", A.syncEnabled() === true && A.signedIn() === true);
+  const emptyHist = A.state.history;
+  A.state.history = [];
+  const signedRestore = A.renderRestoreCard();
+  check("F1d 記録が空なら復元導線を出す（ログイン済みはクラウド取得）",
+    signedRestore.includes("data-restore") && signedRestore.includes("この端末に記録がありません") && signedRestore.includes("restoreFromCloud"),
+    signedRestore ? "描画" : "出ない");
+  A.renderHome();
+  check("F1e ホームと記録タブの両方から復元にたどり着ける", screenEl().includes("data-restore"));
+  A.state.history = emptyHist;
   const r1 = await A.syncNow("test-migration");
   check("F9 初回同期: クラウドが空ならローカルを移行（履歴を消さない）",
     r1.ok === true && r1.migrated === true && !!mk1.row &&
