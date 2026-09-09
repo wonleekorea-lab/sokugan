@@ -335,7 +335,8 @@ function defaultState() {
     seenPassageKeys: [],  // 端末で一度でも出題した本文。日付をまたいで再表示しない
     lastWinCheck: null,
     clarityFlags: [],     // ユーザーが「わかりにくい」と報告した設問 {date, genre, q}
-    contentFeedback: [],  // 読後評価 {date, passageId, genre, rating, questionFit, title}。次回の選定・設問設計を個人化する材料
+    contentFeedback: [],  // 読後評価 {date, passageId, genre, rating, questionFit, note, title}。次回の選定・設問設計を個人化する材料
+    pickSignals: [],      // 一覧で選んだ/選ばなかった {date, passageId, genre, picked}。押す手間なく毎日溜まる選好の信号
     personalLibrary: [], // 非公開の本人用教材。YouTube台本から作る翌日解禁の学習文を保存
     goal: null,           // {target, baseline, setAt, why, hit:[]} 週次の具体的困難目標(Locke&Latham)
     vocabBook: [],        // 語彙道場の習得記録 {term, plain, date, level} level:1=初見,2=曖昧,3=説明できる
@@ -1606,7 +1607,23 @@ function guardedStart(mode = "full") {
   if (mode === "short" && ids.length !== 1) { showToast("ショート版は一覧から本文を1本だけ選んでください"); return; }
   startSession(mode, ids);
 }
+// 選ばれた／並んだのに選ばれなかった、を1件ずつ残す。集計は生成側で行う。
+// タイトルは残さない（選定の手がかりはジャンルと題材で足り、記録は軽い方がよい）。
+function recordPickSignals(picked, shown) {
+  const chosen = new Set([picked && picked.p1, picked && picked.p2].filter(Boolean).map(p => p.id));
+  const t = today();
+  const xs = state.pickSignals = state.pickSignals || [];
+  const seen = new Set(xs.map(x => x.date + "|" + x.passageId));
+  for (const p of (shown || [])) {
+    const key = t + "|" + p.id;
+    if (seen.has(key)) continue;
+    xs.push({ date: t, passageId: p.id, genre: genreOf(p), picked: chosen.has(p.id) });
+    seen.add(key);
+  }
+  state.pickSignals = xs.slice(-600);
+}
 function startSession(mode = "full", selectedIds) {
+  const selectable = preferByFeedback(unseenPassages());
   const picked = pickSessionPassages(mode, selectedIds);
   if (!picked) {
     showToast(mode === "full" ? "未読が2本未満です。次の更新をお待ちください" : ic("flag") + " 本日分を完走しました。次の更新をお待ちください");
@@ -1637,6 +1654,7 @@ function startSession(mode = "full", selectedIds) {
     vocabN: (menu.id === "vocab" || menu.weak === "vocab") ? 6 : 3,
     spanN: (menu.id === "catch" || menu.weak === "catch") ? 12 : SPAN_TRIALS,
   };
+  recordPickSignals(picked, selectable);
   // saveState() はログイン済みなら自動同期を予約する。先に画面を session と
   // 明示しておかないと、同期完了の描画更新がホーム画面を上書きしてしまう。
   setRoute("session");
@@ -2214,6 +2232,10 @@ function findPassageById(id) { return allPassages().find(p => p && p.id === id) 
 function contentFeedbackFor(p) {
   return (state.contentFeedback || []).find(x => x.passageId === p.id && x.date === today()) || null;
 }
+// 1〜5の5段階は「どれを押せばいいか」を考えさせるぶん押されない（109本読んで6件）。
+// 次の素材選びに要るのは強さの度合いではなく向きなので、1タップの3択に畳む。
+// 値は rating(1-5) のまま入れる。過去の記録・集計・同期がそのまま使える。
+const VERDICTS = [[5, "もっと読みたい"], [3, "ふつう"], [1, "いらない"]];
 function contentFeedbackControls(p, feedback) {
   const rating = feedback && feedback.rating;
   const questionFit = feedback && feedback.questionFit;
@@ -2221,11 +2243,11 @@ function contentFeedbackControls(p, feedback) {
   const questionFits = [["easy", "易しい"], ["just_right", "ちょうどよい"], ["hard", "難しい"], ["unclear", "分かりにくい"]];
   const note = (feedback && feedback.note) || "";
   const noteId = "content-note-" + encodeURIComponent(String(p.id)).replace(/%/g, "_");
-  const contentStatus = rating ? `内容 ${rating}/5 を保存済み` : "";
+  const contentStatus = rating ? `内容 ${rating}/5 を保存済み` : "";   // 文言は過去の検査と揃える
   const questionStatus = questionFit ? `保存済み` : "";
   const noteStatus = note ? `次回の素材選びに反映します` : "";
   return `<div style="display:grid;gap:8px;width:100%">
-    <div><div class="small" style="margin-bottom:5px">内容はどうだった？ <span style="opacity:.7">浅い → 話したい</span></div><div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center">${[1,2,3,4,5].map(n => `<button class="recheck-btn" aria-label="内容評価 ${n}/5" aria-pressed="${rating === n ? "true" : "false"}" style="padding:6px 11px;${rating === n ? "border-color:var(--green);color:var(--green);background:var(--green-dim)" : ""}" onclick="recordContentFeedbackById(decodeURIComponent('${passageId}'),${n})">${n}</button>`).join("")}<span class="small">${contentStatus}</span></div></div>
+    <div><div class="small" style="margin-bottom:5px">内容はどうだった？</div><div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center">${VERDICTS.map(([n, label]) => `<button class="recheck-btn" aria-label="内容評価 ${label}" aria-pressed="${rating === n ? "true" : "false"}" style="padding:8px 13px;${rating === n ? "border-color:var(--green);color:var(--green);background:var(--green-dim)" : ""}" onclick="recordContentFeedbackById(decodeURIComponent('${passageId}'),${n})">${label}</button>`).join("")}<span class="small">${contentStatus}</span></div></div>
     <div><div class="small" style="margin-bottom:5px">問題はどうだった？</div><div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center">${questionFits.map(([value, label]) => `<button class="recheck-btn" aria-pressed="${questionFit === value ? "true" : "false"}" style="padding:6px 11px;${questionFit === value ? "border-color:var(--green);color:var(--green);background:var(--green-dim)" : ""}" onclick="recordQuestionFeedbackById(decodeURIComponent('${passageId}'),'${value}')">${label}</button>`).join("")}<span class="small">${questionStatus}</span></div></div>
     <div style="margin-top:2px">
       <div class="small" style="margin-bottom:5px">ひとこと <span style="opacity:.7">次に読みたいもの・合わなかったところ</span></div>
@@ -2799,6 +2821,8 @@ function mergeStates(local, remote) {
   out.wins = unionBy(local.wins, remote.wins, w => [w.date, w.text].join("|"));
   out.clarityFlags = unionBy(local.clarityFlags, remote.clarityFlags, f => [f.date, f.genre, f.q].join("|"));
   out.contentFeedback = mergeContentFeedback(local.contentFeedback, remote.contentFeedback);
+  // 選択の記録も端末をまたいでunionする（同じ日・同じ本文は1件）
+  out.pickSignals = unionBy(local.pickSignals, remote.pickSignals, x => [x.date, x.passageId].join("|")).slice(-600);
   // YouTube教材は動画IDを正本キーにする。同じ動画の旧分割教材が端末に
   // 残っていても、サーバーの新しい1教材へ収束させる。
   const youtubeVideoId = (p) => {

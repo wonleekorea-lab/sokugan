@@ -181,6 +181,25 @@ eval(js + "\nglobal.__app = { get state(){return state}, set state(v){state=v}, 
   }
   check("A11 ans分布の極端な偏りなし (各<=12)", ansDist.every(n => n <= 12), JSON.stringify(ansDist));
 
+  // ---------- A17. 面白さが型に落ちていないか ----------
+  // 直近30日を数えると、takeawayフックの48%が「AではなくB」の対比構文だった。
+  // 驚きを文型で作ると、読み手は3日で型に気づき、内容に関係なく飽きる。
+  // 同様に、第1文が「〜が〜を発表した」の記事が39%を占めていた（プレスリリース型）。
+  const hooks = (daily.passages || []).map(p => ((p.takeaway || {}).hook) || "");
+  const contrastHooks = hooks.filter(h => /ではなく|でなく|より/.test(h));
+  check("A17 takeawayフックの対比構文は3本以下（驚きを文型で作らない）",
+    contrastHooks.length <= 3, `${contrastHooks.length}/10本`);
+  const announceLead = (daily.passages || []).filter(p =>
+    /(発表した|公表した|明らかにした|開始した|募った|決めた)/.test(String(p.text || "").split("。")[0]));
+  // 閾値は「いま以上に悪くしない床」。2026-09-10時点の実測が7/10なので、まず7で止める。
+  // 生成側の目標は daily.md に書いた3本以下。次の生成で下がったらここも下げる。
+  check("A17b 第1文が発表ものの記事は7本以下（プレスリリース化の床。目標は3本）",
+    announceLead.length <= 7, `${announceLead.length}/10本`);
+  // A17c: hookの書き出しが全部同じだと、それ自体が型として見える
+  const hookHeads = hooks.map(h => h.slice(0, 6));
+  const dupHead = hookHeads.filter((h, i) => hookHeads.indexOf(h) !== i).length;
+  check("A17c フックの書き出しが揃いすぎていない", dupHead <= 7, `重複${dupHead}件`);
+
   // ---------- A16. タイトルの日本語（読む気が起きる形になっているか） ----------
   const titles = (daily.passages || []).map(p => String(p.title || ""));
   const titleIssues = [];
@@ -516,13 +535,13 @@ eval(js + "\nglobal.__app = { get state(){return state}, set state(v){state=v}, 
   const regressionPassage = Object.assign({}, rated, { id: "youtube-feedback-regression", kind: "youtube", availableOn: A.daysFromToday(-1) });
   A.state.personalLibrary = [regressionPassage];
   const feedbackHtml = A.renderContentFeedback(regressionPassage);
-  A.recordContentFeedbackById(regressionPassage.id, 4);
+  A.recordContentFeedbackById(regressionPassage.id, 5);
   A.recordQuestionFeedbackById(regressionPassage.id, "just_right");
   const privateFeedback = A.state.contentFeedback[0];
   const feedbackBox = global.document.getElementById("content-feedback-" + regressionPassage.id)._h;
   check("B18i 本人用教材の内容・設問評価後に保存済み表示と選択状態を反映",
-    feedbackHtml.includes("recordContentFeedbackById(decodeURIComponent('youtube-feedback-regression'),4)") && privateFeedback && privateFeedback.rating === 4
-    && privateFeedback.questionFit === "just_right" && feedbackBox.includes("内容 4/5 を保存済み") && feedbackBox.includes("ちょうどよい") && feedbackBox.includes('aria-pressed="true"'));
+    feedbackHtml.includes("recordContentFeedbackById(decodeURIComponent('youtube-feedback-regression'),5)") && privateFeedback && privateFeedback.rating === 5
+    && privateFeedback.questionFit === "just_right" && feedbackBox.includes("内容 5/5 を保存済み") && feedbackBox.includes("ちょうどよい") && feedbackBox.includes('aria-pressed="true"'));
   A.state.personalLibrary = [];
 
   // ---------- C. 解析エンジン（難度・Deep Cloze・アンカー） ----------
@@ -908,6 +927,19 @@ eval(js + "\nglobal.__app = { get state(){return state}, set state(v){state=v}, 
     /sokugan-content-feedback-profile-v1/.test(feedbackProfileSrc) && /minimumSamplesPerSignal/.test(feedbackProfileSrc)
     && /本文、タイトル、ユーザーIDは出力しない/.test(feedbackProfileSrc) && /export-content-feedback-profile\.js/.test(dailyGuide)
     && /questionFit\.instruction/.test(dailyGuide), fs.existsSync(feedbackProfileTool) ? "匿名集計ツール＋日次指示" : "評価集計ツールがない");
+  // F16f: 選択の記録が生成側へ届いているか。読後評価は109本読んで6件しか付かず、
+  // ジャンル別の最小サンプル3件にも届かないため、選定は一度も本人の評価で変わって
+  // いなかった。「並んだ10本から2本選ぶ」は毎日必ず起きるので、ここが主信号になる。
+  const pickProfile = require(feedbackProfileTool).buildProfile([], [
+    ...Array.from({ length: 10 }, (_, i) => ({ date: "2026-09-01", passageId: "p" + i, genre: "社会・価値観", picked: i < 4 })),
+    ...Array.from({ length: 10 }, (_, i) => ({ date: "2026-09-01", passageId: "q" + i, genre: "経営・リーダーシップ", picked: false }))
+  ]);
+  check("F16f 選択/非選択がプロファイルに載り、日次の選定指示が参照する",
+    pickProfile.picks["社会・価値観"].instruction === "prioritize"
+    && pickProfile.picks["経営・リーダーシップ"].instruction === "change_angle"
+    && /picks\[/.test(dailyGuide) && /選択率/.test(dailyGuide),
+    `pickRate=${pickProfile.picks["社会・価値観"].pickRate}`);
+
   // F16e: 自由記述が生成側へ届いているか。ここが切れると書いても何も変わらない
   const notesProfile = require(feedbackProfileTool).buildProfile([
     { date: "2026-09-05", genre: "社会・価値観", rating: 5, note: "現場の運用が変わった話" },
