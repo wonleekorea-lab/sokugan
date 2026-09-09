@@ -403,6 +403,13 @@ eval(js + "\nglobal.__app = { get state(){return state}, set state(v){state=v}, 
   // B13c: 1セッションの出題は本文2本×2問＝4問。ここが増えると6分に収まらない。
   const perPassageQ = (daily.passages || []).map(p => A.sessionQuestions(p).length);
   check("B13c 出題は各本文2問（1セッション計4問）", perPassageQ.every(n => n === 2), perPassageQ.join(","));
+  // B13e: 入口は「2本パッケージ」ひとつだけ。フル版が約6分になり、ショート版との
+  // 差が無くなった。毎回どちらかを選ばせること自体が続ける摩擦になる。
+  A.sess = null; A.renderHome();
+  const homeStart = screenEl();
+  check("B13e ホームの入口は2本パッケージのみ",
+    homeStart.includes("start-full") && !homeStart.includes("start-short") && !homeStart.includes("1本でショート"),
+    homeStart.includes("start-short") ? "ショートが残っている" : "2本のみ");
   // B13d: 論旨型があるときは1問目に置く（全体をつかんでから根拠へ降りる順序）
   const withMain = (daily.passages || []).filter(p => (p.questions || []).some(q => /^take-?away/i.test(q.q)));
   check("B13d 論旨型があれば1問目に出す",

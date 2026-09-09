@@ -541,7 +541,7 @@ function durationTrend(mode) {
   return { n: xs.length, med: medianOf(recent), prevMed: prev.length >= 3 ? medianOf(prev) : null };
 }
 function renderDurationCard() {
-  const modes = [["full", "じっくり"], ["short", "ショート"]].map(([m, label]) => [m, label, durationTrend(m)]).filter(x => x[2]);
+  const modes = [["full", "2本"], ["short", "1本(旧)"]].map(([m, label]) => [m, label, durationTrend(m)]).filter(x => x[2]);
   if (!modes.length) return "";
   return `<div class="card">
     <div class="card-title">所要時間</div>
@@ -1006,9 +1006,9 @@ function normalizeContentNumerals(c) {
 // =============================================================
 // ---- 曜日メニュー（変化で飽きを防ぎ、木曜は弱点集中） ----
 const MENUS = {
-  1: { id: "speed",    ico: "bolt",    label: "速度ストレッチの日", desc: "ペーサー+10%・反復読+20%" },
+  1: { id: "speed",    ico: "bolt",    label: "速度ストレッチの日", desc: "反復読を+20%に" },
   2: { id: "depth",    ico: "lens",    label: "深読みの日",       desc: "深層読解を本文①②で実施" },
-  3: { id: "vocab",    ico: "book",    label: "語彙強化の日",      desc: "語彙道場が6語に増量" },
+  3: { id: "catch",    ico: "eye",     label: "瞬間キャッチの日",   desc: "キャッチを12回に増量" },
   4: { id: "weak",     ico: "target",  label: "弱点集中の日",      desc: "" },
   5: { id: "transfer", ico: "orbit",   label: "転移チェックの日",   desc: "週次アンカー測定に最適" },
   6: { id: "light",    ico: "leaf",    label: "軽めの日",         desc: "通常メニューを気楽に" },
@@ -1328,9 +1328,8 @@ function renderHome() {
       <div class="scrollwrap"><div id="passage-list" style="display:grid;gap:6px;max-height:258px;overflow:auto;padding:2px 2px 12px;border-top:1px solid var(--border)">${selectable.map(p => { const order = selectedIds.indexOf(p.id); const isYoutube = p.kind === "youtube" || /^youtube-/.test(p.id); const defaultLabel = isYoutube ? "YouTube教材" : esc(genreOf(p)); return `<button class="opt passage-choice ${order >= 0 ? "chosen" : ""}" data-passage-id="${encodeURIComponent(p.id)}" style="width:100%;min-height:0;text-align:left;padding:11px 12px" onclick="togglePassageSelection(decodeURIComponent('${encodeURIComponent(p.id)}'))"><div style="display:flex;gap:7px;align-items:center"><span class="tag" data-selection-label data-default-label="${defaultLabel}" style="font-size:9.5px">${order >= 0 ? `本文${order + 1}` : defaultLabel}</span>${isYoutube ? `<span class="small">${esc(genreOf(p))}</span>` : ""}</div><div style="font-size:13.5px;font-weight:700;line-height:1.5;margin-top:5px">${esc(p.title)}</div></button>`; }).join("") || `<p class="small">選べる未読教材がありません。</p>`}</div></div>
 
       <button id="start-full" class="btn" style="margin-top:14px" onclick="guardedStart('full')" ${unseenN < 2 || selectedIds.length !== 2 ? "disabled" : ""}>選んだ2本で始める<span style="font-size:9.5px;font-weight:600;opacity:.65;letter-spacing:.18em;margin-left:10px">6 MIN</span></button>
-      <button id="start-short" class="btn secondary" style="margin-top:7px;padding:11px" onclick="guardedStart('short')" ${unseenN < 1 || selectedIds.length !== 1 ? "disabled" : ""}>1本でショート<span style="font-size:9.5px;font-weight:600;opacity:.55;letter-spacing:.18em;margin-left:10px">3-5 MIN</span></button>
-      <div id="short-selection-hint" class="small" style="margin-top:6px;${selectedIds.length === 2 ? "" : "display:none"}">ショート版は1本だけ選択</div>
-      ${unseenN < 1 ? `<div class="banner" style="margin-top:10px">${ic("flag")} <b>本日分を完走</b>。未読0本。</div>` : ""}
+      ${unseenN < 1 ? `<div class="banner" style="margin-top:10px">${ic("flag")} <b>本日分を完走</b>。未読0本。</div>`
+        : unseenN < 2 ? `<div class="banner" style="margin-top:10px">${ic("flag")} 残り1本。2本そろう次の更新をお待ちください。</div>` : ""}
       ${fr.isStale ? `<p class="small" style="margin-top:8px;color:var(--acc-ink)">${ic("alert")} 表示中は <b>${fr.date}</b> 分</p>` : ""}
 
       ${gp ? `
@@ -1610,7 +1609,7 @@ function guardedStart(mode = "full") {
 function startSession(mode = "full", selectedIds) {
   const picked = pickSessionPassages(mode, selectedIds);
   if (!picked) {
-    showToast(mode === "full" ? "未読が2本未満です。ショート版か次の更新をお待ちください" : ic("flag") + " 本日分を完走しました。次の更新をお待ちください");
+    showToast(mode === "full" ? "未読が2本未満です。次の更新をお待ちください" : ic("flag") + " 本日分を完走しました。次の更新をお待ちください");
     if (ui.route === "home" && !sess) renderHome();
     return;
   }
@@ -1636,7 +1635,7 @@ function startSession(mode = "full", selectedIds) {
     rereadFactor: (menu.id === "speed" || menu.weak === "speed") ? 1.20 : REREAD_FACTOR,
     clozeBoth: (menu.id === "depth" || menu.weak === "deep" || menu.weak === "comp"),
     vocabN: (menu.id === "vocab" || menu.weak === "vocab") ? 6 : 3,
-    spanN: (menu.weak === "catch") ? 12 : SPAN_TRIALS,
+    spanN: (menu.id === "catch" || menu.weak === "catch") ? 12 : SPAN_TRIALS,
   };
   // saveState() はログイン済みなら自動同期を予約する。先に画面を session と
   // 明示しておかないと、同期完了の描画更新がホーム画面を上書きしてしまう。
@@ -2335,7 +2334,7 @@ function renderShortResult() {
     </div>
     <div class="card"><div class="card-title">${ic("quote")}1つ持ち帰る</div><div class="card-subtitle up">Takeaway</div><div class="win-item"><span class="ico">${ic("gift")}</span><div><b>${esc(take.hook)}</b>${take.detail ? `<div class="small">${esc(take.detail)}</div>` : ""}</div></div></div>
     ${renderContentFeedback(completedPassage)}
-    <div style="display:flex;gap:8px"><button class="btn secondary" onclick="go('home')">ホームへ</button><button class="btn" onclick="startSession('short')">もう1本</button></div>`;
+    <div style="display:flex;gap:8px"><button class="btn" onclick="go('home')">ホームへ</button></div>`;
 }
 function renderResult() {
   const p1 = sess.p1Init, p2 = sess.p2Init, re = sess.p1Re;
@@ -2702,7 +2701,7 @@ function renderAbout() {
       <div class="win-item"><span class="ico">⑨</span><div><b>深層読解（Deep Cloze）</b> — 本文の接続表現を空所化し、論理関係（逆接/因果/換言…）を取れているかを1問で測る。速く読んでも文と文のつなぎ目を理解できているかを、理解度MCQとは別に可視化する。</div></div>
       <div class="win-item"><span class="ico">⑩</span><div><b>週次アンカー転移テスト</b> — 訓練とは別枠で、週1回・難度固定の<b>未訓練文</b>を測定。アプリ内の速度向上が「普通の文章を速く読む力」に本当に転移しているかを検証する（目標やベストには影響させない）。</div></div>
       <div class="win-item"><span class="ico">⑪</span><div><b>語彙道場（3.0）</b> — 本文の「学校語彙」（利回り・系統連系など日本の中高で覚える類の用語）を<b>12歳にわかる言葉</b>で説明できるまで深掘り。語彙の深さは読解分散の約59%を説明し（Qian 2002）、自己説明はg=0.55（Bisra 2018）。後から日本語を習得した学習者が教育あるネイティブを超える主戦場。</div></div>
-      <div class="win-item"><span class="ico">⑫</span><div><b>曜日メニュー（3.0）</b> — 月:速度 / 火:深読み / 水:語彙 / 木:弱点集中 / 金:転移。交互配置は識別学習でg=0.42（Brunmair 2019）。飽きを防ぎつつ、木曜は直近14日の最弱スキルを自動で重点化。</div></div>
+      <div class="win-item"><span class="ico">⑫</span><div><b>曜日メニュー（3.0）</b> — 月:速度 / 火:深読み / 水:キャッチ / 木:弱点集中 / 金:転移。交互配置は識別学習でg=0.42（Brunmair 2019）。飽きを防ぎつつ、木曜は直近14日の最弱スキルを自動で重点化。</div></div>
       <div class="win-item"><span class="ico">⑬</span><div><b>持ち帰り＆教えるつもり（3.0）</b> — 「読了後に誰かへ話す」前提で読む（教える期待でg=0.50、Kobayashi 2019）。毎日の持ち帰りフックをコピーして雑談・会議で使えば定着完了。</div></div>
       <div class="win-item" style="border-bottom:none"><span class="ico">⑭</span><div><b>週次目標と一目量（3.0）</b> — 具体的で少し難しい目標は成果d=0.42〜0.80（Locke & Latham）。近接サブゴールだけが内発的興味を生む（Bandura & Schunk 1981）。一目量（字/固視）は語彙自動化の従属変数として成長を映す。</div></div>
       </details>
