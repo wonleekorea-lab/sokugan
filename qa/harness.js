@@ -108,7 +108,7 @@ const _si = global.setInterval;
 global.setInterval = (f, d) => _si(f, Math.max(1, Math.min(d || 0, 5)));
 
 // ---------- アプリ実コードを実行 ----------
-eval(js + "\nglobal.__app = { get state(){return state}, set state(v){state=v}, get ui(){return ui}, get sess(){return sess}, get view(){return view}, get content(){return content}, get syncState(){return syncState}, DEFAULT_CONTENT, ANCHOR_POOL, chunkText, getChunks, validChunks, chunkPool, spanTrialSet, pickSessionPassages, selectedPassageIds, togglePassageSelection, patchPassageSelectionUi, startSession, abortSession, renderShortIntro, renderShortResult, unseenPassages, allPassages, personalPassages, normalizePersonalPassage, importPersonalContent, daysFromToday, passageKey, passageKeys, isPassageSeen, markPassagesSeen, markPassageRead, textFingerprint, sourceUrlKey, renderHome, renderHistory, contentStatus, renderFreshnessPanel, guardedStart, renderPacer, renderPacerQuiz, answerPacer, renderSpanIntro, answerSpan, finishSpan, renderRead, startReading, finishReading, renderQuiz, finishQuiz, renderReread, startReread, finishReread, renderResult, textStats, adjustSpeed, makeDeepCloze, answerDeepCloze, normalizeNumerals, parseKanjiNum, startAnchor, renderAnchorRead, startAnchorRead, finishAnchorRead, renderAnchorQuiz, answerAnchor, anchorDue, todayMenu, goalProgress, gazeSpan, sessionKeyTerms, passageTakeaway, finishVocab, proceedAfterCloze1, weakestSkill, feedbackGenreScore, preferByFeedback, recordContentFeedback, recordContentFeedbackById, recordQuestionFeedback, recordQuestionFeedbackById, renderContentFeedback, contentFeedbackFor, contentFeedbackKey, findPassageById, defaultState, newSessionId, stampField, saveState, mergeStates, syncableState, unionBy, mergeContentFeedback, recordContentNote, recordContentNoteById, renderRestoreCard, restoreFromCloud, PASSWORD_RE, uiSendMagicLink, uiSetPassword, uiPasteAuthLink, authParamsFrom, applyAuthTokens, histKey, syncCfg, syncEnabled, signedIn, loadAuth, saveAuth, syncNow, pullRemote, pushRemote, scheduleSync, flushSyncQueue, syncStatusText, renderSyncCard, renderSyncLine, syncSignOut, KEY, AUTH_KEY, UI_KEY };");
+eval(js + "\nglobal.__app = { get state(){return state}, set state(v){state=v}, get ui(){return ui}, get sess(){return sess}, get view(){return view}, get content(){return content}, get syncState(){return syncState}, DEFAULT_CONTENT, ANCHOR_POOL, chunkText, getChunks, validChunks, chunkPool, spanTrialSet, pickSessionPassages, selectedPassageIds, togglePassageSelection, patchPassageSelectionUi, startSession, abortSession, renderShortIntro, renderShortResult, unseenPassages, allPassages, personalPassages, normalizePersonalPassage, importPersonalContent, daysFromToday, passageKey, passageKeys, isPassageSeen, markPassagesSeen, markPassageRead, textFingerprint, sourceUrlKey, renderHome, renderHistory, contentStatus, renderFreshnessPanel, guardedStart, renderPacer, renderPacerQuiz, answerPacer, renderSpanIntro, answerSpan, finishSpan, renderRead, startReading, finishReading, renderQuiz, finishQuiz, renderReread, startReread, finishReread, renderResult, textStats, adjustSpeed, makeDeepCloze, answerDeepCloze, normalizeNumerals, parseKanjiNum, startAnchor, renderAnchorRead, startAnchorRead, finishAnchorRead, renderAnchorQuiz, answerAnchor, anchorDue, todayMenu, goalProgress, gazeSpan, sessionKeyTerms, passageTakeaway, finishVocab, proceedAfterCloze1, weakestSkill, feedbackGenreScore, preferByFeedback, recordContentFeedback, recordContentFeedbackById, recordQuestionFeedback, recordQuestionFeedbackById, renderContentFeedback, contentFeedbackFor, contentFeedbackKey, findPassageById, defaultState, newSessionId, stampField, saveState, mergeStates, syncableState, unionBy, PHASES, render, pickSessionPassages, sessionQuestions, mergeContentFeedback, recordContentNote, recordContentNoteById, renderRestoreCard, restoreFromCloud, PASSWORD_RE, uiSendMagicLink, uiSetPassword, uiPasteAuthLink, authParamsFrom, applyAuthTokens, histKey, syncCfg, syncEnabled, signedIn, loadAuth, saveAuth, syncNow, pullRemote, pushRemote, scheduleSync, flushSyncQueue, syncStatusText, renderSyncCard, renderSyncLine, syncSignOut, KEY, AUTH_KEY, UI_KEY };");
 
 (async () => {
   await new Promise(r => _st(r, 80)); // init完了待ち
@@ -127,9 +127,23 @@ eval(js + "\nglobal.__app = { get state(){return state}, set state(v){state=v}, 
     const len = (p.text || "").replace(/\s/g, "").length;
     check(`A4 [${id}] 本文400-700字`, len >= 400 && len <= 700, `${len}字`);
     const qs = p.questions || [];
-    check(`A5 [${id}] 設問3問・4択・ans域内・rationale付き`,
-      qs.length === 3 && qs.every(q => Array.isArray(q.opts) && q.opts.length === 4 && q.ans >= 0 && q.ans <= 3 && (q.rationale || "").length >= 20),
+    // 3.6でセッションの出題は2問（論旨・根拠）にした。生成側が2問形式へ移るまでの間、
+    // 3問の教材も受け入れる（アプリ側が論旨・根拠の2問を選ぶ）。
+    check(`A5 [${id}] 設問2〜3問・4択・ans域内・rationale付き`,
+      qs.length >= 2 && qs.length <= 3 && qs.every(q => Array.isArray(q.opts) && q.opts.length === 4 && q.ans >= 0 && q.ans <= 3 && (q.rationale || "").length >= 20),
       `${qs.length}問`);
+    // A5b: 根拠を問う設問が必ず1問。論旨だけを当てさせると、本文を読まずに
+    // タイトルから推測しても通ってしまう。
+    const QG = /^(strong evidence|evidence|grounds|cause|comparison|counter|falsif|hidden premise|根拠|証拠)/i;
+    const QM = /^(take-?away|main point|author'?s intent|論旨|要旨|主張)/i;
+    check(`A5b [${id}] 根拠を問う設問が1問以上`, qs.some(q => QG.test(String(q.q || ""))),
+      qs.map(q => String(q.q || "").split(":")[0]).join("/"));
+    // A5c: 2問形式に移った教材は「論旨＋根拠」であること（3問形式のうちは対象外）
+    if (qs.length === 2) {
+      check(`A5c [${id}] 2問形式は論旨と根拠の組`,
+        qs.some(q => QM.test(String(q.q || ""))) && qs.some(q => QG.test(String(q.q || ""))),
+        qs.map(q => String(q.q || "").split(":")[0]).join("/"));
+    }
     for (const q of qs) if (q.ans >= 0 && q.ans <= 3) ansDist[q.ans]++;
     // 単独最長=正解の禁止
     const longestIsAns = qs.filter(q => {
@@ -325,19 +339,20 @@ eval(js + "\nglobal.__app = { get state(){return state}, set state(v){state=v}, 
   check("B3i 選んだ2本を本文①・本文②として開始", twoPicked && twoPicked.p1.id === daily.passages[0].id && twoPicked.p2.id === "youtube-private-01", twoPicked && `${twoPicked.p1.id}|${twoPicked.p2.id}`);
   A.state.selectedPassageIds = [];
   A.startSession();
-  check("B4 セッション開始 (warmChunks生成)", A.sess && A.sess.warmChunks.length >= 20, A.sess && A.sess.warmChunks.length + "chunks");
+  check("B4 セッション開始 (本文2本を確定)", A.sess && A.sess.p1 && A.sess.p2 && A.sess.p1.id !== A.sess.p2.id,
+    A.sess && `${A.sess.p1 && A.sess.p1.id}/${A.sess.p2 && A.sess.p2.id}`);
   const selectedId = daily.passages[1].id;
   A.startSession("short", [selectedId]);
   check("B4a 選んだ本文をショート版の先頭に使う", A.sess && A.sess.p1 && A.sess.p1.id === selectedId, A.sess && A.sess.p1 && A.sess.p1.id);
   A.startSession();
-  A.renderPacer();
-  const spanTexts = [...screenEl().matchAll(/<span class="chunk" id="ck\d+">([\s\S]*?)<\/span>/g)].map(m => unesc(m[1]));
-  check("B5 ペーサーUI: チャンクspan描画数一致", spanTexts.length === A.sess.warmChunks.length, `${spanTexts.length}/${A.sess.warmChunks.length}`);
-  check("B6 ペーサーUI: span連結=原文（区切り破損なし）", spanTexts.join("") === A.sess.warm.text.replace(/\s/g, ""));
-  A.renderPacerQuiz();
-  check("B7 ペーサー確認問題の描画", screenEl().includes("ペース内で意味は取れたか"));
-  A.answerPacer(A.sess.warmQ.ans);
-  check("B8 ペーサー採点とステアケース動作", typeof A.state.pacerLevel === "number" && A.state.pacerLevel >= 200);
+  // B5/B6: 3.6でチャンクペーサーと語彙道場を流れから外した（コードは残置）。
+  // 「外したはずのものが戻っていない」ことを検査で固定する。復活させるときはここも直す。
+  check("B5 チャンクペーサーは流れに含まれない（3.6で一旦廃止）",
+    !A.PHASES.includes("ペーサー") && A.sess.warm === null, `phases=${A.PHASES.join(",")}`);
+  check("B6 語彙道場は流れに含まれない（3.6で一旦廃止）", !A.PHASES.includes("語彙"));
+  A.render();
+  check("B7 フル版はキャッチから始まる", screenEl().includes("瞬間キャッチ") && !screenEl().includes("チャンクペーサー"));
+  check("B8 フル版に必要な未読は2本（ペーサー用の3本目が不要）", A.pickSessionPassages("full", []) !== null);
   A.renderSpanIntro();
   check("B9 瞬間キャッチ導入画面", screenEl().includes("瞬間キャッチ") && screenEl().includes("視幅"));
   const trial = A.spanTrialSet(A.state.spanLevel);
@@ -354,20 +369,45 @@ eval(js + "\nglobal.__app = { get state(){return state}, set state(v){state=v}, 
     spanDetail.push(lv + ":" + (t ? t.opts.length + "択" : "null"));
   }
   check("B10b 視幅3-9字すべてで妥当な出題", spanOK, spanDetail.join(" "));
+  // B10c: 「最初の1字が読めれば当たる」試行を作らない。選択肢は書き出しを揃え、
+  // 語尾まで一目で取れないと解けない状態にする（これが瞬間キャッチの目的そのもの）。
+  let headSame = 0, head2Same = 0, sampled = 0;
+  for (let lv = 3; lv <= 9; lv++) {
+    for (let k = 0; k < 12; k++) {
+      const t = A.spanTrialSet(lv);
+      if (!t) continue;
+      sampled++;
+      if (t.opts.every(o => o[0] === t.target[0])) headSame++;
+      if (t.opts.every(o => o.slice(0, 2) === t.target.slice(0, 2))) head2Same++;
+    }
+  }
+  check("B10c 選択肢は書き出しが揃う（先頭1字では当てられない）",
+    sampled > 0 && headSame / sampled >= 0.9, `先頭1字一致 ${Math.round(headSame / sampled * 100)}% / 2字一致 ${Math.round(head2Same / sampled * 100)}%`);
+  // B10d: マスクの長さで字数が割れるため、候補の字数が的と違うと消去法で解ける
+  let lenOK = true;
+  for (let lv = 3; lv <= 9; lv++) {
+    const t = A.spanTrialSet(lv);
+    if (t && !t.opts.every(o => [...o].length === [...t.target].length)) lenOK = false;
+  }
+  check("B10d 選択肢の字数は的と同じ（マスク長からの消去法を封じる）", lenOK);
   A.sess.spanTrial = trial; A.answerSpan(0, 0, trial.ans);
   const trial2 = A.spanTrialSet(A.state.spanLevel);
   A.sess.spanTrial = trial2; A.answerSpan(1, 1, (trial2.ans + 1) % 4);
   check("B11 視幅ステアケース動作", typeof A.state.spanLevel === "number" && A.state.spanLevel >= 3 && A.state.spanLevel <= 9, `視幅${A.state.spanLevel}字`);
   A.finishSpan(1);
-  // 語彙道場フェーズ（keyTermsがある日）を通過
-  let vocabShown = screenEl().includes("語彙道場");
-  check("B11b 語彙道場: keyTermsがある日は表示される", !((daily.passages||[]).some(p=>(p.keyTerms||[]).length>=2)) || vocabShown, vocabShown ? "表示" : "非表示");
-  if (vocabShown) A.finishVocab(2, (A.sess.vocabTerms || []).length || 3);
+  check("B11b キャッチの次は本文①（語彙道場を挟まない）", screenEl().includes("初読") && !screenEl().includes("語彙道場"));
   check("B12 本文①読書画面 (タイトル表示)", screenEl().includes("初読") && screenEl().includes("計測開始"));
   A.startReading(1); await new Promise(r => _st(r, 12)); A.finishReading(1);
-  check("B13 設問画面に遷移", screenEl().includes("設問 1 / 3"));
+  check("B13 設問画面に遷移（2問構成）", screenEl().includes("設問 1 / 2"), screenEl().match(/設問 \d \/ \d/) || "");
   check("B13b 設問画面に『わかりにくい』報告ボタン", screenEl().includes("わかりにくい"));
-  A.finishQuiz(1, [true, true, true]);
+  // B13c: 1セッションの出題は本文2本×2問＝4問。ここが増えると6分に収まらない。
+  const perPassageQ = (daily.passages || []).map(p => A.sessionQuestions(p).length);
+  check("B13c 出題は各本文2問（1セッション計4問）", perPassageQ.every(n => n === 2), perPassageQ.join(","));
+  // B13d: 論旨型があるときは1問目に置く（全体をつかんでから根拠へ降りる順序）
+  const withMain = (daily.passages || []).filter(p => (p.questions || []).some(q => /^take-?away/i.test(q.q)));
+  check("B13d 論旨型があれば1問目に出す",
+    withMain.every(p => /^take-?away/i.test(A.sessionQuestions(p)[0].q)), `${withMain.length}本で確認`);
+  A.finishQuiz(1, [true, true]);
   if (screenEl().includes("深層読解")) { A.answerDeepCloze(0); A.proceedAfterCloze1(); }
   check("B14 反復読画面", screenEl().includes("反復読"));
   A.startReread(1); await new Promise(r => _st(r, 12)); A.finishReread(1);
@@ -747,11 +787,11 @@ eval(js + "\nglobal.__app = { get state(){return state}, set state(v){state=v}, 
   A.state = A.defaultState();
   A.ui.selectionDraft = [daily.passages[0].id, daily.passages[1].id];
   A.guardedStart("full");
-  const fullStarted = A.sess && A.sess.mode === "full" && A.view === "session" && screenEl().includes("チャンクペーサー");
+  const fullStarted = A.sess && A.sess.mode === "full" && A.view === "session" && screenEl().includes("瞬間キャッチ");
   await new Promise(r => _st(r, 20));
-  check("F9e 2本開始後の自動同期がペーサー画面をホームへ戻さない",
-    fullStarted && A.sess && A.sess.mode === "full" && A.view === "session" && screenEl().includes("チャンクペーサー"),
-    `view=${A.view} screen=${screenEl().includes("チャンクペーサー") ? "pacer" : "other"}`);
+  check("F9e 2本開始後の自動同期がキャッチ画面をホームへ戻さない",
+    fullStarted && A.sess && A.sess.mode === "full" && A.view === "session" && screenEl().includes("瞬間キャッチ"),
+    `view=${A.view} screen=${screenEl().includes("瞬間キャッチ") ? "catch" : "other"}`);
 
   // F9f: 2本選択のままショートを始めると、以前のように先頭だけを黙って
   // 開始しない。本人が1本へ戻してから選ぶ。

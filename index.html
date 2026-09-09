@@ -1201,7 +1201,7 @@ function render() {
   // session / anchor は操作途中の一時画面。同期完了時にホームを描き直して
   // 途中画面を消さないため、ここでは明示的な遷移時だけ描画し直す。
   else if (view === "session" && sess) {
-    if (sess.mode === "short") renderShortIntro(); else renderPacer();
+    if (sess.mode === "short") renderShortIntro(); else renderSpanIntro();
   } else if (view === "anchor" && anchorState) renderAnchorIntro();
   else { setRoute("home"); renderHome(); }
   window.scrollTo(0, 0);
@@ -1327,7 +1327,7 @@ function renderHome() {
       </div>
       <div class="scrollwrap"><div id="passage-list" style="display:grid;gap:6px;max-height:258px;overflow:auto;padding:2px 2px 12px;border-top:1px solid var(--border)">${selectable.map(p => { const order = selectedIds.indexOf(p.id); const isYoutube = p.kind === "youtube" || /^youtube-/.test(p.id); const defaultLabel = isYoutube ? "YouTube教材" : esc(genreOf(p)); return `<button class="opt passage-choice ${order >= 0 ? "chosen" : ""}" data-passage-id="${encodeURIComponent(p.id)}" style="width:100%;min-height:0;text-align:left;padding:11px 12px" onclick="togglePassageSelection(decodeURIComponent('${encodeURIComponent(p.id)}'))"><div style="display:flex;gap:7px;align-items:center"><span class="tag" data-selection-label data-default-label="${defaultLabel}" style="font-size:9.5px">${order >= 0 ? `本文${order + 1}` : defaultLabel}</span>${isYoutube ? `<span class="small">${esc(genreOf(p))}</span>` : ""}</div><div style="font-size:13.5px;font-weight:700;line-height:1.5;margin-top:5px">${esc(p.title)}</div></button>`; }).join("") || `<p class="small">選べる未読教材がありません。</p>`}</div></div>
 
-      <button id="start-full" class="btn" style="margin-top:14px" onclick="guardedStart('full')" ${unseenN < 3 || selectedIds.length !== 2 ? "disabled" : ""}>選んだ2本で始める<span style="font-size:9.5px;font-weight:600;opacity:.65;letter-spacing:.18em;margin-left:10px">12 MIN</span></button>
+      <button id="start-full" class="btn" style="margin-top:14px" onclick="guardedStart('full')" ${unseenN < 2 || selectedIds.length !== 2 ? "disabled" : ""}>選んだ2本で始める<span style="font-size:9.5px;font-weight:600;opacity:.65;letter-spacing:.18em;margin-left:10px">6 MIN</span></button>
       <button id="start-short" class="btn secondary" style="margin-top:7px;padding:11px" onclick="guardedStart('short')" ${unseenN < 1 || selectedIds.length !== 1 ? "disabled" : ""}>1本でショート<span style="font-size:9.5px;font-weight:600;opacity:.55;letter-spacing:.18em;margin-left:10px">3-5 MIN</span></button>
       <div id="short-selection-hint" class="small" style="margin-top:6px;${selectedIds.length === 2 ? "" : "display:none"}">ショート版は1本だけ選択</div>
       ${unseenN < 1 ? `<div class="banner" style="margin-top:10px">${ic("flag")} <b>本日分を完走</b>。未読0本。</div>` : ""}
@@ -1457,11 +1457,14 @@ function renderSparkline() {
   </svg>`;
 }
 // =============================================================
-// SESSION FLOW
-// 0 ペーサー準備 → 1 ペーサー確認 → 2 本文1初読 → 3 設問1 → 4 本文1反復
-// → 5 本文2初読 → 6 設問2 → 7 結果
+// SESSION FLOW（3.6 / 約6分）
+// 0 キャッチ → 1 本文1初読 → 2 設問1 → 3 本文1反復 → 4 本文2初読 → 5 設問2 → 6 結果
+//
+// 3.5まであった「チャンクペーサー」と「語彙道場」は一旦流れから外した（コードは残す）。
+// 12分は毎日続けるには長く、この2つを外すと約6分になる。復活させるときは
+// PHASES へ戻し、renderPacer / renderVocabIntro を再び呼ぶだけでよい。
 // =============================================================
-const PHASES = ["ペーサー","確認","キャッチ","語彙","本文①","設問①","反復①","本文②","設問②","結果"];
+const PHASES = ["キャッチ","本文①","設問①","反復①","本文②","設問②","結果"];
 function phaseIdx(name) { const i = PHASES.indexOf(name); return i < 0 ? 0 : i; }
 function phaseDots(cur) {
   return `<div class="phase-dots">${PHASES.map((_, i) =>
@@ -1519,7 +1522,7 @@ function togglePassageSelection(id) {
 }
 function pickSessionPassages(mode = "full", selectedIds) {
   const pool = preferByFeedback(unseenPassages());
-  const need = mode === "short" ? 1 : 3;
+  const need = mode === "short" ? 1 : 2;
   if (pool.length < need) return null; // 重複させて穴埋めしない
   const deep = pool.filter(isDeep);
   const news = pool.filter(p => !isDeep(p));
@@ -1527,9 +1530,7 @@ function pickSessionPassages(mode = "full", selectedIds) {
   const p1 = wanted[0] || news[0] || pool[0];
   if (mode === "short") return { p1, p2: null, warm: null };
   const p2 = wanted[1] || deep.find(p => p.id !== p1.id) || pool.find(p => p.id !== p1.id) || pool[0];
-  const rest = pool.filter(p => p.id !== p1.id && p.id !== p2.id);
-  const warm = rest[0];
-  return { p1, p2, warm };
+  return { p1, p2, warm: null };   // warm はペーサー用。流れから外したので取らない
 }
 // =============================================================
 // コンテンツ鮮度ゲート（開始前に「今日の最新か」を確認できる仕組み）
@@ -1609,7 +1610,7 @@ function guardedStart(mode = "full") {
 function startSession(mode = "full", selectedIds) {
   const picked = pickSessionPassages(mode, selectedIds);
   if (!picked) {
-    showToast(mode === "full" ? "未読が3本未満です。ショート版か次の更新をお待ちください" : ic("flag") + " 本日分を完走しました。次の更新をお待ちください");
+    showToast(mode === "full" ? "未読が2本未満です。ショート版か次の更新をお待ちください" : ic("flag") + " 本日分を完走しました。次の更新をお待ちください");
     if (ui.route === "home" && !sess) renderHome();
     return;
   }
@@ -1645,7 +1646,7 @@ function startSession(mode = "full", selectedIds) {
   saveUiState();
   saveState();
   if (mode === "short") renderShortIntro();
-  else renderPacer();
+  else renderSpanIntro();
 }
 function renderShortIntro() {
   const p = sess.p1;
@@ -1785,7 +1786,7 @@ const SPAN_MASK = 130;      // 逆向きマスク呈示時間（残像読みを�
 const MASK_CHARS = "▦▧▨▩░▒▓█";
 function maskString(n) { let s = ""; for (let i = 0; i < n; i++) s += MASK_CHARS[Math.floor(Math.random() * MASK_CHARS.length)]; return s; }
 // レベルが上がるほど選択肢を増やす（紛らわしさ↑）
-function spanOptCount(level) { return level >= 8 ? 6 : level >= 6 ? 5 : 4; }
+function spanOptCount(level) { return level >= 8 ? 6 : level >= 5 ? 5 : 4; }
 // 候補と target の類似度（共有文字数×2＋同先頭＋同末尾）。高いほど紛らわしい
 function spanSim(a, target) {
   let s = 0; const tset = new Set([...target]);
@@ -1795,7 +1796,12 @@ function spanSim(a, target) {
   if (a.length === target.length) s += 1;
   return s;
 }
+// 1試行ごとに全本文をチャンク化し直すと重い（端末で1回60ms前後）。日次教材は
+// セッション中に変わらないので、日付＋構成が同じ間はキャッシュを使い回す。
+let _chunkPoolCache = null, _chunkPoolKey = "";
 function chunkPool() {
+  const key = (content.date || "") + "|" + contentSignature() + "|" + (state.personalLibrary || []).length;
+  if (_chunkPoolCache && _chunkPoolKey === key) return _chunkPoolCache;
   const pool = {};
   for (const p of (content.passages || [])) {
     const cs = getChunks(p);
@@ -1805,31 +1811,51 @@ function chunkPool() {
       (pool[t.length] = pool[t.length] || []).push(t);
     }
   }
+  _chunkPoolCache = pool; _chunkPoolKey = key;
   return pool;
+}
+// 的を先に決めて候補を後から妥協すると、書き出しの違う語が並び「最初の1字が読めれば
+// 当たる」試行になる。ここでは逆に、同じ書き出しの候補が十分にある語だけを的に選ぶ。
+// 語尾まで一目で取れないと解けない、が成立する条件。
+function spanLureSet(arr, target, optN) {
+  const t = [...target];
+  const head2 = t.slice(0, Math.min(2, t.length - 1)).join("");
+  const strong = arr.filter(c => c !== target && c.startsWith(head2));
+  const weak = arr.filter(c => c !== target && c[0] === target[0] && !strong.includes(c))
+    .sort((a, b) => spanSim(b, target) - spanSim(a, target));
+  return { strong, all: strong.concat(weak) };
+}
+function spanBuildTrial(target, lures, optN, lv) {
+  const picked = lures.slice(0, optN - 1);
+  const opts = [target, ...picked];
+  for (let i = opts.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [opts[i], opts[j]] = [opts[j], opts[i]]; }
+  return { target, opts, ans: opts.indexOf(target), level: lv };
 }
 function spanTrialSet(level) {
   const pool = chunkPool();
-  const distinct = l => new Set(pool[l] || []).size;
-  const need = spanOptCount(level) + 2;
-  let lv = level;
-  while (lv > 3 && distinct(lv) < need) lv--;
-  while (lv < 9 && distinct(lv) < need) lv++;
-  const arr = [...new Set(pool[lv] || [])];
-  if (arr.length < 4) return null;
-  const optN = Math.min(spanOptCount(lv), arr.length);
-  const target = arr[Math.floor(Math.random() * arr.length)];
-  // 選択肢は必ず本文から切り出した実在チャンクだけを使う。文字を合成すると
-  // 「日本と」のような不自然な語が混じり、語形認識ではなく日本語らしさだけで解けてしまう。
-  // 同じ書き出しの自然な候補があれば優先するが、足りなければ実在する別チャンクを使う。
-  const prefLen = Math.min(2, [...target].length - 1);
-  const pref = [...target].slice(0, prefLen).join("");
-  let lures = arr.filter(c => c !== target && c.startsWith(pref));
-  if (lures.length < optN - 1) lures = lures.concat(arr.filter(c => c !== target && !lures.includes(c) && c[0] === target[0]));
-  if (lures.length < optN - 1) lures = lures.concat(arr.filter(c => c !== target && !lures.includes(c)).sort((a, b) => spanSim(b, target) - spanSim(a, target)));
-  lures.sort(() => Math.random() - 0.5);
-  const opts = [target, ...lures.slice(0, optN - 1)];
-  for (let i = opts.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [opts[i], opts[j]] = [opts[j], opts[i]]; }
-  return { target, opts, ans: opts.indexOf(target), level: lv };
+  // 字数はマスクの長さで分かってしまうため、候補は必ず的と同じ字数から取る
+  const order = [level];
+  for (let d = 1; d <= 6; d++) { if (level - d >= 3) order.push(level - d); if (level + d <= 9) order.push(level + d); }
+  let fallback = null;
+  for (const pass of ["strong", "weak"]) {          // ①書き出し2字が同じ ②先頭1字が同じ
+    for (const lv of order) {
+      const arr = [...new Set(pool[lv] || [])];
+      if (arr.length < 4) continue;
+      const optN = Math.min(spanOptCount(lv), arr.length);
+      const cands = [...arr].sort(() => Math.random() - 0.5);
+      for (const target of cands) {
+        const { strong, all } = spanLureSet(arr, target, optN);
+        const lures = pass === "strong" ? strong : all;
+        if (lures.length >= optN - 1) return spanBuildTrial(target, [...lures].sort(() => Math.random() - 0.5), optN, lv);
+        if (!fallback || lures.length > fallback.lures.length) fallback = { target, lures: all, optN, lv, arr };
+      }
+    }
+  }
+  // ここまで来るのは教材の語彙が偏った日だけ。出題を止めないための最終手段
+  if (!fallback) return null;
+  const rest = fallback.arr.filter(c => c !== fallback.target && !fallback.lures.includes(c))
+    .sort((a, b) => spanSim(b, fallback.target) - spanSim(a, fallback.target));
+  return spanBuildTrial(fallback.target, fallback.lures.concat(rest), fallback.optN, fallback.lv);
 }
 function renderSpanIntro() {
   screen().innerHTML = `
@@ -1837,7 +1863,7 @@ function renderSpanIntro() {
     <div class="card">
       <div class="card-title">瞬間キャッチ <span class="tag">現在の視幅 ${state.spanLevel}字</span></div>
       <div class="card-subtitle up">Flash catch</div><p class="small" style="margin:-6px 0 14px">${SPAN_EXPOSURE}ms呈示 → マスク → 似た語から選ぶ</p>
-      <p class="muted" style="margin-bottom:10px">中央の<span style="color:var(--coral)">●</span>を凝視。語が一瞬光りすぐ<b>マスク</b>で隠れます。選択肢は<b>書き出しが同じで語尾だけ違う</b>ため、最初の数文字では当てられません。語全体を一目で取る訓練です（全${(sess && sess.spanN) || SPAN_TRIALS}回）。視幅が上がると字数も選択肢の紛らわしさも増します。</p>
+      <p class="small" style="margin-bottom:12px">中央の<span style="color:var(--acc)">●</span>を凝視。語が一瞬光り、すぐマスクで隠れます。選択肢は<b>書き出しも字数も同じ</b>で語尾だけが違うので、最初の数文字では当たりません（全${(sess && sess.spanN) || SPAN_TRIALS}回）。</p>
       <button class="btn" onclick="runSpanTrial(0,0)">スタート</button>
     </div>`;
 }
@@ -1902,9 +1928,7 @@ function answerSpan(idx, score, i) {
 }
 function finishSpan(score) {
   sess.spanResult = { score, total: (sess && sess.spanN) || SPAN_TRIALS };
-  const terms = sessionKeyTerms(sess.vocabN || 3);
-  if (terms.length >= 2) { sess.vocabTerms = terms; renderVocabIntro(); }
-  else renderRead(1);
+  renderRead(1);   // 語彙道場は一旦流れから外している（sessionKeyTerms は残置）
 }
 // ---------- PHASE 3.5: 語彙道場（学校語彙を12歳の言葉で深く） ----------
 function renderVocabIntro() {
@@ -1999,10 +2023,23 @@ function finishReading(which) {
   renderQuiz(which, 0, []);
 }
 // ---------- 設問（3問・即時フィードバック+解説） ----------
+// 出題は2問だけ。1問目で全体の論旨、2問目でその根拠を取れているかを見る。
+// 3問目以降（応用・類比など）は面白いが、毎日6分に収めるには重い。
+const Q_MAIN = /^(take-?away|main point|author'?s intent|論旨|要旨|主張)/i;
+const Q_GROUND = /^(strong evidence|evidence|grounds|cause|comparison|counter|falsif|hidden premise|根拠|証拠)/i;
+function sessionQuestions(p) {
+  const qs = (p && p.questions) || [];
+  if (qs.length <= 2) return qs;
+  const main = qs.find(q => Q_MAIN.test(String(q.q || "")));
+  const ground = qs.find(q => q !== main && Q_GROUND.test(String(q.q || "")));
+  const picked = [main, ground].filter(Boolean);
+  for (const q of qs) { if (picked.length >= 2) break; if (!picked.includes(q)) picked.push(q); }
+  return picked.slice(0, 2);
+}
 function renderQuiz(which, qi, answers) {
   const p = which === 1 ? sess.p1 : sess.p2;
   const phase = which === 1 ? phaseIdx("設問①") : phaseIdx("設問②");
-  const qs = p.questions || [];
+  const qs = sessionQuestions(p);
   if (qi >= qs.length) { finishQuiz(which, answers); return; }
   const q = qs[qi];
   screen().innerHTML = `
@@ -2021,7 +2058,7 @@ function renderQuiz(which, qi, answers) {
 // ユーザーが「わかりにくい」と感じた設問を記録（明快さ改善のシグナル源）
 function flagQuestion(which, qi) {
   const p = which === 1 ? sess.p1 : sess.p2;
-  const q = (p.questions || [])[qi];
+  const q = sessionQuestions(p)[qi];
   if (!q) return;
   (state.clarityFlags = state.clarityFlags || []).push({ date: today(), genre: genreOf(p), title: p.title, q: q.q, opts: q.opts });
   saveState();
@@ -2031,7 +2068,8 @@ function flagQuestion(which, qi) {
 }
 function answerQuiz(which, qi, i) {
   const p = which === 1 ? sess.p1 : sess.p2;
-  const q = p.questions[qi];
+  const qs = sessionQuestions(p);
+  const q = qs[qi];
   const correct = i === q.ans;
   q.opts.forEach((_, j) => {
     const el = document.getElementById("qo" + j);
@@ -2042,7 +2080,7 @@ function answerQuiz(which, qi, i) {
   const answers = window._quizAnswers.concat([correct]);
   document.getElementById("quiz-fb").innerHTML = `
     ${q.rationale ? `<div class="rationale" style="margin-top:10px">${esc(q.rationale)}</div>` : ""}
-    <button class="btn" style="margin-top:8px" onclick='renderQuiz(${which},${qi + 1},${JSON.stringify(answers)})'>${qi + 1 >= p.questions.length ? "採点へ" : "次の設問"}</button>`;
+    <button class="btn" style="margin-top:8px" onclick='renderQuiz(${which},${qi + 1},${JSON.stringify(answers)})'>${qi + 1 >= qs.length ? "採点へ" : "次の設問"}</button>`;
 }
 function finishQuiz(which, answers) {
   const comp = answers.length ? answers.filter(Boolean).length / answers.length : 0;
@@ -2290,7 +2328,7 @@ function renderShortResult() {
     <div class="card"><div class="result-verdict">
       <div class="card-subtitle up">SHORT SESSION COMPLETE</div><div class="card-subtitle">${esc(title)}</div>
       <div class="big" style="color:${valid ? "var(--ink)" : "var(--ink3)"}">${p.speed}<span style="font-size:14px;color:var(--ink3);letter-spacing:.16em"> 字/分</span></div>
-      ${qDots(Math.round(comp * 3), 3)}
+      ${qDots(Math.round(comp * sessionQuestions(completedPassage).length), sessionQuestions(completedPassage).length)}
       <div class="sub">${valid ? "" : "理解度60%未満 — 速度は記録対象外"}</div>
     </div>
     ${shortElapsed != null ? `<div style="margin-top:6px">${durationRow(shortElapsed, "short", shortSessionId)}</div>` : ""}
@@ -2370,6 +2408,7 @@ function renderResult() {
   const ma30 = movingAvg(30);
   const newWins = state.wins.filter(w => w.date === today()).slice(-4);
   const compPct = Math.round(comp * 100);
+  const totalQuizN = sessionQuestions(sess.p1).length + sessionQuestions(sess.p2).length;
   const g1 = genreOf(sess.p1), g2 = genreOf(sess.p2);
   const sp = sess.spanResult;
   const dcRes = sess.deepCloze;
@@ -2387,7 +2426,7 @@ function renderResult() {
     <div class="card">
       <div class="result-verdict">
         <div class="big" style="color:${valid ? "var(--ink)" : "var(--ink3)"}">${sessSpeed}<span style="font-size:14px;color:var(--ink3);letter-spacing:.16em"> 字/分</span></div>
-        ${qDots(Math.round(compPct / 100 * 6), 6)}
+        ${qDots(Math.round(compPct / 100 * totalQuizN), totalQuizN)}
         <div class="sub">${valid ? "" : "理解度60%未満 — 速度は記録対象外"}</div>
         ${valid ? (rat.cleared
           ? `<div class="banner ok" style="margin-top:14px;text-align:left"><span style="color:var(--green)">${ic("spark")}</span> 目標クリア。明日は <b>${rat.newTarget}字/分</b>（+${rat.newTarget - rat.oldTarget}）。</div>`
@@ -2404,9 +2443,7 @@ function renderResult() {
       <div class="compare-row"><span class="lab">本文②（${esc(g2)}）初読</span><span><b>${p2.speed}</b> 字/分 · 理解 ${Math.round(p2.comp*100)}%</span></div>
       <div class="compare-row" style="background:var(--card2);border-radius:3px;padding-left:8px;padding-right:8px"><span class="lab">難度補正速度 <span class="small">（難度${sessReadability}）</span></span><span><b>${adjSpeed}</b> 字/分 ${valid && adjSpeed > sessSpeed ? `<span class="delta-chip up">生速度+${adjSpeed - sessSpeed}</span>` : ""}</span></div>
       <div class="compare-row"><span class="lab">深層読解（接続）</span><span>${[dc1Res, dcRes].filter(Boolean).map(d => `${d.correct ? '<span class="delta-chip up">正解</span>' : '<span class="delta-chip down">不正解</span>'} ${esc(d.type)}`).join(" · ") || "—"}</span></div>
-      <div class="compare-row"><span class="lab">語彙道場</span><span>${vres ? `<b>${vres.score}</b>/${vres.total} 語 · 習得計 ${(state.vocabBook || []).filter(v => v.level >= 3).length}語` : "—"}</span></div>
       <div class="compare-row" style="background:var(--green-dim);border-radius:8px;padding-left:8px;padding-right:8px"><span class="lab">推定 一目量 <span class="small">（1固視で読める文字数）</span></span><span><b style="color:var(--green)">${gazeSpan(adjSpeed) || "—"}</b> 字/固視</span></div>
-      <div class="compare-row"><span class="lab">ペーサー現在値</span><span><b>${state.pacerLevel}</b> 字/分</span></div>
       <div class="compare-row"><span class="lab">瞬間キャッチ</span><span>${sp ? `<b>${sp.score}</b>/${sp.total} 正解 · 視幅 ${state.spanLevel}字` : "—"}</span></div>
       <div class="compare-row"><span class="lab">昨回ベスト比</span><span>${yestBest ? `${yestBest} → <b>${valid ? sessSpeed : "—"}</b> ${valid && sessSpeed - yestBest !== 0 ? `<span class="delta-chip ${sessSpeed >= yestBest ? "up" : "down"}">${sessSpeed >= yestBest ? "+" : ""}${sessSpeed - yestBest}</span>` : ""}` : "初回基準日"}</span></div>
       <div class="compare-row"><span class="lab">30日平均比</span><span>${ma30 && valid ? `<span class="delta-chip ${sessSpeed >= ma30 ? "up" : "down"}">${sessSpeed >= ma30 ? "+" : ""}${Math.round((sessSpeed - ma30) / ma30 * 100)}%</span>` : "—"}</span></div>
@@ -2672,13 +2709,13 @@ function renderAbout() {
     </div>
     <div class="card">
       <div class="card-title">1日の流れ</div>
-      <div class="card-subtitle up">12 min</div>
-      <div class="win-item"><span class="ico">1</span><div><b>チャンクペーサー</b>（約1.5分）— 適応速度で文節ハイライトを追い、1問で確認</div></div>
-      <div class="win-item"><span class="ico">2</span><div><b>瞬間キャッチ</b>（約2分）— 160ms呈示→マスク、似た語から選択。視幅を漸進拡大（8試行）</div></div>
-      <div class="win-item"><span class="ico">3</span><div><b>本文① ニュース初読</b>(約2分）— 計測読み + 設問3問</div></div>
-      <div class="win-item"><span class="ico">4</span><div><b>本文① 反復読</b>（約1.5分）— 初読の15%増しに挑戦</div></div>
-      <div class="win-item"><span class="ico">5</span><div><b>本文② 経営・論説 初読</b>（約2.5分）— 計測読み + 設問3問</div></div>
-      <div class="win-item"><span class="ico">6</span><div><b>結果</b> — 昨日比・目標判定・今日のWins</div></div>
+      <div class="card-subtitle up">6 min</div>
+      <div class="win-item"><span class="ico">1</span><div><b>瞬間キャッチ</b>（約1.5分）— 160ms呈示→マスク。<b>書き出しが同じ語</b>から選ぶので、語尾まで一目で取れないと解けない</div></div>
+      <div class="win-item"><span class="ico">2</span><div><b>本文① 初読</b>（約1.5分）— 計測読み + 設問2問（論旨・根拠）</div></div>
+      <div class="win-item"><span class="ico">3</span><div><b>本文① 反復読</b>（約1分）— 初読の15%増しに挑戦</div></div>
+      <div class="win-item"><span class="ico">4</span><div><b>本文② 初読</b>（約1.5分）— 計測読み + 設問2問</div></div>
+      <div class="win-item"><span class="ico">5</span><div><b>結果</b> — 所要・昨日比・目標判定・今日のWins</div></div>
+      <p class="small" style="margin-top:10px">チャンクペーサーと語彙道場は3.6で一旦外しました。12分は毎日続けるには長く、この2つを外すと約6分に収まります。</p>
       <p class="small" style="margin-top:12px">毎夕18時に翌日分を自動生成。テーマは スタートアップ／AI・技術／市場・経済／経営・組織／規制・環境。</p>
     </div>`;
 }
