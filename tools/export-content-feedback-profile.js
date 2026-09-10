@@ -65,10 +65,55 @@ function pickRates(signals) {
   }
   return out;
 }
+// 出典ドメイン別の選択率・評価。「どの場所から拾った教材が読まれているか」を返し、
+// sources.json の増減の材料にする。passageId の先頭8桁が日付なので archive から出典を引く。
+const fs = require("fs"), path = require("path");
+const ROOT = path.resolve(__dirname, "..");
+function passageSourceHost(passageId) {
+  const m = String(passageId || "").match(/^(\d{4})(\d{2})(\d{2})_/);
+  if (!m) return null;
+  const date = `${m[1]}-${m[2]}-${m[3]}`;
+  for (const f of [path.join(ROOT, "archive", date + ".json"), path.join(ROOT, "daily-content.json")]) {
+    try {
+      const d = JSON.parse(fs.readFileSync(f, "utf8"));
+      const p = (d.passages || []).find(x => x.id === passageId);
+      if (!p) continue;
+      const u = (String(p.source || "").match(/https?:\/\/[^\s、。）)"']+/) || [])[0];
+      return u ? new URL(u).hostname.replace(/^www\./, "") : null;
+    } catch (e) {}
+  }
+  return null;
+}
+function sourceDomainStats(signals, rows) {
+  const by = {};
+  for (const x of (Array.isArray(signals) ? signals : []).slice(-400)) {
+    const h = passageSourceHost(x && x.passageId);
+    if (!h) continue;
+    const o = by[h] = by[h] || { shown: 0, picked: 0, ratings: [] };
+    o.shown++; if (x.picked) o.picked++;
+  }
+  for (const x of (Array.isArray(rows) ? rows : [])) {
+    if (!Number.isInteger(x && x.rating)) continue;
+    const h = passageSourceHost(x.passageId);
+    if (!h) continue;
+    (by[h] = by[h] || { shown: 0, picked: 0, ratings: [] }).ratings.push(x.rating);
+  }
+  const out = [];
+  for (const [host, o] of Object.entries(by)) {
+    const pickRate = o.shown ? +(o.picked / o.shown).toFixed(2) : null;
+    const rating = avg(o.ratings);
+    out.push({ host, shown: o.shown, picked: o.picked, pickRate, rating, samples: o.ratings.length,
+      instruction: o.shown < 4 && o.ratings.length < 2 ? "insufficient"
+        : (pickRate != null && pickRate >= 0.35) || (rating != null && rating >= 4) ? "promote"
+        : (o.shown >= 6 && o.picked === 0) || (rating != null && rating <= 2 && o.ratings.length >= 2) ? "demote" : "neutral" });
+  }
+  return out.sort((a, b) => b.shown - a.shown).slice(0, 30);
+}
 function buildProfile(rows, signals) {
   const feedback = recentFeedback(rows);
   const notes = recentNotes(rows);
   const picks = pickRates(signals);
+  const sourceDomains = sourceDomainStats(signals, rows);
   const genres = Object.fromEntries(GENRES.map(genre => {
     const scores = feedback.filter(x => x.genre === genre).map(x => x.rating);
     return [genre, { samples: scores.length, averageRating: avg(scores), instruction: preferenceFor(scores) }];
@@ -82,6 +127,8 @@ function buildProfile(rows, signals) {
     genres,
     questionFit: Object.assign(questionFit, { instruction: questionRecommendation(questionFit) }),
     picks,
+    sourceDomains,
+    sourceDomainsInstruction: "promote の出典は sources.json に無ければ追加候補、demote の出典は巡回頻度を落とす。教材そのものの良し悪しでなく『どこから拾うと読まれるか』の信号",
     picksInstruction: "pickRateは『一覧に並んだうち実際に選ばれた割合』。change_angleのジャンルは本数を減らさず、題材の角度を変える（同じ枠で違う種類の話を出す）",
     notes,
     notesInstruction: notes.length
@@ -142,4 +189,4 @@ async function main() {
 // 直接実行のときだけ通信する（qa/harness.js は集計ロジックだけを require する）
 if (require.main === module) main().catch(e => fail(`評価プロファイルの取得に失敗しました: ${e.message}`));
 
-module.exports = { buildProfile, recentFeedback, recentNotes, pickRates };
+module.exports = { buildProfile, recentFeedback, recentNotes, pickRates, sourceDomainStats };

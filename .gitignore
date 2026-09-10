@@ -9,6 +9,7 @@
 !/tools
 !/index.html
 !/daily-content.json
+!/sources.json
 !/clarity-audit.json
 !/qa-report.json
 !/manifest.json

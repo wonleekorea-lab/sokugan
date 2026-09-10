@@ -181,6 +181,57 @@ eval(js + "\nglobal.__app = { get state(){return state}, set state(v){state=v}, 
   }
   check("A11 ans分布の極端な偏りなし (各<=12)", ansDist.every(n => n <= 12), JSON.stringify(ansDist));
 
+  // ---------- A18. 出典の種類（どこから拾ったか） ----------
+  // 直近30日の教材は、出典の9割が発表者本人のページ（企業ニュースルーム・PRワイヤー・
+  // 統計リリース・公式発表）で、論考は1%、独立系ニュースレターは0本だった。
+  // 選定ロジックを直しても、候補が発表ものしか無ければ発表ものしか選べない。
+  // sources.json が「どこから拾うか」の正本。ここでは出典URLの有無と種類の配分を検査する。
+  const SOURCES = JSON.parse(fs.readFileSync(path.join(ROOT, "sources.json"), "utf8"));
+  const srcUrl = p => (String((p && p.source) || "").match(/https?:\/\/[^\s、。）)"']+/) || [])[0] || "";
+  const srcHost = u => { try { return new URL(u).hostname.replace(/^www\./, ""); } catch (e) { return ""; } };
+  const OFFICIAL_HOST = /(prnewswire|globenewswire|businesswire|accesswire|newswire|\.gov$|\.gov\.|\.go\.jp$|europa\.eu|who\.int|imf\.org\/en\/news|oecd\.org\/newsroom|un\.org|nasa\.gov|esa\.int|boj\.or\.jp|federalreserve\.gov|bls\.gov|rba\.gov|bankofcanada|ecb\.europa|sec\.gov|fpcj\.jp)/i;
+  const OFFICIAL_PATH = /\/(news|newsroom|press|press-release|press-releases|announcement|announcements|media|pr|ir)(\/|$)/i;
+  const sourceKind = p => {
+    const u = srcUrl(p), h = srcHost(u);
+    if (!u) return "none";
+    const listed = (SOURCES.sources || []).find(x => { try { return h === new URL(x.url).hostname.replace(/^www\./, ""); } catch (e) { return false; } });
+    if (listed && listed.kind !== "official") return listed.kind;
+    if (OFFICIAL_HOST.test(h) || OFFICIAL_HOST.test(u) || OFFICIAL_PATH.test(new URL(u).pathname)) return "official";
+    return "media";   // 種類が分からない外部サイトは報道扱い（発表ものと数えない）
+  };
+  const kinds = (daily.passages || []).map(sourceKind);
+  const noUrl = kinds.filter(k => k === "none").length;
+  check("A18 全教材の出典にURLがある（種類判定と重複排除の前提）", noUrl === 0, `URLなし ${noUrl}本`);
+  const officialN = kinds.filter(k => k === "official").length;
+  const insightN = kinds.filter(k => (SOURCES.quota.insight_kinds || []).includes(k)).length;
+  // 3.6以降に生成された教材（date >= 2026-09-11）から配分を強制する。それ以前の教材は
+  // 旧手順（WebSearchのみ）で作られており、遡って落としても直せない。
+  const sourcePolicyOn = String(daily.date || "") >= "2026-09-11";
+  if (sourcePolicyOn) {
+    check("A18b 出典の配分: official 3本以下・洞察系 5本以上", officialN <= SOURCES.quota.official_max && insightN >= SOURCES.quota.insight_min,
+      `official ${officialN} / 洞察系 ${insightN} / 内訳 ${JSON.stringify(kinds)}`);
+    check("A18c 教材が sourcePolicy 3.6 で作られている（sources.json を巡回した印）", daily.sourcePolicy === "3.6", `sourcePolicy=${daily.sourcePolicy}`);
+  } else {
+    check("A18b 出典の配分（3.6以前の教材は記録のみ）", true, `official ${officialN} / 洞察系 ${insightN}`);
+  }
+  check("A18d sources.json が正しい形（kind・quota・巡回先）", SOURCES.schema === "sokugan-sources-v1" && Array.isArray(SOURCES.sources) && SOURCES.sources.length >= 20
+    && SOURCES.sources.every(x => x.id && x.url && x.kind && SOURCES.kinds[x.kind]) && SOURCES.quota && SOURCES.quota.official_max <= 3,
+    `${(SOURCES.sources || []).length}件`);
+  const insightSources = (SOURCES.sources || []).filter(x => (SOURCES.quota.insight_kinds || []).includes(x.kind)).length;
+  check("A18e 巡回先の半分以上が洞察系（発表者のページ中心にならない）", insightSources >= (SOURCES.sources || []).length / 2, `洞察系 ${insightSources}/${(SOURCES.sources || []).length}`);
+  check("A18f daily.md と content-scout が sources.json から始める手順になっている",
+    /sources\.json/.test(fs.readFileSync(path.join(ROOT, ".claude", "commands", "daily.md"), "utf8"))
+    && /sources\.json/.test(fs.readFileSync(path.join(ROOT, ".claude", "agents", "content-scout.md"), "utf8")));
+
+  // ---------- A19. 誰が書いたか ----------
+  // 洞察は書き手の立場で重みが変わる。個人名か組織名と、立場が分かる一言を必ず付ける。
+  const noAuthor = (daily.passages || []).filter(p => !(p.author && p.author.name && p.author.role));
+  if (sourcePolicyOn) {
+    check("A19 全教材に author（誰が・どんな立場で書いたか）がある", noAuthor.length === 0, noAuthor.map(p => p.id).slice(0, 3).join(" "));
+  } else {
+    check("A19 author の有無（3.6以前の教材は記録のみ）", true, `author なし ${noAuthor.length}本`);
+  }
+
   // ---------- A17. 面白さが型に落ちていないか ----------
   // 直近30日を数えると、takeawayフックの48%が「AではなくB」の対比構文だった。
   // 驚きを文型で作ると、読み手は3日で型に気づき、内容に関係なく飽きる。
@@ -416,6 +467,9 @@ eval(js + "\nglobal.__app = { get state(){return state}, set state(v){state=v}, 
   A.finishSpan(1);
   check("B11b キャッチの次は本文①（語彙道場を挟まない）", screenEl().includes("初読") && !screenEl().includes("語彙道場"));
   check("B12 本文①読書画面 (タイトル表示)", screenEl().includes("初読") && screenEl().includes("計測開始"));
+  // B12b: 本文の前に「誰が書いたか」が出る。author が無い旧教材でも媒体名で埋めて空にしない
+  const authorShown = (screenEl().match(/data-author>[\s\S]*?<b>([^<]*)<\/b>/) || [])[1] || "";
+  check("B12b 本文の前に書き手（author か媒体名）を表示", authorShown.trim().length > 0, authorShown.trim().slice(0, 40));
   A.startReading(1); await new Promise(r => _st(r, 12)); A.finishReading(1);
   check("B13 設問画面に遷移（2問構成）", screenEl().includes("設問 1 / 2"), screenEl().match(/設問 \d \/ \d/) || "");
   check("B13b 設問画面に『わかりにくい』報告ボタン", screenEl().includes("わかりにくい"));
