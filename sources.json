@@ -42,6 +42,7 @@
     { "id": "hacker-news", "name": "Hacker News", "url": "https://news.ycombinator.com/", "kind": "community", "lang": "en", "topics": ["テック", "起業", "現場"], "why": "上位の議論スレッドから『現場の人はこう見ている』を拾う。記事本体より議論を読む" },
     { "id": "our-world-in-data", "name": "Our World in Data", "url": "https://ourworldindata.org/latest", "kind": "research", "lang": "en", "topics": ["データ", "社会", "長期趨勢"], "why": "『数字の裏側』の一次データ。常識の反転が図で見える" },
     { "id": "nber-digest", "name": "NBER Digest", "url": "https://www.nber.org/digest", "kind": "research", "lang": "en", "topics": ["経済", "研究"], "why": "新しい研究の要約。発表ものと違い『分かったこと』が主語" },
+    { "id": "nature-research", "name": "Nature Research", "url": "https://www.nature.com/nature/research-articles", "kind": "research", "lang": "en", "topics": ["研究", "技術", "社会", "環境"], "why": "査読研究と分析を一次論文で確認する。社会・技術の構造を数字と実験で読む" },
     { "id": "imf-blog", "name": "IMF Blog", "url": "https://www.imf.org/en/Blogs", "kind": "research", "lang": "en", "topics": ["マクロ", "地政学", "金融"], "why": "統計リリースでなく、分析の記事" },
     { "id": "brookings", "name": "Brookings", "url": "https://www.brookings.edu/research/", "kind": "research", "lang": "en", "topics": ["政策", "社会", "都市"], "why": "政策の効果を検証する。長い" },
     { "id": "berkshire-letters", "name": "Berkshire Hathaway 株主への手紙", "url": "https://www.berkshirehathaway.com/letters/letters.html", "kind": "letters", "lang": "en", "cadence": "annual", "topics": ["経営", "資本配分", "判断"], "why": "年1回。経営判断の理由が自分の言葉で書かれる古典" },
