@@ -1,377 +1,377 @@
 {
-  "date": "2026-09-21",
+  "date": "2026-09-22",
   "status": "pass",
-  "checked_at": "2026-09-20T18:25:00+0900",
+  "checked_at": "2026-09-21T09:48:57.090Z",
   "auditor": "Codex（本文だけを根拠に全30問を自力解答）",
   "avgScore": 5,
   "total": 30,
   "rewritten": 0,
   "items": [
     {
-      "passage": "20260921_mlits_industrial_resilience",
+      "passage": "20260922_oecd_asean_inclusive",
       "q": 1,
       "type": "Take-away",
-      "stem": "Take-away: 中小企業団地の防災を支えた中心は何か",
+      "stem": "Take-away: 報告書が示す包摂の位置づけはどれか",
       "ans": 0,
       "readable": 5,
       "unique": 5,
       "concrete": 5,
       "score": 5,
-      "note": "本文の中心論旨を一意に確認した。"
+      "note": "本文の明示情報、または本文から一意に導ける因果・比較・応用で解答した。"
     },
     {
-      "passage": "20260921_mlits_industrial_resilience",
+      "passage": "20260922_oecd_asean_inclusive",
       "q": 2,
       "type": "Strong evidence",
-      "stem": "Strong evidence: 中小企業10社の団地にいた専従職員は何人か",
+      "stem": "Strong evidence: ASEANの社会的企業は約何社か",
       "ans": 1,
       "readable": 5,
       "unique": 5,
       "concrete": 5,
       "score": 5,
-      "note": "本文の明示情報を一意に確認した。"
+      "note": "本文の明示情報、または本文から一意に導ける因果・比較・応用で解答した。"
     },
     {
-      "passage": "20260921_mlits_industrial_resilience",
+      "passage": "20260922_oecd_asean_inclusive",
       "q": 3,
       "type": "Scenario",
-      "stem": "Scenario: 地域設備を新規導入するとき先に置くものはどれか",
+      "stem": "Scenario: 新規事業で包摂を実装する最初の検討はどれか",
       "ans": 2,
       "readable": 5,
       "unique": 5,
       "concrete": 5,
       "score": 5,
-      "note": "本文の因果・構造を応用して解いた。"
+      "note": "本文の明示情報、または本文から一意に導ける因果・比較・応用で解答した。"
     },
     {
-      "passage": "20260921_nber_declining_occupation",
+      "passage": "20260922_nber_multi_platform",
       "q": 1,
       "type": "Take-away",
-      "stem": "Take-away: 職業の縮小が示す転職の盲点は何か",
+      "stem": "Take-away: 二つの平台を使えると何が変わったか",
       "ans": 3,
       "readable": 5,
       "unique": 5,
       "concrete": 5,
       "score": 5,
-      "note": "本文の中心論旨を一意に確認した。"
+      "note": "本文の明示情報、または本文から一意に導ける因果・比較・応用で解答した。"
     },
     {
-      "passage": "20260921_nber_declining_occupation",
+      "passage": "20260922_nber_multi_platform",
       "q": 2,
       "type": "Strong evidence",
-      "stem": "Strong evidence: 累積収入の差はおよそいくらか",
+      "stem": "Strong evidence: 単一平台での弾力性はいくつか",
       "ans": 0,
       "readable": 5,
       "unique": 5,
       "concrete": 5,
       "score": 5,
-      "note": "本文の明示情報を一意に確認した。"
+      "note": "本文の明示情報、または本文から一意に導ける因果・比較・応用で解答した。"
     },
     {
-      "passage": "20260921_nber_declining_occupation",
+      "passage": "20260922_nber_multi_platform",
       "q": 3,
       "type": "Scenario",
-      "stem": "Scenario: 自動化で仕事を減らす事業者が追加で設計するものは何か",
+      "stem": "Scenario: 配達員の交渉力を測る企業が比較すべき条件はどれか",
       "ans": 1,
       "readable": 5,
       "unique": 5,
       "concrete": 5,
       "score": 5,
-      "note": "本文の因果・構造を応用して解いた。"
+      "note": "本文の明示情報、または本文から一意に導ける因果・比較・応用で解答した。"
     },
     {
-      "passage": "20260921_bocconi_twin_transition",
+      "passage": "20260922_oecd_tvet_data",
       "q": 1,
       "type": "Take-away",
-      "stem": "Take-away: 欧州中小企業で先に進んだ移行はどちらか",
+      "stem": "Take-away: 技能データを政策に届ける条件はどれか",
       "ans": 2,
       "readable": 5,
       "unique": 5,
       "concrete": 5,
       "score": 5,
-      "note": "本文の中心論旨を一意に確認した。"
+      "note": "本文の明示情報、または本文から一意に導ける因果・比較・応用で解答した。"
     },
     {
-      "passage": "20260921_bocconi_twin_transition",
+      "passage": "20260922_oecd_tvet_data",
       "q": 2,
       "type": "Strong evidence",
-      "stem": "Strong evidence: 脱炭素側に重なる壁は何か",
+      "stem": "Strong evidence: データ活用を妨げる要因として本文が挙げるものはどれか",
       "ans": 3,
       "readable": 5,
       "unique": 5,
       "concrete": 5,
       "score": 5,
-      "note": "本文の明示情報を一意に確認した。"
+      "note": "本文の明示情報、または本文から一意に導ける因果・比較・応用で解答した。"
     },
     {
-      "passage": "20260921_bocconi_twin_transition",
+      "passage": "20260922_oecd_tvet_data",
       "q": 3,
       "type": "Scenario",
-      "stem": "Scenario: 中小企業向け環境サービスの提案に加える情報は何か",
+      "stem": "Scenario: 自治体が技能調査を始めるとき、収集後に置く役割はどれか",
       "ans": 0,
       "readable": 5,
       "unique": 5,
       "concrete": 5,
       "score": 5,
-      "note": "本文の因果・構造を応用して解いた。"
+      "note": "本文の明示情報、または本文から一意に導ける因果・比較・応用で解答した。"
     },
     {
-      "passage": "20260921_nature_evidence_policy",
+      "passage": "20260922_nature_flood_blackout",
       "q": 1,
       "type": "Take-away",
-      "stem": "Take-away: 知識が政策で使われるために必要な設計は何か",
+      "stem": "Take-away: 研究が防災計画に加えた視点はどれか",
       "ans": 1,
       "readable": 5,
       "unique": 5,
       "concrete": 5,
       "score": 5,
-      "note": "本文の中心論旨を一意に確認した。"
+      "note": "本文の明示情報、または本文から一意に導ける因果・比較・応用で解答した。"
     },
     {
-      "passage": "20260921_nature_evidence_policy",
+      "passage": "20260922_nature_flood_blackout",
       "q": 2,
       "type": "Strong evidence",
-      "stem": "Strong evidence: 知識の利用を何段階で区別するか",
+      "stem": "Strong evidence: 最も高い相対リスクはいくつか",
       "ans": 2,
       "readable": 5,
       "unique": 5,
       "concrete": 5,
       "score": 5,
-      "note": "本文の明示情報を一意に確認した。"
+      "note": "本文の明示情報、または本文から一意に導ける因果・比較・応用で解答した。"
     },
     {
-      "passage": "20260921_nature_evidence_policy",
+      "passage": "20260922_nature_flood_blackout",
       "q": 3,
       "type": "Scenario",
-      "stem": "Scenario: 自治体向け調査で引用数以外に追うものは何か",
+      "stem": "Scenario: 地域の防災優先区域を選ぶとき重ねるデータはどれか",
       "ans": 3,
       "readable": 5,
       "unique": 5,
       "concrete": 5,
       "score": 5,
-      "note": "本文の因果・構造を応用して解いた。"
+      "note": "本文の明示情報、または本文から一意に導ける因果・比較・応用で解答した。"
     },
     {
-      "passage": "20260921_nature_nutrient_justice",
+      "passage": "20260922_ap_long_rates",
       "q": 1,
       "type": "Take-away",
-      "stem": "Take-away: 論考が示す栄養問題の見方は何か",
+      "stem": "Take-away: 長期金利を押し上げる構図はどれか",
       "ans": 0,
       "readable": 5,
       "unique": 5,
       "concrete": 5,
       "score": 5,
-      "note": "本文の中心論旨を一意に確認した。"
+      "note": "本文の明示情報、または本文から一意に導ける因果・比較・応用で解答した。"
     },
     {
-      "passage": "20260921_nature_nutrient_justice",
+      "passage": "20260922_ap_long_rates",
       "q": 2,
       "type": "Strong evidence",
-      "stem": "Strong evidence: 循環設計に含める工程はどれか",
+      "stem": "Strong evidence: 30年固定住宅ローン金利は何%だったか",
       "ans": 1,
       "readable": 5,
       "unique": 5,
       "concrete": 5,
       "score": 5,
-      "note": "本文の明示情報を一意に確認した。"
+      "note": "本文の明示情報、または本文から一意に導ける因果・比較・応用で解答した。"
     },
     {
-      "passage": "20260921_nature_nutrient_justice",
+      "passage": "20260922_ap_long_rates",
       "q": 3,
       "type": "Scenario",
-      "stem": "Scenario: 排水資源化事業で省いてはいけない条件は何か",
+      "stem": "Scenario: 企業が長期借入の費用を予測するとき見るべきものはどれか",
       "ans": 2,
       "readable": 5,
       "unique": 5,
       "concrete": 5,
       "score": 5,
-      "note": "本文の因果・構造を応用して解いた。"
+      "note": "本文の明示情報、または本文から一意に導ける因果・比較・応用で解答した。"
     },
     {
-      "passage": "20260921_richmond_demand_costs",
+      "passage": "20260922_oecd_copper_price",
       "q": 1,
       "type": "Take-away",
-      "stem": "Take-away: 需要が強い企業が値上げを抑える理由は何か",
+      "stem": "Take-away: 銅の価格を決めるとき確認する条件はどれか",
       "ans": 3,
       "readable": 5,
       "unique": 5,
       "concrete": 5,
       "score": 5,
-      "note": "本文の中心論旨を一意に確認した。"
+      "note": "本文の明示情報、または本文から一意に導ける因果・比較・応用で解答した。"
     },
     {
-      "passage": "20260921_richmond_demand_costs",
+      "passage": "20260922_oecd_copper_price",
       "q": 2,
       "type": "Strong evidence",
-      "stem": "Strong evidence: 聞き取りの対象期間はいつか",
+      "stem": "Strong evidence: 税務の比較に使う方法はどれか",
       "ans": 0,
       "readable": 5,
       "unique": 5,
       "concrete": 5,
       "score": 5,
-      "note": "本文の明示情報を一意に確認した。"
+      "note": "本文の明示情報、または本文から一意に導ける因果・比較・応用で解答した。"
     },
     {
-      "passage": "20260921_richmond_demand_costs",
+      "passage": "20260922_oecd_copper_price",
       "q": 3,
       "type": "Scenario",
-      "stem": "Scenario: 長期保守がある設備事業で価格を決めるとき見るものは何か",
+      "stem": "Scenario: 鉱物取引の税務監査で最初にそろえる情報はどれか",
       "ans": 1,
       "readable": 5,
       "unique": 5,
       "concrete": 5,
       "score": 5,
-      "note": "本文の因果・構造を応用して解いた。"
+      "note": "本文の明示情報、または本文から一意に導ける因果・比較・応用で解答した。"
     },
     {
-      "passage": "20260921_hbr_stress_sources",
+      "passage": "20260922_oecd_ph_water",
       "q": 1,
       "type": "Take-away",
-      "stem": "Take-away: 仕事量以外のストレス要因は何か",
+      "stem": "Take-away: 水道規制でそろえるべき基盤はどれか",
       "ans": 2,
       "readable": 5,
       "unique": 5,
       "concrete": 5,
       "score": 5,
-      "note": "本文の中心論旨を一意に確認した。"
+      "note": "本文の明示情報、または本文から一意に導ける因果・比較・応用で解答した。"
     },
     {
-      "passage": "20260921_hbr_stress_sources",
+      "passage": "20260922_oecd_ph_water",
       "q": 2,
       "type": "Strong evidence",
-      "stem": "Strong evidence: 紹介されたメタ分析は何研究を扱ったか",
+      "stem": "Strong evidence: 2030年までに必要とされる投資額は約いくらか",
       "ans": 3,
       "readable": 5,
       "unique": 5,
       "concrete": 5,
       "score": 5,
-      "note": "本文の明示情報を一意に確認した。"
+      "note": "本文の明示情報、または本文から一意に導ける因果・比較・応用で解答した。"
     },
     {
-      "passage": "20260921_hbr_stress_sources",
+      "passage": "20260922_oecd_ph_water",
       "q": 3,
       "type": "Scenario",
-      "stem": "Scenario: 現場のストレスを減らす設計はどれか",
+      "stem": "Scenario: 複数地域の水道を比較するために先に統一するものはどれか",
       "ans": 0,
       "readable": 5,
       "unique": 5,
       "concrete": 5,
       "score": 5,
-      "note": "本文の因果・構造を応用して解いた。"
+      "note": "本文の明示情報、または本文から一意に導ける因果・比較・応用で解答した。"
     },
     {
-      "passage": "20260921_hbr_organizational_capital",
+      "passage": "20260922_construction_housing",
       "q": 1,
       "type": "Take-away",
-      "stem": "Take-away: 成果の低い人を残す構造的な原因は何か",
+      "stem": "Take-away: 住宅供給の詰まりを生む組み合わせはどれか",
       "ans": 1,
       "readable": 5,
       "unique": 5,
       "concrete": 5,
       "score": 5,
-      "note": "本文の中心論旨を一意に確認した。"
+      "note": "本文の明示情報、または本文から一意に導ける因果・比較・応用で解答した。"
     },
     {
-      "passage": "20260921_hbr_organizational_capital",
+      "passage": "20260922_construction_housing",
       "q": 2,
       "type": "Strong evidence",
-      "stem": "Strong evidence: 対処で文書化する要素はどれか",
+      "stem": "Strong evidence: 紹介された投資規模は何ドルか",
       "ans": 2,
       "readable": 5,
       "unique": 5,
       "concrete": 5,
       "score": 5,
-      "note": "本文の明示情報を一意に確認した。"
+      "note": "本文の明示情報、または本文から一意に導ける因果・比較・応用で解答した。"
     },
     {
-      "passage": "20260921_hbr_organizational_capital",
+      "passage": "20260922_construction_housing",
       "q": 3,
       "type": "Scenario",
-      "stem": "Scenario: 経験者が安全手順を守らない現場で決めるものは何か",
+      "stem": "Scenario: 住宅事業の融資が決まった後に確認すべきものはどれか",
       "ans": 3,
       "readable": 5,
       "unique": 5,
       "concrete": 5,
       "score": 5,
-      "note": "本文の因果・構造を応用して解いた。"
+      "note": "本文の明示情報、または本文から一意に導ける因果・比較・応用で解答した。"
     },
     {
-      "passage": "20260921_nature_fiscal_infrastructure",
+      "passage": "20260922_nature_smart_ocean",
       "q": 1,
       "type": "Take-away",
-      "stem": "Take-away: インフラ投資を初年度収支だけで測れない理由は何か",
+      "stem": "Take-away: 提案システムの中心的な工夫はどれか",
       "ans": 0,
       "readable": 5,
       "unique": 5,
       "concrete": 5,
       "score": 5,
-      "note": "本文の中心論旨を一意に確認した。"
+      "note": "本文の明示情報、または本文から一意に導ける因果・比較・応用で解答した。"
     },
     {
-      "passage": "20260921_nature_fiscal_infrastructure",
+      "passage": "20260922_nature_smart_ocean",
       "q": 2,
       "type": "Strong evidence",
-      "stem": "Strong evidence: 物理的インフラの長期係数は何か",
+      "stem": "Strong evidence: 研究でモデル化された条件はどれか",
       "ans": 1,
       "readable": 5,
       "unique": 5,
       "concrete": 5,
       "score": 5,
-      "note": "本文の明示情報を一意に確認した。"
+      "note": "本文の明示情報、または本文から一意に導ける因果・比較・応用で解答した。"
     },
     {
-      "passage": "20260921_nature_fiscal_infrastructure",
+      "passage": "20260922_nature_smart_ocean",
       "q": 3,
       "type": "Scenario",
-      "stem": "Scenario: 水インフラ投資の採否で加える視点は何か",
+      "stem": "Scenario: 現場導入の判断で研究結果に追加して確認すべきものはどれか",
       "ans": 2,
       "readable": 5,
       "unique": 5,
       "concrete": 5,
       "score": 5,
-      "note": "本文の因果・構造を応用して解いた。"
+      "note": "本文の明示情報、または本文から一意に導ける因果・比較・応用で解答した。"
     },
     {
-      "passage": "20260921_nature_wildfire_synchronicity",
+      "passage": "20260922_nature_laser_welding",
       "q": 1,
       "type": "Take-away",
-      "stem": "Take-away: 山火事の同時発生が防災を難しくする理由は何か",
+      "stem": "Take-away: 研究が品質管理に加えた視点はどれか",
       "ans": 3,
       "readable": 5,
       "unique": 5,
       "concrete": 5,
       "score": 5,
-      "note": "本文の中心論旨を一意に確認した。"
+      "note": "本文の明示情報、または本文から一意に導ける因果・比較・応用で解答した。"
     },
     {
-      "passage": "20260921_nature_wildfire_synchronicity",
+      "passage": "20260922_nature_laser_welding",
       "q": 2,
       "type": "Strong evidence",
-      "stem": "Strong evidence: 同期する事例は何地域を超える規模か",
+      "stem": "Strong evidence: X線撮影の速度はどの程度か",
       "ans": 0,
       "readable": 5,
       "unique": 5,
       "concrete": 5,
       "score": 5,
-      "note": "本文の明示情報を一意に確認した。"
+      "note": "本文の明示情報、または本文から一意に導ける因果・比較・応用で解答した。"
     },
     {
-      "passage": "20260921_nature_wildfire_synchronicity",
+      "passage": "20260922_nature_laser_welding",
       "q": 3,
       "type": "Scenario",
-      "stem": "Scenario: 広域災害計画に加える前提は何か",
+      "stem": "Scenario: 溶接欠陥を減らす工程設計で優先するものはどれか",
       "ans": 1,
       "readable": 5,
       "unique": 5,
       "concrete": 5,
       "score": 5,
-      "note": "本文の因果・構造を応用して解いた。"
+      "note": "本文の明示情報、または本文から一意に導ける因果・比較・応用で解答した。"
     }
   ],
   "rubric": {
-    "readable": "一読で意味が取れる",
-    "unique": "本文から正答が一意に決まる",
-    "concrete": "選択肢が具体的で比較できる",
-    "score": "3未満は書き直し、平均4以上で合格"
+    "one_read": 5,
+    "unique_logic": 5,
+    "concrete_options": 5,
+    "natural_faithful_japanese": 5
   }
 }
