@@ -108,7 +108,7 @@ const _si = global.setInterval;
 global.setInterval = (f, d) => _si(f, Math.max(1, Math.min(d || 0, 5)));
 
 // ---------- アプリ実コードを実行 ----------
-eval(js + "\nglobal.__app = { get state(){return state}, set state(v){state=v}, get ui(){return ui}, get sess(){return sess}, get view(){return view}, get content(){return content}, get syncState(){return syncState}, DEFAULT_CONTENT, ANCHOR_POOL, chunkText, getChunks, validChunks, chunkPool, spanTrialSet, pickSessionPassages, selectedPassageIds, togglePassageSelection, patchPassageSelectionUi, startSession, abortSession, renderShortIntro, renderShortResult, unseenPassages, allPassages, personalPassages, normalizePersonalPassage, importPersonalContent, daysFromToday, passageKey, passageKeys, isPassageSeen, markPassagesSeen, markPassageRead, textFingerprint, sourceUrlKey, renderHome, renderHistory, contentStatus, renderFreshnessPanel, guardedStart, renderPacer, renderPacerQuiz, answerPacer, renderSpanIntro, answerSpan, finishSpan, renderRead, startReading, finishReading, renderQuiz, finishQuiz, renderReread, startReread, finishReread, renderResult, textStats, adjustSpeed, makeDeepCloze, answerDeepCloze, normalizeNumerals, parseKanjiNum, startAnchor, renderAnchorRead, startAnchorRead, finishAnchorRead, renderAnchorQuiz, answerAnchor, anchorDue, todayMenu, goalProgress, gazeSpan, sessionKeyTerms, passageTakeaway, finishVocab, proceedAfterCloze1, weakestSkill, feedbackGenreScore, preferByFeedback, recordContentFeedback, recordContentFeedbackById, recordQuestionFeedback, recordQuestionFeedbackById, renderContentFeedback, contentFeedbackFor, contentFeedbackKey, findPassageById, defaultState, newSessionId, stampField, saveState, mergeStates, syncableState, unionBy, PHASES, render, pickSessionPassages, sessionQuestions, mergeContentFeedback, recordContentNote, recordContentNoteById, renderRestoreCard, restoreFromCloud, PASSWORD_RE, uiSendMagicLink, uiSetPassword, uiPasteAuthLink, authParamsFrom, applyAuthTokens, histKey, syncCfg, syncEnabled, signedIn, loadAuth, saveAuth, syncNow, pullRemote, pushRemote, scheduleSync, flushSyncQueue, syncStatusText, renderSyncCard, renderSyncLine, syncSignOut, KEY, AUTH_KEY, UI_KEY };");
+eval(js + "\nglobal.__app = { get state(){return state}, set state(v){state=v}, get ui(){return ui}, get sess(){return sess}, get view(){return view}, get content(){return content}, get syncState(){return syncState}, DEFAULT_CONTENT, ANCHOR_POOL, chunkText, getChunks, validChunks, chunkPool, spanTrialSet, pickSessionPassages, selectedPassageIds, togglePassageSelection, patchPassageSelectionUi, startSession, abortSession, renderShortIntro, renderShortResult, unseenPassages, unseenStock, isReviewPassage, addedOnOf, allPassages, personalPassages, normalizePersonalPassage, importPersonalContent, daysFromToday, passageKey, passageKeys, isPassageSeen, markPassagesSeen, markPassageRead, textFingerprint, sourceUrlKey, renderHome, renderHistory, contentStatus, renderFreshnessPanel, guardedStart, renderPacer, renderPacerQuiz, answerPacer, renderSpanIntro, answerSpan, finishSpan, renderRead, startReading, finishReading, renderQuiz, finishQuiz, renderReread, startReread, finishReread, renderResult, textStats, adjustSpeed, makeDeepCloze, answerDeepCloze, normalizeNumerals, parseKanjiNum, startAnchor, renderAnchorRead, startAnchorRead, finishAnchorRead, renderAnchorQuiz, answerAnchor, anchorDue, todayMenu, goalProgress, gazeSpan, sessionKeyTerms, passageTakeaway, finishVocab, proceedAfterCloze1, weakestSkill, feedbackGenreScore, preferByFeedback, recordContentFeedback, recordContentFeedbackById, recordQuestionFeedback, recordQuestionFeedbackById, renderContentFeedback, contentFeedbackFor, contentFeedbackKey, findPassageById, defaultState, newSessionId, stampField, saveState, mergeStates, syncableState, unionBy, PHASES, render, pickSessionPassages, sessionQuestions, mergeContentFeedback, recordContentNote, recordContentNoteById, renderRestoreCard, restoreFromCloud, PASSWORD_RE, uiSendMagicLink, uiSetPassword, uiPasteAuthLink, authParamsFrom, applyAuthTokens, histKey, syncCfg, syncEnabled, signedIn, loadAuth, saveAuth, syncNow, pullRemote, pushRemote, scheduleSync, flushSyncQueue, syncStatusText, renderSyncCard, renderSyncLine, syncSignOut, KEY, AUTH_KEY, UI_KEY };");
 
 (async () => {
   await new Promise(r => _st(r, 80)); // init完了待ち
@@ -118,7 +118,14 @@ eval(js + "\nglobal.__app = { get state(){return state}, set state(v){state=v}, 
   // ========== A. コンテンツ品質検査 ==========
   const todayUTC = new Date().toISOString().slice(0, 10);
   check("A1 日付がstaleでない (date >= 実行日UTC)", daily.date >= todayUTC, `date=${daily.date}`);
-  check("A2 パッセージ10本（複数セッション用）", (daily.passages || []).length === 10, `n=${(daily.passages || []).length}`);
+  const GENRE5 = ["スタートアップ・新規事業", "社会・価値観", "市場・経済・地政学", "経営・リーダーシップ", "未来の兆し"];
+  // 4.0: 日次はビッグイシュー2本だけ。残りの枠は復習教材（Obsidianのリサーチ由来）が埋める。
+  const N = (daily.passages || []).length;
+  check("A2 日次はビッグイシュー2本（4.0）", N === 2, `n=${N}`);
+  check("A2b 全教材に kind と addedOn がある（新しい順のキューに並べるため）",
+    (daily.passages || []).every(p => p.kind === "issue" && /^\d{4}-\d{2}-\d{2}$/.test(String(p.addedOn || ""))),
+    (daily.passages || []).map(p => `${p.kind}/${p.addedOn}`).join(" "));
+  check("A2c 一覧に出す枠は5（slots）", daily.slots === 5, `slots=${daily.slots}`);
   let ansDist = [0, 0, 0, 0];
   for (const p of daily.passages || []) {
     const id = p.genre || p.tag || p.id;
@@ -208,12 +215,42 @@ eval(js + "\nglobal.__app = { get state(){return state}, set state(v){state=v}, 
   // 旧手順（WebSearchのみ）で作られており、遡って落としても直せない。
   const sourcePolicyOn = String(daily.date || "") >= "2026-09-11";
   if (sourcePolicyOn) {
-    check("A18b 出典の配分: official 3本以下・洞察系 5本以上", officialN <= SOURCES.quota.official_max && insightN >= SOURCES.quota.insight_min,
+    // 本数が10本から2本に減ったので、配分は割合で見る（official 3割まで・洞察系 半分以上）
+    const officialMax = Math.min(SOURCES.quota.official_max, Math.max(1, Math.round(N * 0.3)));
+    const insightMin = Math.max(1, Math.ceil(N * 0.5));
+    check(`A18b 出典の配分: official ${officialMax}本以下・洞察系 ${insightMin}本以上`, officialN <= officialMax && insightN >= insightMin,
       `official ${officialN} / 洞察系 ${insightN} / 内訳 ${JSON.stringify(kinds)}`);
-    check("A18c 教材が sourcePolicy 3.6 で作られている（sources.json を巡回した印）", daily.sourcePolicy === "3.6", `sourcePolicy=${daily.sourcePolicy}`);
+    check("A18c 教材が sourcePolicy 4.0 で作られている（sources.json を巡回した印）", daily.sourcePolicy === "4.0", `sourcePolicy=${daily.sourcePolicy}`);
   } else {
     check("A18b 出典の配分（3.6以前の教材は記録のみ）", true, `official ${officialN} / 洞察系 ${insightN}`);
   }
+  // ---------- A20/A21. 変換ロジック（自然な日本語と、洞察が残っているか） ----------
+  const { lintPassage } = require("./insight-lint.js");
+  const lintFails = [];
+  for (const p of (daily.passages || [])) {
+    const errs = lintPassage(p, {});
+    if (errs.length) lintFails.push(`[${p.id}] ${errs.slice(0, 2).join(" / ")}`);
+  }
+  check("A20 全教材が変換リンターに通る（翻訳調・長文・因果欠落・具体欠落なし）", lintFails.length === 0, lintFails.slice(0, 2).join(" "));
+  // 直近まで、10本すべての末尾に同じ一般論（「数字は結果だけでなく…」）が付いていた。
+  // 使い回しの定型句は、読み手にとって読む価値がゼロの行になる。
+  const boiler = [];
+  const texts = (daily.passages || []).map(p => String(p.text || "").replace(/\s/g, ""));
+  for (let i = 0; i < texts.length; i++) {
+    for (let j = i + 1; j < texts.length; j++) {
+      for (let k = 0; k + 30 <= texts[i].length; k += 10) {
+        const span = texts[i].slice(k, k + 30);
+        if (texts[j].includes(span)) { boiler.push(span); break; }
+      }
+    }
+  }
+  check("A21 教材どうしで定型句（30字以上）を使い回していない", boiler.length === 0, boiler.slice(0, 1).join(""));
+  check("A22 復習教材の経路が配線されている（抽出ツール・非公開スキーマ・日次手順）",
+    fs.existsSync(path.join(ROOT, "tools", "build-review-briefs.js"))
+    && /sokugan-private-review-v1/.test(fs.readFileSync(path.join(ROOT, "tools", "publish-private-youtube.js"), "utf8"))
+    && /build-review-briefs/.test(fs.readFileSync(path.join(ROOT, ".claude", "commands", "daily.md"), "utf8"))
+    && /insight-lint/.test(fs.readFileSync(path.join(ROOT, ".claude", "commands", "daily.md"), "utf8")));
+
   check("A18d sources.json が正しい形（kind・quota・巡回先）", SOURCES.schema === "sokugan-sources-v1" && Array.isArray(SOURCES.sources) && SOURCES.sources.length >= 20
     && SOURCES.sources.every(x => x.id && x.url && x.kind && SOURCES.kinds[x.kind]) && SOURCES.quota && SOURCES.quota.official_max <= 3,
     `${(SOURCES.sources || []).length}件`);
@@ -238,18 +275,19 @@ eval(js + "\nglobal.__app = { get state(){return state}, set state(v){state=v}, 
   // 同様に、第1文が「〜が〜を発表した」の記事が39%を占めていた（プレスリリース型）。
   const hooks = (daily.passages || []).map(p => ((p.takeaway || {}).hook) || "");
   const contrastHooks = hooks.filter(h => /ではなく|でなく|より/.test(h));
-  check("A17 takeawayフックの対比構文は3本以下（驚きを文型で作らない）",
-    contrastHooks.length <= 3, `${contrastHooks.length}/10本`);
+  check("A17 takeawayフックの対比構文は3割以下（驚きを文型で作らない）",
+    contrastHooks.length <= Math.max(1, Math.round(N * 0.3)), `${contrastHooks.length}/${N}本`);
   const announceLead = (daily.passages || []).filter(p =>
     /(発表した|公表した|明らかにした|開始した|募った|決めた)/.test(String(p.text || "").split("。")[0]));
   // 閾値は「いま以上に悪くしない床」。2026-09-10時点の実測が7/10なので、まず7で止める。
   // 生成側の目標は daily.md に書いた3本以下。次の生成で下がったらここも下げる。
-  check("A17b 第1文が発表ものの記事は7本以下（プレスリリース化の床。目標は3本）",
-    announceLead.length <= 7, `${announceLead.length}/10本`);
+  // 4.0: 2本しか出さないので、発表ものは最大1本。残り1本は構造・数字の裏側・現場の変化から取る。
+  check("A17b 第1文が発表ものの記事は半分以下（プレスリリース化の床）",
+    announceLead.length <= Math.floor(N / 2), `${announceLead.length}/${N}本`);
   // A17c: hookの書き出しが全部同じだと、それ自体が型として見える
   const hookHeads = hooks.map(h => h.slice(0, 6));
   const dupHead = hookHeads.filter((h, i) => hookHeads.indexOf(h) !== i).length;
-  check("A17c フックの書き出しが揃いすぎていない", dupHead <= 7, `重複${dupHead}件`);
+  check("A17c フックの書き出しが揃いすぎていない", dupHead === 0, `重複${dupHead}件`);
 
   // ---------- A16. タイトルの日本語（読む気が起きる形になっているか） ----------
   const titles = (daily.passages || []).map(p => String(p.title || ""));
@@ -263,7 +301,7 @@ eval(js + "\nglobal.__app = { get state(){return state}, set state(v){state=v}, 
   const overused = Object.entries(patCounts).filter(([, n]) => n > 2).map(([k, n]) => `${k}=${n}`);
   check("A16b 同じ構文のタイトルが3本以上ない（型の使い回し）", overused.length === 0, overused.join(" ") || JSON.stringify(patCounts));
   const dupTitleToday = titles.filter((t, i) => titles.findIndex(x => charOverlap(x, t) >= 0.8) !== i);
-  check("A16c 当日10本のタイトルが互いに似すぎない", dupTitleToday.length === 0, dupTitleToday.slice(0, 2).join(" / "));
+  check("A16c 当日分のタイトルが互いに似すぎない", dupTitleToday.length === 0, dupTitleToday.slice(0, 2).join(" / "));
 
   // ---------- A4c. 漢数字の数量表記が残っていないか（正規化の回帰防止） ----------
   // 数字始まり・長さ2以上の漢数字連（六千三百/二千二十四 等）は算用数字へ正規化されるべき
@@ -286,10 +324,11 @@ eval(js + "\nglobal.__app = { get state(){return state}, set state(v){state=v}, 
     return hits >= 4; // 本文でAI語が頻出＝AI中心
   });
   const genres = new Set((daily.passages || []).map(p => p.genre));
-  check("A14 AI中心の記事は2本以下（テーマ多様性）", aiCentric.length <= 2, `AI中心 ${aiCentric.length}/10: ${aiCentric.map(p => p.genre).join(",")}`);
-  check("A14b 非AIテーマが8本以上", (daily.passages || []).length - aiCentric.length >= 8, `非AI ${(daily.passages || []).length - aiCentric.length}本`);
-  const genreCounts = [...genres].map(g => (daily.passages || []).filter(p => p.genre === g).length);
-  check("A14c 5ジャンルを各2本", genres.size === 5 && genreCounts.every(n => n === 2), `${genres.size}種 / ${genreCounts.join(",")}`);
+  check("A14 AI中心の記事は半分以下（テーマ多様性）", aiCentric.length <= Math.floor(N / 2), `AI中心 ${aiCentric.length}/${N}: ${aiCentric.map(p => p.genre).join(",")}`);
+  check("A14b 非AIテーマが1本以上", N - aiCentric.length >= 1, `非AI ${N - aiCentric.length}本`);
+  // 4.0: 2本を同じジャンルで埋めない（5系統から毎日2つ選ぶ）
+  check("A14c 当日の2本は別ジャンル（5系統から選ぶ）",
+    genres.size === N && [...genres].every(g => GENRE5.includes(g)), `${[...genres].join(" / ")}`);
   // 実際に崩れた表現をfixture化。単語境界と意味の閉じ方の両方を固定する。
   const semanticFixtures = [
     ["新たな好奇心の対象が見つかる。", "新たな好奇心の対象が"],
@@ -384,8 +423,8 @@ eval(js + "\nglobal.__app = { get state(){return state}, set state(v){state=v}, 
   // ========== B. UI描画検査（実コードのE2E） ==========
   check("B1 コンテンツがJSONからロードされた", A.content && A.content.date === daily.date, A.content && A.content.date);
   A.renderHome();
-  check("B2 ホーム: 2本文を選んでから開始する導線を描画", screenEl().includes("今日、何を読む？") && screenEl().includes("日次記事・YouTube教材から2本") && screenEl().includes("選んだ2本で始める"));
-  check("B2a ホーム: YouTube教材はファイル選択でなく自動受取を案内", screenEl().includes("台本取得後にあなた専用ライブラリへ自動追加") && !screenEl().includes("personal-content-file"));
+  check("B2 ホーム: 5枠から2本を選んでから開始する導線を描画", screenEl().includes("今日の5本から2本を選ぶ") && screenEl().includes("選んだ2本で始める"));
+  check("B2a ホーム: 復習教材はファイル選択でなく自動受取を案内", screenEl().includes("線を引いた論点が優先で毎日あなた専用ライブラリへ届きます") && !screenEl().includes("personal-content-file"));
   check("B3 ホーム: 成長カーブ描画", screenEl().includes("成長カーブ"));
   // 鮮度ゲート（開始前に最新かを確認できる仕組み）
   check("B3a ホーム: 鮮度ゲート＋更新確認ボタン描画", screenEl().includes("更新を確認") && /fresh (ok|stale|err)/.test(screenEl()));
@@ -401,6 +440,28 @@ eval(js + "\nglobal.__app = { get state(){return state}, set state(v){state=v}, 
   check("B3f YouTube由来の私用教材は翌日まで表示せず、同期対象へ保存", imported.count === 1 && A.state.personalLibrary.length === 1 && A.personalPassages().length === 0);
   A.state.personalLibrary[0].availableOn = A.daysFromToday(0);
   check("B3g 解禁日以降の私用教材は本文選択肢に加わる", A.personalPassages().length === 1 && A.allPassages().some(p => p.id === "youtube-private-01"));
+  // 4.0: 実運用の在庫を再現する。日次2本＋復習（Obsidianリサーチ由来）で一覧5枠が埋まる。
+  const reviewStock = (A.DEFAULT_CONTENT.passages || []).map((p, i) => Object.assign({}, p, {
+    id: `review-qa-0${i + 1}`, kind: "review", genre: "学び方", tag: "学び方",
+    availableOn: A.daysFromToday(0), addedOn: A.daysFromToday(0),
+    author: p.author || { name: "検証", role: "検証用の復習教材" }
+  }));
+  A.state.personalLibrary = [...A.state.personalLibrary, ...reviewStock];
+  check("Q1 一覧は未読を新しい順に5本まで出す（読み終えた分だけ繰り上がる）",
+    A.unseenPassages().length === Math.min(5, A.content.passages.length + A.personalPassages().length),
+    `未読${A.unseenPassages().length}本 / 在庫${A.content.passages.length + A.personalPassages().length}本`);
+  check("Q2 日次のビッグイシューと復習が同じ一覧に並ぶ",
+    A.unseenPassages().some(p => !A.isReviewPassage(p)) && A.unseenPassages().some(p => A.isReviewPassage(p)),
+    A.unseenPassages().map(p => (A.isReviewPassage(p) ? "復習" : "論点")).join(","));
+  {
+    const older = Object.assign({}, reviewStock[0], { id: "review-qa-old", addedOn: "2026-01-01", availableOn: A.daysFromToday(0), text: reviewStock[0].text.replace("。", "。 ") });
+    A.state.personalLibrary = [older, ...A.state.personalLibrary];
+    const order = A.unseenPassages().map(p => p.addedOn);
+    check("Q3 一覧は新しい順（古い在庫は控えに回る）", order.join(",") === [...order].sort().reverse().join(","), order.join(","));
+    check("Q4 6本目以降は5枠に出さず控えに置く", A.unseenPassages().length === 5 && !A.unseenPassages().some(p => p.id === "review-qa-old"),
+      `${A.unseenPassages().length}枠`);
+    A.state.personalLibrary = A.state.personalLibrary.filter(p => p.id !== "review-qa-old");
+  }
   A.state.selectedPassageIds = [];
   A.togglePassageSelection(daily.passages[0].id);
   A.togglePassageSelection("youtube-private-01");
@@ -599,9 +660,12 @@ eval(js + "\nglobal.__app = { get state(){return state}, set state(v){state=v}, 
   A.state.personalLibrary = [];
 
   // ---------- C. 解析エンジン（難度・Deep Cloze・アンカー） ----------
-  const rs = (daily.passages || []).map(p => A.textStats(p.text));
+  // 4.0: 難度の幅は一覧に並ぶ在庫（日次＋復習）で見る。日次2本だけでは差が出ない
+  const stock = (daily.passages || []).concat(A.personalPassages());
+  const readPool = stock.length >= 3 ? stock : (daily.passages || []).concat(A.DEFAULT_CONTENT.passages || []);
+  const rs = readPool.map(p => A.textStats(p.text));
   check("C1 難度スコアが0..1・bucket1-5で算出", rs.every(s => s.readability >= 0 && s.readability <= 1 && s.bucket >= 1 && s.bucket <= 5), rs.map(s => s.bucket).join(","));
-  check("C2 難度に差がつく（飽和していない）", (Math.max(...rs.map(s => s.readability)) - Math.min(...rs.map(s => s.readability))) >= 0.05, `range ${(Math.max(...rs.map(s=>s.readability))-Math.min(...rs.map(s=>s.readability))).toFixed(2)}`);
+  check("C2 その日の在庫（日次＋復習）で難度に差がつく", (Math.max(...rs.map(s => s.readability)) - Math.min(...rs.map(s => s.readability))) >= 0.05, `range ${(Math.max(...rs.map(s=>s.readability))-Math.min(...rs.map(s=>s.readability))).toFixed(2)}`);
   check("C3 難度補正速度は難度単調（難しい文ほど高い）", A.adjustSpeed(400, 0.7) > A.adjustSpeed(400, 0.4));
   const dcs = (daily.passages || []).map(p => A.makeDeepCloze(p.text)).filter(Boolean);
   check("C4 Deep Cloze: 生成できた本文では4択・正解整合", dcs.length >= 1 && dcs.every(d => d.opts.length === 4 && d.opts[d.ans] === d.correct), `生成 ${dcs.length}/${daily.passages.length}本`);
@@ -619,9 +683,9 @@ eval(js + "\nglobal.__app = { get state(){return state}, set state(v){state=v}, 
 
   // ---------- E. SOKUGAN 3.0 (語彙道場/持ち帰り/キャッチv3/メニュー/目標) ----------
   const ktPass = (daily.passages || []).filter(p => (p.keyTerms || []).length >= 2);
-  check("E1 keyTerms: 10本すべてに2語以上・各語 plain+lures3", ktPass.length === 10 && ktPass.every(p => p.keyTerms.every(t => t.term && (t.plain || "").length >= 15 && (t.lures || []).length >= 3)), `${ktPass.length}/10本`);
+  check("E1 keyTerms: 全教材に2語以上・各語 plain+lures3", ktPass.length === N && ktPass.every(p => p.keyTerms.every(t => t.term && (t.plain || "").length >= 15 && (t.lures || []).length >= 3)), `${ktPass.length}/${N}本`);
   const tkPass = (daily.passages || []).filter(p => p.takeaway && (p.takeaway.hook || "").length >= 10 && (p.takeaway.hook || "").length <= 70);
-  check("E2 takeaway: 10本すべてに10-70字のフック", tkPass.length === 10, `${tkPass.length}/10本`);
+  check("E2 takeaway: 全教材に10-70字のフック", tkPass.length === N, `${tkPass.length}/${N}本`);
   // キャッチ: 合成した文字列を使わず、選択肢のすべてが本文から得た自然なチャンクである
   let naturalSpanOK = true, naturalSpanDetail = [];
   const sourceChunks = new Set(Object.values(A.chunkPool()).flat());
@@ -687,7 +751,7 @@ eval(js + "\nglobal.__app = { get state(){return state}, set state(v){state=v}, 
   check("G4 未読枯渇時は既読へフォールバックせずnullを返す",
     A.pickSessionPassages("short") === null && A.pickSessionPassages("full") === null);
   A.renderHome();
-  check("G4b ホームに『本日分を完走』を明示（黙って再表示しない）", screenEl().includes("本日分を完走"));
+  check("G4b ホームに『在庫を完走』を明示（黙って再表示しない）", screenEl().includes("在庫を完走"));
   A.startSession("short");
   check("G4c 枯渇時にショート版を押しても既読本文を出さない", A.sess === null || A.sess.mode !== "short");
 
@@ -1058,7 +1122,7 @@ eval(js + "\nglobal.__app = { get state(){return state}, set state(v){state=v}, 
   const perPassage = {};
   for (const i of ((ca && ca.items) || [])) if (i.passage) perPassage[i.passage] = (perPassage[i.passage] || 0) + 1;
   const uncovered = (daily.passages || []).filter(p => (perPassage[p.id] || 0) !== (p.questions || []).length);
-  check("D3c 全10本が各3問ずつ監査されている（1本も素通りしていない）",
+  check("D3c 全教材が設問数ぶん監査されている（1本も素通りしていない）",
     uncovered.length === 0, uncovered.map(p => p.id + ":" + (perPassage[p.id] || 0)).join(" "));
   // 監査対象が実際にその設問か（stemの実体照合）。IDだけ付け替える偽装を防ぐ
   const stemMismatch = [];

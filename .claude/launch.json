@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "sokugan",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["/Users/wota/Documents/ChatGPT/AI Engineering/sokugan-work/.claude/serve.js"],
+      "port": 8788
+    }
+  ]
+}

@@ -31,13 +31,31 @@ function videoIdFromUrl(source) {
 function sameVideo(existing, incoming) {
   if (!existing || !incoming) return false;
   if (existing.id === incoming.id) return true;
+  // 復習教材は1本の動画から論点ごとに何本も作る。IDが違えば別の教材として残す
+  if (incoming.kind === "review" || existing.kind === "review") return false;
   const vid = incoming.videoId || videoIdFromUrl(incoming.source);
   return !!vid && (videoIdFromUrl(existing.source) === vid || String(existing.id || "").includes(vid));
 }
 function sameJson(a, b) { return JSON.stringify(a) === JSON.stringify(b); }
+// Obsidianのリサーチから作った復習教材（1ファイルに複数本）
+function readReviewLessons(data, file) {
+  if (!Array.isArray(data.passages) || !data.passages.length) fail("復習教材のpassagesが空です");
+  return data.passages.map((p, i) => {
+    if (!p.id || !/^review-/.test(p.id)) fail(`復習教材のidは review- で始めてください: ${p.id || "(なし)"}`);
+    if (!validPassage(p)) fail(`本文400〜700字、3問×4択の形式を満たしていません: ${p.id}`);
+    if (!p.source || !videoIdFromUrl(p.source)) fail(`出典に元動画のURLがありません: ${p.id}`);
+    if (!p.author || !p.author.name) fail(`誰の考えかが無い教材です: ${p.id}`);
+    return Object.assign({}, p, {
+      kind: "review",
+      availableOn: p.availableOn || data.availableOn || data.date,
+      addedOn: p.addedOn || data.date
+    });
+  });
+}
 function readLesson(file) {
   let data;
   try { data = JSON.parse(fs.readFileSync(file, "utf8")); } catch (e) { fail(`教材JSONを読めません: ${e.message}`); }
+  if (data && data.schema === "sokugan-private-review-v1") return readReviewLessons(data, file);
   if (!data || data.schema !== "sokugan-private-youtube-v2" || !Array.isArray(data.passages) || data.passages.length !== 1) {
     fail("新形式のSOKUGAN用YouTube教材ではありません。1動画につきpassagesを1本だけ、schema=sokugan-private-youtube-v2で作成してください");
   }
@@ -115,5 +133,5 @@ if (!cfg.url || !cfg.key) fail("Supabaseの接続情報またはSecret API Key�
 const passages = readLesson(path.resolve(file));
 resolveUserId(cfg.url, cfg.key, cfg.userId)
   .then(userId => publish(passages, Object.assign(cfg, { userId })))
-  .then(r => console.log(`OK: 1動画1教材で登録しました（追加${r.added}、更新${r.updated}、旧教材整理${r.removed}、ライブラリ合計${r.total}本）。スマホでSOKUGANを開くと自動同期します。`))
+  .then(r => console.log(`OK: あなた専用ライブラリへ登録しました（追加${r.added}、更新${r.updated}、旧教材整理${r.removed}、ライブラリ合計${r.total}本）。スマホでSOKUGANを開くと自動同期します。`))
   .catch(e => fail(`自動登録に失敗しました: ${e.message}`));

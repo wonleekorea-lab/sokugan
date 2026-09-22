@@ -21,3 +21,4 @@
 !/README.md
 # .claude配下のローカル専用設定は除外
 .claude/settings.local.json
+qa/_dbg.js

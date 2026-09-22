@@ -686,15 +686,27 @@ function markPassageRead(p) {
   markPassagesSeen([p]);
   if ((state.seenPassageKeys || []).length !== before) saveState();
 }
-function unseenPassages() {
-  const seen = seenPassageSet();
-  const dailyUnseen = (content.passages || []).filter(p => !isPassageSeen(p, seen));
-  // 日次教材を完走した後は、私用教材へ黙ってフォールバックしない。
-  // 私用教材は日次在庫が残っている間だけ選択肢へ加える。
-  if (!dailyUnseen.length) return [];
-  const personalUnseen = personalPassages().filter(p => !isPassageSeen(p, seen));
-  return [...dailyUnseen, ...personalUnseen];
+// ---------- 5枠のキュー（4.0）----------
+// 一覧に並ぶのは常に未読5本まで。1本読み終えるたびに、次に新しいものが繰り上がる。
+// 10本を一度に見せていた頃は、選ぶこと自体が重くなって在庫が滞留していた。
+const VISIBLE_SLOTS = 5;
+function isReviewPassage(p) { return !!p && (p.kind === "review" || p.kind === "youtube" || /^(review|youtube)-/.test(String(p.id || ""))); }
+// 新しい順に並べるための日付。日次のビッグイシューは配信日、復習は取り込み日。
+function addedOnOf(p) {
+  return String((p && (p.addedOn || p.availableOn)) || (isReviewPassage(p) ? "" : (content && content.date) || "")) || "";
 }
+function queueOrder(a, b) {
+  const d = addedOnOf(b).localeCompare(addedOnOf(a));
+  return d !== 0 ? d : String(a.id || "").localeCompare(String(b.id || ""));
+}
+// 未読の全在庫（日次のビッグイシュー＋復習ライブラリ）。新しい順。
+function unseenStock() {
+  const seen = seenPassageSet();
+  return [...(content.passages || []), ...personalPassages()]
+    .filter(p => p && p.id && !isPassageSeen(p, seen))
+    .sort(queueOrder);
+}
+function unseenPassages() { return unseenStock().slice(0, VISIBLE_SLOTS); }
 function totalTrainingDays() {
   return new Set(state.history.map(h => h.date)).size;
 }
@@ -1302,8 +1314,12 @@ function renderHome() {
   const gp = goalProgress();
   const gz = gazeSpan(adjMa7);
   const tk = (state.lastTakeaways && state.lastTakeaways.date === today()) ? state.lastTakeaways : null;
-  const unseenN = unseenPassages().length;
-  const selectable = preferByFeedback(unseenPassages());
+  const stockN = unseenStock().length;
+  const visible = unseenPassages();
+  const unseenN = visible.length;
+  const issueN = visible.filter(p => !isReviewPassage(p)).length;
+  const reviewN = unseenN - issueN;
+  const selectable = preferByFeedback(visible);
   const selectedIds = selectedPassageIds();
   const ringPct = todayBest ? Math.min(100, Math.round(todayBest / t * 100)) : 0;
   const slots = () => `<span class="slots" id="selection-slots">${[0,1].map(i => `<i class="${i < selectedIds.length ? "on" : ""}"></i>`).join("")}</span>`;
@@ -1325,14 +1341,15 @@ function renderHome() {
       </div>
 
       <div style="margin-top:18px;display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-        <div class="card-subtitle" style="margin:0">今日、何を読む？ 日次記事・YouTube教材から2本</div>
+        <div class="card-subtitle" style="margin:0">今日の5本から2本を選ぶ · 論点${issueN}・復習${reviewN}</div>
         ${slots()}
       </div>
-      <div class="scrollwrap"><div id="passage-list" style="display:grid;gap:6px;max-height:258px;overflow:auto;padding:2px 2px 12px;border-top:1px solid var(--border)">${selectable.map(p => { const order = selectedIds.indexOf(p.id); const isYoutube = p.kind === "youtube" || /^youtube-/.test(p.id); const defaultLabel = isYoutube ? "YouTube教材" : esc(genreOf(p)); return `<button class="opt passage-choice ${order >= 0 ? "chosen" : ""}" data-passage-id="${encodeURIComponent(p.id)}" style="width:100%;min-height:0;text-align:left;padding:11px 12px" onclick="togglePassageSelection(decodeURIComponent('${encodeURIComponent(p.id)}'))"><div style="display:flex;gap:7px;align-items:center"><span class="tag" data-selection-label data-default-label="${defaultLabel}" style="font-size:9.5px">${order >= 0 ? `本文${order + 1}` : defaultLabel}</span>${isYoutube ? `<span class="small">${esc(genreOf(p))}</span>` : ""}</div><div style="font-size:13.5px;font-weight:700;line-height:1.5;margin-top:5px">${esc(p.title)}</div>${p.author && p.author.name ? `<div class="small" style="margin-top:3px">${esc([p.author.name, p.author.role].filter(Boolean).join(" · "))}</div>` : ""}</button>`; }).join("") || `<p class="small">選べる未読教材がありません。</p>`}</div></div>
+      <div class="scrollwrap"><div id="passage-list" style="display:grid;gap:6px;max-height:258px;overflow:auto;padding:2px 2px 12px;border-top:1px solid var(--border)">${selectable.map(p => { const order = selectedIds.indexOf(p.id); const isReview = isReviewPassage(p); const defaultLabel = isReview ? "復習" : "今日の論点"; return `<button class="opt passage-choice ${order >= 0 ? "chosen" : ""}" data-passage-id="${encodeURIComponent(p.id)}" style="width:100%;min-height:0;text-align:left;padding:11px 12px" onclick="togglePassageSelection(decodeURIComponent('${encodeURIComponent(p.id)}'))"><div style="display:flex;gap:7px;align-items:center"><span class="tag${isReview ? " sci" : ""}" data-selection-label data-default-label="${defaultLabel}" style="font-size:9.5px">${order >= 0 ? `本文${order + 1}` : defaultLabel}</span><span class="small">${esc(genreOf(p))}</span></div><div style="font-size:13.5px;font-weight:700;line-height:1.5;margin-top:5px">${esc(p.title)}</div>${p.author && p.author.name ? `<div class="small" style="margin-top:3px">${esc([p.author.name, p.author.role].filter(Boolean).join(" · "))}</div>` : ""}</button>`; }).join("") || `<p class="small">選べる未読教材がありません。</p>`}</div></div>
 
       <button id="start-full" class="btn" style="margin-top:14px" onclick="guardedStart('full')" ${unseenN < 2 || selectedIds.length !== 2 ? "disabled" : ""}>選んだ2本で始める<span style="font-size:9.5px;font-weight:600;opacity:.65;letter-spacing:.18em;margin-left:10px">6 MIN</span></button>
-      ${unseenN < 1 ? `<div class="banner" style="margin-top:10px">${ic("flag")} <b>本日分を完走</b>。未読0本。</div>`
-        : unseenN < 2 ? `<div class="banner" style="margin-top:10px">${ic("flag")} 残り1本。2本そろう次の更新をお待ちください。</div>` : ""}
+      ${unseenN < 1 ? `<div class="banner" style="margin-top:10px">${ic("flag")} <b>在庫を完走</b>。未読0本。次の更新で新しい論点と復習が届きます。</div>`
+        : unseenN < 2 ? `<div class="banner" style="margin-top:10px">${ic("flag")} 残り1本。2本そろう次の更新をお待ちください。</div>`
+        : stockN > unseenN ? `<p class="small" style="margin-top:8px">${ic("repeat")} 読み終えるたび、控えの${stockN - unseenN}本から新しい順に繰り上がります。</p>` : ""}
       ${fr.isStale ? `<p class="small" style="margin-top:8px;color:var(--acc-ink)">${ic("alert")} 表示中は <b>${fr.date}</b> 分</p>` : ""}
 
       ${gp ? `
@@ -1349,7 +1366,7 @@ function renderHome() {
           <button class="stat-box" style="border:none;cursor:pointer;font-family:inherit;color:inherit" onclick="setGoal(650)"><div class="v">650</div><div class="l">上位帯</div></button>
         </div>
       </div>`}
-      <details class="fold" style="margin-top:14px"><summary>${ic("play")} YouTube教材</summary><p class="small" style="padding-bottom:12px">台本取得後にあなた専用ライブラリへ自動追加されます。${syncEnabled() && signedIn() ? "" : "受取には「記録」で端末間同期を設定してください。"}</p></details>
+      <details class="fold" style="margin-top:14px"><summary>${ic("play")} 復習教材（YouTubeリサーチ）</summary><p class="small" style="padding-bottom:12px">Obsidianに溜めたリサーチから、線を引いた論点が優先で毎日あなた専用ライブラリへ届きます。${syncEnabled() && signedIn() ? "" : "受取には「記録」で端末間同期を設定してください。"}</p></details>
     </div>
 
     ${tk ? `<div class="card"><div class="card-title">${ic("gift")}今日の持ち帰り</div><div class="card-subtitle up">Takeaways</div>${tk.items.map(t => `<div class="win-item"><span class="ico">${ic("quote")}</span><div><b>${esc(t.hook)}</b></div></div>`).join("")}<button class="btn secondary small" style="margin-top:10px" onclick="copyTakeaways()">${ic("copy")} コピー</button></div>` : ""}
@@ -1504,7 +1521,7 @@ function patchPassageSelectionUi() {
     slotWrap.querySelectorAll("i").forEach((el, i) => el.classList.toggle("on", i < ids.length));
   }
   const full = document.getElementById("start-full");
-  if (full) full.disabled = ids.length !== 2 || unseenPassages().length < 3;
+  if (full) full.disabled = ids.length !== 2 || unseenPassages().length < 2;
   const short = document.getElementById("start-short");
   if (short) short.disabled = ids.length !== 1 || unseenPassages().length < 1;
   const hint = document.getElementById("short-selection-hint");
@@ -1822,7 +1839,9 @@ function chunkPool() {
   const key = (content.date || "") + "|" + contentSignature() + "|" + (state.personalLibrary || []).length;
   if (_chunkPoolCache && _chunkPoolKey === key) return _chunkPoolCache;
   const pool = {};
-  for (const p of (content.passages || [])) {
+  // 4.0: 復習教材も今日読む教材なので、瞬間キャッチの語プールに入れる。
+  // 日次が2本に減った分、ここを日次だけにすると候補が痩せて「先頭1字で当たる」出題になる。
+  for (const p of [...(content.passages || []), ...personalPassages()]) {
     const cs = getChunks(p);
     for (const c of cs) {
       const t = c.replace(/[、。！？「」『』（）・：；]/g, "");
