@@ -1,6 +1,6 @@
 {
   "schema": "sokugan-sources-v1",
-  "updated": "2026-09-10",
+  "updated": "2026-09-22",
   "note": "教材の素材を『どこから拾うか』の正本。/daily はまずここを巡回し、WebSearch は補助にする。kind ごとの配分は harness A18b が検査する。面白かった出典は tools/export-content-feedback-profile.js の sourceDomains に選択率として現れるので、それを見て増減する。",
   "kinds": {
     "analysis":   "独立系の論考・ニュースレター。書き手が自分の判断で構造を説明している",
@@ -63,6 +63,10 @@
     { "id": "gwi", "name": "Global Water Intelligence", "url": "https://www.globalwaterintel.com/", "kind": "media", "lang": "en", "paywall": true, "topics": ["水処理", "水ビジネス", "市場"], "why": "水ビジネスの業界紙。無料の見出しと要約だけでも市場の動きが分かる" },
     { "id": "techcrunch", "name": "TechCrunch", "url": "https://techcrunch.com/", "kind": "media", "lang": "en", "topics": ["スタートアップ", "資金調達"], "why": "資金調達ニュースの供給元。発表ものになりやすいので official 扱いに近く、月3本まで" },
     { "id": "gov-stats", "name": "政府統計・中央銀行（BLS/日銀/FRB/RBA など）", "url": "https://www.bls.gov/", "kind": "official", "lang": "en", "topics": ["統計"], "why": "『数字の裏側』の一次データとしてのみ使う。統計そのものを教材の主役にしない" },
-    { "id": "pr-wires", "name": "PRワイヤー（PR Newswire / GlobeNewswire / Business Wire）", "url": "https://www.prnewswire.com/", "kind": "official", "lang": "en", "topics": ["企業発表"], "why": "事実確認用。ここが出典の教材は月に数本まで" }
+    { "id": "pr-wires", "name": "PRワイヤー（PR Newswire / GlobeNewswire / Business Wire）", "url": "https://www.prnewswire.com/", "kind": "official", "lang": "en", "topics": ["企業発表"], "why": "事実確認用。ここが出典の教材は月に数本まで" },
+    { "id": "gmu-climate-communication", "name": "George Mason University Center for Climate Change Communication", "url": "https://climatecommunication.gmu.edu/", "kind": "analysis", "lang": "en", "topics": ["気候", "コミュニケーション", "社会"], "why": "気候情報の伝え方を調査データで検証する" },
+    { "id": "kcl-business-school", "name": "King's College London Business School", "url": "https://www.kcl.ac.uk/business", "kind": "analysis", "lang": "en", "topics": ["経営", "投資", "企業価値"], "why": "経営・金融の研究を実務に接続する" },
+    { "id": "harvard-salata", "name": "Harvard Salata Institute for Climate and Sustainability", "url": "https://salatainstitute.harvard.edu/", "kind": "analysis", "lang": "en", "topics": ["気候", "予測", "異常気象"], "why": "気候の予測と不確実性を研究者の説明で読む" },
+    { "id": "cnas", "name": "Center for a New American Security", "url": "https://www.cnas.org/", "kind": "analysis", "lang": "en", "topics": ["AI", "安全保障", "地政学"], "why": "AIと安全保障のシナリオを政策研究で捉える" }
   ]
 }

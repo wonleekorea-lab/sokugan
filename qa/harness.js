@@ -119,9 +119,9 @@ eval(js + "\nglobal.__app = { get state(){return state}, set state(v){state=v}, 
   const todayUTC = new Date().toISOString().slice(0, 10);
   check("A1 日付がstaleでない (date >= 実行日UTC)", daily.date >= todayUTC, `date=${daily.date}`);
   const GENRE5 = ["スタートアップ・新規事業", "社会・価値観", "市場・経済・地政学", "経営・リーダーシップ", "未来の兆し"];
-  // 4.0: 日次はビッグイシュー2本だけ。残りの枠は復習教材（Obsidianのリサーチ由来）が埋める。
+  // 日次教材はユーザー指定の5ジャンル各2本。
   const N = (daily.passages || []).length;
-  check("A2 日次はビッグイシュー2本（4.0）", N === 2, `n=${N}`);
+  check("A2 日次教材は10本（5ジャンル各2本）", N === 10, `n=${N}`);
   check("A2b 全教材に kind と addedOn がある（新しい順のキューに並べるため）",
     (daily.passages || []).every(p => p.kind === "issue" && /^\d{4}-\d{2}-\d{2}$/.test(String(p.addedOn || ""))),
     (daily.passages || []).map(p => `${p.kind}/${p.addedOn}`).join(" "));
@@ -324,11 +324,11 @@ eval(js + "\nglobal.__app = { get state(){return state}, set state(v){state=v}, 
     return hits >= 4; // 本文でAI語が頻出＝AI中心
   });
   const genres = new Set((daily.passages || []).map(p => p.genre));
-  check("A14 AI中心の記事は半分以下（テーマ多様性）", aiCentric.length <= Math.floor(N / 2), `AI中心 ${aiCentric.length}/${N}: ${aiCentric.map(p => p.genre).join(",")}`);
-  check("A14b 非AIテーマが1本以上", N - aiCentric.length >= 1, `非AI ${N - aiCentric.length}本`);
-  // 4.0: 2本を同じジャンルで埋めない（5系統から毎日2つ選ぶ）
-  check("A14c 当日の2本は別ジャンル（5系統から選ぶ）",
-    genres.size === N && [...genres].every(g => GENRE5.includes(g)), `${[...genres].join(" / ")}`);
+  check("A14 AI中心の記事は2本以下（テーマ多様性）", aiCentric.length <= 2, `AI中心 ${aiCentric.length}/${N}: ${aiCentric.map(p => p.genre).join(",")}`);
+  check("A14b 非AIテーマが8本以上", N - aiCentric.length >= 8, `非AI ${N - aiCentric.length}本`);
+  check("A14c 5ジャンルを各2本掲載",
+    genres.size === 5 && GENRE5.every(g => (daily.passages || []).filter(p => p.genre === g).length === 2),
+    GENRE5.map(g => `${g}:${(daily.passages || []).filter(p => p.genre === g).length}`).join(" / "));
   // 実際に崩れた表現をfixture化。単語境界と意味の閉じ方の両方を固定する。
   const semanticFixtures = [
     ["新たな好奇心の対象が見つかる。", "新たな好奇心の対象が"],
@@ -435,7 +435,9 @@ eval(js + "\nglobal.__app = { get state(){return state}, set state(v){state=v}, 
   check("B3e 鮮度パネルはQA詳細をホームから外し、開始画面を簡潔に保つ", !A.renderFreshnessPanel(fr).includes("設問明快さ"));
   check("B3d guardedStart が定義されている", typeof A.guardedStart === "function");
   A.state = A.defaultState();
-  const privatePassage = Object.assign({}, daily.passages[0], { id: "youtube-private-01", availableOn: A.daysFromToday(1) });
+  const visibleDaily = A.unseenPassages().find(p => !A.isReviewPassage(p));
+  const visibleDailyIds = () => A.unseenPassages().filter(p => !A.isReviewPassage(p)).slice(0, 2).map(p => p.id);
+  const privatePassage = Object.assign({}, daily.passages[0], { id: "youtube-private-01", addedOn: "2999-01-01", availableOn: A.daysFromToday(1) });
   const imported = A.importPersonalContent({ schema: "sokugan-private-youtube-v2", videoId: "youtube-private-01", source: "https://www.youtube.com/watch?v=youtube-private-01", sourceTitle: "検証動画", coreConcept: "検証用の中心概念", selectionRationale: "検証用", availableOn: A.daysFromToday(1), passages: [privatePassage] });
   check("B3f YouTube由来の私用教材は翌日まで表示せず、同期対象へ保存", imported.count === 1 && A.state.personalLibrary.length === 1 && A.personalPassages().length === 0);
   A.state.personalLibrary[0].availableOn = A.daysFromToday(0);
@@ -450,9 +452,9 @@ eval(js + "\nglobal.__app = { get state(){return state}, set state(v){state=v}, 
   check("Q1 一覧は未読を新しい順に5本まで出す（読み終えた分だけ繰り上がる）",
     A.unseenPassages().length === Math.min(5, A.content.passages.length + A.personalPassages().length),
     `未読${A.unseenPassages().length}本 / 在庫${A.content.passages.length + A.personalPassages().length}本`);
-  check("Q2 日次のビッグイシューと復習が同じ一覧に並ぶ",
-    A.unseenPassages().some(p => !A.isReviewPassage(p)) && A.unseenPassages().some(p => A.isReviewPassage(p)),
-    A.unseenPassages().map(p => (A.isReviewPassage(p) ? "復習" : "論点")).join(","));
+  check("Q2 日次教材と復習教材が同じ在庫で管理される",
+    A.unseenPassages().some(p => !A.isReviewPassage(p)) && A.personalPassages().some(p => A.isReviewPassage(p)),
+    `表示${A.unseenPassages().filter(p => !A.isReviewPassage(p)).length}本 / 復習在庫${A.personalPassages().filter(p => A.isReviewPassage(p)).length}本`);
   {
     const older = Object.assign({}, reviewStock[0], { id: "review-qa-old", addedOn: "2026-01-01", availableOn: A.daysFromToday(0), text: reviewStock[0].text.replace("。", "。 ") });
     A.state.personalLibrary = [older, ...A.state.personalLibrary];
@@ -463,16 +465,16 @@ eval(js + "\nglobal.__app = { get state(){return state}, set state(v){state=v}, 
     A.state.personalLibrary = A.state.personalLibrary.filter(p => p.id !== "review-qa-old");
   }
   A.state.selectedPassageIds = [];
-  A.togglePassageSelection(daily.passages[0].id);
+  A.togglePassageSelection(visibleDaily.id);
   A.togglePassageSelection("youtube-private-01");
-  check("B3h 日次記事とYouTube教材を2本タップし、選択順を保持", A.selectedPassageIds().join("|") === `${daily.passages[0].id}|youtube-private-01`, A.selectedPassageIds().join("|"));
+  check("B3h 日次記事とYouTube教材を2本タップし、選択順を保持", A.selectedPassageIds().join("|") === `${visibleDaily.id}|youtube-private-01`, A.selectedPassageIds().join("|"));
   const twoPicked = A.pickSessionPassages("full", A.selectedPassageIds());
-  check("B3i 選んだ2本を本文①・本文②として開始", twoPicked && twoPicked.p1.id === daily.passages[0].id && twoPicked.p2.id === "youtube-private-01", twoPicked && `${twoPicked.p1.id}|${twoPicked.p2.id}`);
+  check("B3i 選んだ2本を本文①・本文②として開始", twoPicked && twoPicked.p1.id === visibleDaily.id && twoPicked.p2.id === "youtube-private-01", twoPicked && `${twoPicked.p1.id}|${twoPicked.p2.id}`);
   A.state.selectedPassageIds = [];
   A.startSession();
   check("B4 セッション開始 (本文2本を確定)", A.sess && A.sess.p1 && A.sess.p2 && A.sess.p1.id !== A.sess.p2.id,
     A.sess && `${A.sess.p1 && A.sess.p1.id}/${A.sess.p2 && A.sess.p2.id}`);
-  const selectedId = daily.passages[1].id;
+  const selectedId = visibleDaily.id;
   A.startSession("short", [selectedId]);
   check("B4a 選んだ本文をショート版の先頭に使う", A.sess && A.sess.p1 && A.sess.p1.id === selectedId, A.sess && A.sess.p1 && A.sess.p1.id);
   A.startSession();
@@ -718,7 +720,7 @@ eval(js + "\nglobal.__app = { get state(){return state}, set state(v){state=v}, 
   const startedP1 = A.sess && A.sess.p1;
   A.markPassageRead(startedP1);
   check("G1b 通読し終えた本文だけが既読になる",
-    A.unseenPassages().length === unseenBefore - 1, `${A.unseenPassages().length}本`);
+    !!startedP1 && !A.unseenPassages().some(p => p.id === startedP1.id), `${startedP1 && startedP1.id} / 表示${A.unseenPassages().length}本`);
 
   // G2: 既読は日付をまたいで保持される（当日セッションの日付リセットに巻き込まれない）
   A.state.seenPassageKeys = ["persist-test-key"];
@@ -910,9 +912,9 @@ eval(js + "\nglobal.__app = { get state(){return state}, set state(v){state=v}, 
   // 予約せず、同期ペイロードにも混ざらないことを確認する。
   A.state = A.defaultState();
   A.ui.selectionDraft = [];
-  A.togglePassageSelection(daily.passages[0].id);
+  A.togglePassageSelection(visibleDaily.id);
   check("F9c 本文選択は端末UI下書きであり同期ペイロードへ含めない",
-    A.selectedPassageIds().join("|") === daily.passages[0].id &&
+    A.selectedPassageIds().join("|") === visibleDaily.id &&
     !Object.prototype.hasOwnProperty.call(A.syncableState(A.state), "selectedPassageIds"),
     `selected=${A.selectedPassageIds().join("|")}`);
 
@@ -929,7 +931,7 @@ eval(js + "\nglobal.__app = { get state(){return state}, set state(v){state=v}, 
   // F9e: 2本版も同じ同期経路を通る。ショートだけを直して通常セッションが
   // 巻き戻る回帰を防ぐ。
   A.state = A.defaultState();
-  A.ui.selectionDraft = [daily.passages[0].id, daily.passages[1].id];
+  A.ui.selectionDraft = visibleDailyIds();
   A.guardedStart("full");
   const fullStarted = A.sess && A.sess.mode === "full" && A.view === "session" && screenEl().includes("瞬間キャッチ");
   await new Promise(r => _st(r, 20));
@@ -940,7 +942,7 @@ eval(js + "\nglobal.__app = { get state(){return state}, set state(v){state=v}, 
   // F9f: 2本選択のままショートを始めると、以前のように先頭だけを黙って
   // 開始しない。本人が1本へ戻してから選ぶ。
   A.state = A.defaultState();
-  A.ui.selectionDraft = [daily.passages[0].id, daily.passages[1].id];
+  A.ui.selectionDraft = visibleDailyIds();
   const beforeShortGuard = A.sess;
   A.guardedStart("short");
   check("F9f ショート版は本文1本だけの選択を要求する", A.sess === beforeShortGuard,
