@@ -110,9 +110,13 @@ node tools/build-review-briefs.js --count 3 --date <target_date>
 
 出力先: `private-imports/review-<target_date>.json`
 
+**`availableOn` は target_date ではなく「生成した日（今日）」にする。**
+日次のビッグイシューは翌日分でもその場で読めるが、私用教材は `availableOn` を過ぎるまで一覧に出ない。
+target_date を入れると、生成した当日は論点2本しか並ばず、5枠のうち3枠が空のまま一日が終わる。
+
 ```json
-{ "schema": "sokugan-private-review-v1", "date": "<target_date>", "availableOn": "<target_date>",
-  "passages": [ { "id": "review-...", "kind": "review", "addedOn": "...", "availableOn": "...",
+{ "schema": "sokugan-private-review-v1", "date": "<target_date>", "availableOn": "<生成した日>",
+  "passages": [ { "id": "review-...", "kind": "review", "addedOn": "<target_date>", "availableOn": "<生成した日>",
                   "genre": "...", "title": "...", "source": "... https://www.youtube.com/watch?v=...",
                   "sourceUrl": "...", "text": "...", "author": {"name":"...","role":"..."},
                   "keyTerms": [...], "takeaway": {"hook":"...","detail":"..."},
