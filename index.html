@@ -655,10 +655,25 @@ function textFingerprint(text) {
   for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 0x01000193) >>> 0; }
   return "t:" + s.length + "-" + h.toString(36);
 }
+// 出典URLの正規化。クエリを丸ごと捨てると、YouTubeの動画IDが `?v=` にあるため
+// すべての動画が `youtube.com/watch` という同じ鍵になり、1本読んだ時点で以後の
+// 全教材が既読になる（2026-09-25に復習が1本も出なくなった原因）。
+// 計測用のパラメータだけ落とし、記事を指すパラメータは残す。
+const URL_TRACKING = /^(utm_.*|fbclid|gclid|mc_cid|mc_eid|ref|ref_src|si|feature|app|ab_channel|pp|t|start|share_source)$/i;
 function sourceUrlKey(p) {
   const m = String((p && p.source) || "").match(/https?:\/\/[^\s、。）)"']+/);
   if (!m) return "";
-  return "u:" + m[0].toLowerCase().replace(/[#?].*$/, "").replace(/\/+$/, "");
+  let u;
+  try { u = new URL(m[0]); } catch (e) { return "u:" + m[0].toLowerCase().replace(/[#?].*$/, "").replace(/\/+$/, ""); }
+  const host = u.hostname.toLowerCase().replace(/^www\./, "");
+  const path = u.pathname.replace(/\/+$/, "").toLowerCase();
+  const qs = [...u.searchParams.entries()]
+    .filter(([k]) => !URL_TRACKING.test(k))
+    .map(([k, v]) => [k.toLowerCase(), v])
+    .sort((a, b) => a[0].localeCompare(b[0]))
+    .map(([k, v]) => k + "=" + v)
+    .join("&");
+  return "u:" + host + path + (qs ? "?" + qs : "");
 }
 function passageKeys(p) {
   if (!p) return [];

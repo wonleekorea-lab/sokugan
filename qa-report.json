@@ -1,9 +1,9 @@
 {
  "date": "2026-09-25",
  "status": "pass",
- "checked_at": "2026-09-24T09:16:18.849Z",
- "passed": 228,
- "total": 228,
+ "checked_at": "2026-09-24T23:40:14.203Z",
+ "passed": 230,
+ "total": 230,
  "failures": [],
- "notes": "daily: 2026-09-24"
+ "notes": "fix: 既読判定のURL鍵"
 }
