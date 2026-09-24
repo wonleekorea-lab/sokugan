@@ -13,6 +13,15 @@ elif command -v gtimeout >/dev/null 2>&1; then TO="gtimeout 20"
 else TO=""; fi
 $TO git fetch --quiet origin main 2>/dev/null || { echo "（GitHubに接続できず同期確認をスキップ）"; exit 0; }
 
+# Obsidian vault のミラーを更新する。夜間の codex は macOS の権限で iCloud を
+# 読めないので、vault を読めるこのセッションで複製しておく。失敗しても止めない。
+MIRROR_LOG="$PROJ/private-imports/.mirror.log"
+if node tools/mirror-vault.js >"$MIRROR_LOG" 2>&1; then
+  head -1 "$MIRROR_LOG" | sed 's/^/📚 /'
+else
+  echo "（vaultミラーを更新できませんでした。復習は前回のミラーを使います）"
+fi
+
 BEHIND=$(git rev-list --count HEAD..origin/main 2>/dev/null || echo 0)
 AHEAD=$(git rev-list --count origin/main..HEAD 2>/dev/null || echo 0)
 DIRTY=$(git status --porcelain | wc -l | tr -d ' ')

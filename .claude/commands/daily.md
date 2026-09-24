@@ -72,6 +72,13 @@ node /Users/wota/Documents/ChatGPT/AI\ Engineering/sokugan-work/tools/export-con
 node tools/build-review-briefs.js --count 3 --date <target_date>
 ```
 
+**`--vault` で別のフォルダを指さない。** 正本は Obsidian の vault で、本人の `==ハイライト==` はそこにしか無い。
+launchd 配下の codex は macOS の権限で iCloud を読めない（EPERM）ので、ツールが自動で
+`private-imports/vault-mirror/` へ落ちる。ミラーは vault を読めるセッションが
+`node tools/mirror-vault.js` で更新している（sokugan-work を開くたびに自動実行）。
+**`youtube_search/` を代わりに読ませないこと。** 生成時の原本なのでハイライトが無く、
+選定の第一優先が黙って効かなくなる。両方とも読めないときは、復習を作らずに報告して止まる。
+
 `private-imports/review-briefs/<date>.json` に3件のブリーフが出る。選定の優先順は決定論で、
 
 1. 本人が `==ハイライト==` を引いた論点

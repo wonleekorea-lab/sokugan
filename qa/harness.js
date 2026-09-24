@@ -258,6 +258,9 @@ eval(js + "\nglobal.__app = { get state(){return state}, set state(v){state=v}, 
   check("A22 復習教材の経路が配線されている（抽出ツール・非公開スキーマ・日次手順）",
     fs.existsSync(path.join(ROOT, "tools", "build-review-briefs.js"))
     && /sokugan-private-review-v1/.test(fs.readFileSync(path.join(ROOT, "tools", "publish-private-youtube.js"), "utf8"))
+    && fs.existsSync(path.join(ROOT, "tools", "mirror-vault.js"))
+    && /vault-mirror/.test(fs.readFileSync(path.join(ROOT, "tools", "build-review-briefs.js"), "utf8"))
+    && /mirror-vault/.test(fs.readFileSync(path.join(ROOT, ".claude", "hooks", "sync-check.sh"), "utf8"))
     && /build-review-briefs/.test(fs.readFileSync(path.join(ROOT, ".claude", "commands", "daily.md"), "utf8"))
     && /insight-lint/.test(fs.readFileSync(path.join(ROOT, ".claude", "commands", "daily.md"), "utf8")));
 

@@ -22,6 +22,11 @@ const path = require("path");
 
 const ROOT = path.resolve(__dirname, "..");
 const DEFAULT_VAULT = "/Users/wota/Library/Mobile Documents/iCloud~md~obsidian/Documents/Daily Brief/40_Knowledge/YouTube Research";
+// 本人の ==ハイライト== は vault にしか無い。launchd 配下の codex は macOS の
+// プライバシー保護で iCloud を読めない（EPERM）ため、読めたときに作っておいた
+// ミラーへ落ちる。生成物フォルダ（youtube_search）で代用すると、ハイライトが
+// 無いノートを読むことになり、選定の第一優先が黙って効かなくなる。
+const MIRROR = path.join(ROOT, "private-imports", "vault-mirror");
 const OUT_DIR = path.join(ROOT, "private-imports", "review-briefs");
 const STATE_FILE = path.join(ROOT, "private-imports", ".review-state.json");
 const RECALL_DAYS = 45;          // 再登場を許すまでの間隔
@@ -80,7 +85,13 @@ function highlightsIn(text) {
 
 const SKIP_HEADING = /^(一言でいうと|ほかに触れていたこと|言葉の意味|何を見たか|他に見つかったもの)/;
 
+// 生成物フォルダのファイル名は `YYYY-MM-DD_テーマ.md`、vault側は日付なし。
+// 同じ論点が経路の違いで別IDになると、45日の重複防止が2系統に割れる。
+function noteIdOf(file) {
+  return path.basename(file, ".md").replace(/^\d{4}-\d{2}-\d{2}_/, "");
+}
 function parseNote(file) {
+  const noteId = noteIdOf(file);
   const text = fs.readFileSync(file, "utf8");
   const fm = parseFrontmatter(text);
   const noteTitle = (text.match(/^#\s+(.+)$/m) || [])[1] || path.basename(file, ".md");
@@ -127,7 +138,7 @@ function parseNote(file) {
     n++;
     const quotes = (raw.match(/^\*「[^*]+」\*/gm) || []).map(s => s.replace(/^\*|\*$/g, ""));
     sections.push({
-      sectionId: `${path.basename(file, ".md")}#${n}`,
+      sectionId: `${noteId}#${n}`,
       claim: heading,
       body: raw,
       quotes,
@@ -136,7 +147,7 @@ function parseNote(file) {
   }
 
   return {
-    noteId: path.basename(file, ".md"),
+    noteId,
     notePath: file,
     noteTitle,
     created: fm.created || "",
@@ -171,9 +182,21 @@ function rank(note, section, state) {
   return score;
 }
 
+function readable(dir) {
+  try { fs.readdirSync(dir); return true; } catch (e) { return false; }
+}
 function main() {
-  if (!fs.existsSync(VAULT)) { console.error(`ERROR: vaultが見つかりません: ${VAULT}`); process.exit(1); }
-  const files = fs.readdirSync(VAULT).filter(f => f.endsWith(".md")).map(f => path.join(VAULT, f));
+  let source = VAULT, via = "vault";
+  if (!readable(source)) {
+    if (readable(MIRROR)) { source = MIRROR; via = "mirror"; }
+    else {
+      console.error(`ERROR: vaultもミラーも読めません: ${VAULT}\n` +
+        `  → 先に node tools/mirror-vault.js を vault が読める環境で実行してください。\n` +
+        `  → 生成物フォルダ（youtube_search）で代用しないこと。ハイライトが無く、選定の第一優先が効きません。`);
+      process.exit(1);
+    }
+  }
+  const files = fs.readdirSync(source).filter(f => f.endsWith(".md")).map(f => path.join(source, f));
   const state = readState();
   const cands = [];
   const skipped = [];
@@ -189,6 +212,9 @@ function main() {
     }
   }
   cands.sort((a, b) => b.score - a.score || a.section.sectionId.localeCompare(b.section.sectionId));
+  if (via === "mirror") console.log(`(vaultを直接読めないため、ミラーを使用: ${path.relative(ROOT, MIRROR)})`);
+  const withHl = cands.filter(c => c.note.noteHighlights.length).length;
+  if (!withHl) console.log("警告: ハイライトのあるノートが1件も無い。読んでいる正本と違う場所を見ている可能性がある");
 
   // 同じノートから2本以上出さない（同じ話を続けて読まされない）
   const picked = [];
