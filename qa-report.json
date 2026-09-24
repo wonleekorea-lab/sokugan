@@ -1,9 +1,9 @@
 {
  "date": "2026-09-24",
  "status": "pass",
- "checked_at": "2026-09-23T22:57:01.969Z",
- "passed": 339,
- "total": 339,
+ "checked_at": "2026-09-24T06:34:39.585Z",
+ "passed": 228,
+ "total": 228,
  "failures": [],
- "notes": ""
+ "notes": "4.0復旧: 夜間生成が10本へ戻していた分を修正"
 }

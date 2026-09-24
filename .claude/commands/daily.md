@@ -23,6 +23,8 @@ SOKUGAN 4.0 の教材を生成する。**CLAUDE.md の絶対ルールに従う�
 
 **WebSearchから始めない。** 検索は鮮度で並ぶため、鮮度が最高のプレスリリースと公式発表が必ず上に来る。
 
+**ビッグイシューは sources.json を巡回して2本だけ選ぶ。10本に戻さない。**
+
 1. `sources.json` を読み、`analysis` / `analysis_ja` / `letters` / `research` / `community` を巡回する（WebFetch）。**直近21日**の新着から候補を拾う。洞察は腐らないので72時間に縛らない
    - Substackは本体ページがJavaScriptで描かれ、WebFetchでは中身が取れない。**`<URL>/feed` を読む**
 2. 足りないときだけ WebSearch で補う。ここで拾うのは直近72時間の `media` か `official`

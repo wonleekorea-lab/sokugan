@@ -1841,7 +1841,9 @@ function chunkPool() {
   const pool = {};
   // 4.0: 復習教材も今日読む教材なので、瞬間キャッチの語プールに入れる。
   // 日次が2本に減った分、ここを日次だけにすると候補が痩せて「先頭1字で当たる」出題になる。
-  for (const p of [...(content.passages || []), ...personalPassages()]) {
+  // 日次が2本に減ったぶん、常に手元にあるフォールバック教材の語も混ぜて母数を保つ。
+  // 候補が痩せると「先頭1字で当たる」出題になり、語形認識の訓練にならない（B10c）。
+  for (const p of [...(content.passages || []), ...personalPassages(), ...(DEFAULT_CONTENT.passages || [])]) {
     const cs = getChunks(p);
     for (const c of cs) {
       const t = c.replace(/[、。！？「」『』（）・：；]/g, "");

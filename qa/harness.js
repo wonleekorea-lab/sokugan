@@ -119,13 +119,23 @@ eval(js + "\nglobal.__app = { get state(){return state}, set state(v){state=v}, 
   const todayUTC = new Date().toISOString().slice(0, 10);
   check("A1 日付がstaleでない (date >= 実行日UTC)", daily.date >= todayUTC, `date=${daily.date}`);
   const GENRE5 = ["スタートアップ・新規事業", "社会・価値観", "市場・経済・地政学", "経営・リーダーシップ", "未来の兆し"];
-  // 日次教材はユーザー指定の5ジャンル各2本。
+  // 4.0: 日次はビッグイシュー2本だけ。残りの枠は復習教材（Obsidianのリサーチ由来）が埋める。
+  // ここを10本へ戻すと、同じ日付の日次だけで5枠が埋まり、復習が一生繰り上がらない。
   const N = (daily.passages || []).length;
-  check("A2 日次教材は10本（5ジャンル各2本）", N === 10, `n=${N}`);
+  check("A2 日次はビッグイシュー2本（4.0）", N === 2, `n=${N}`);
   check("A2b 全教材に kind と addedOn がある（新しい順のキューに並べるため）",
     (daily.passages || []).every(p => p.kind === "issue" && /^\d{4}-\d{2}-\d{2}$/.test(String(p.addedOn || ""))),
     (daily.passages || []).map(p => `${p.kind}/${p.addedOn}`).join(" "));
   check("A2c 一覧に出す枠は5（slots）", daily.slots === 5, `slots=${daily.slots}`);
+  // A2d: 検査と規約が食い違ったまま片方だけ書き換わるのを見つける仕掛け。
+  // 2026-09-24に、夜間の自動生成が本数の検査ごと10本へ書き戻していた。
+  {
+    const rules = fs.readFileSync(path.join(ROOT, "CLAUDE.md"), "utf8");
+    const guide = fs.readFileSync(path.join(ROOT, ".claude", "commands", "daily.md"), "utf8");
+    check("A2d 規約と日次手順が『ビッグイシュー2本』のままである（検査だけ書き換わっていない）",
+      /ビッグイシュー2本/.test(rules) && /ビッグイシュー2本/.test(guide) && /sources\.json を巡回して2本/.test(guide),
+      "CLAUDE.md / daily.md");
+  }
   let ansDist = [0, 0, 0, 0];
   for (const p of daily.passages || []) {
     const id = p.genre || p.tag || p.id;
@@ -324,11 +334,11 @@ eval(js + "\nglobal.__app = { get state(){return state}, set state(v){state=v}, 
     return hits >= 4; // 本文でAI語が頻出＝AI中心
   });
   const genres = new Set((daily.passages || []).map(p => p.genre));
-  check("A14 AI中心の記事は2本以下（テーマ多様性）", aiCentric.length <= 2, `AI中心 ${aiCentric.length}/${N}: ${aiCentric.map(p => p.genre).join(",")}`);
-  check("A14b 非AIテーマが8本以上", N - aiCentric.length >= 8, `非AI ${N - aiCentric.length}本`);
-  check("A14c 5ジャンルを各2本掲載",
-    genres.size === 5 && GENRE5.every(g => (daily.passages || []).filter(p => p.genre === g).length === 2),
-    GENRE5.map(g => `${g}:${(daily.passages || []).filter(p => p.genre === g).length}`).join(" / "));
+  check("A14 AI中心の記事は半分以下（テーマ多様性）", aiCentric.length <= Math.floor(N / 2), `AI中心 ${aiCentric.length}/${N}: ${aiCentric.map(p => p.genre).join(",")}`);
+  check("A14b 非AIテーマが1本以上", N - aiCentric.length >= 1, `非AI ${N - aiCentric.length}本`);
+  // 4.0: 2本を同じジャンルで埋めない（5系統から毎日2つ選ぶ）
+  check("A14c 当日の2本は別ジャンル（5系統から選ぶ）",
+    genres.size === N && [...genres].every(g => GENRE5.includes(g)), `${[...genres].join(" / ")}`);
   // 実際に崩れた表現をfixture化。単語境界と意味の閉じ方の両方を固定する。
   const semanticFixtures = [
     ["新たな好奇心の対象が見つかる。", "新たな好奇心の対象が"],
@@ -443,7 +453,10 @@ eval(js + "\nglobal.__app = { get state(){return state}, set state(v){state=v}, 
   A.state.personalLibrary[0].availableOn = A.daysFromToday(0);
   check("B3g 解禁日以降の私用教材は本文選択肢に加わる", A.personalPassages().length === 1 && A.allPassages().some(p => p.id === "youtube-private-01"));
   // 4.0: 実運用の在庫を再現する。日次2本＋復習（Obsidianリサーチ由来）で一覧5枠が埋まる。
-  const reviewStock = (A.DEFAULT_CONTENT.passages || []).map((p, i) => Object.assign({}, p, {
+  // 復習の在庫は本番で常に3本以上ある（毎日3本届く）。2本しか積まないと
+  // 瞬間キャッチの語プールが本番より痩せ、B10cが実機と違う結果になる。
+  const reviewSeed = [...(A.DEFAULT_CONTENT.passages || []), ...(A.ANCHOR_POOL || [])];
+  const reviewStock = reviewSeed.map((p, i) => Object.assign({}, p, {
     id: `review-qa-0${i + 1}`, kind: "review", genre: "学び方", tag: "学び方",
     availableOn: A.daysFromToday(0), addedOn: A.daysFromToday(0),
     author: p.author || { name: "検証", role: "検証用の復習教材" }
@@ -452,9 +465,11 @@ eval(js + "\nglobal.__app = { get state(){return state}, set state(v){state=v}, 
   check("Q1 一覧は未読を新しい順に5本まで出す（読み終えた分だけ繰り上がる）",
     A.unseenPassages().length === Math.min(5, A.content.passages.length + A.personalPassages().length),
     `未読${A.unseenPassages().length}本 / 在庫${A.content.passages.length + A.personalPassages().length}本`);
-  check("Q2 日次教材と復習教材が同じ在庫で管理される",
-    A.unseenPassages().some(p => !A.isReviewPassage(p)) && A.personalPassages().some(p => A.isReviewPassage(p)),
-    `表示${A.unseenPassages().filter(p => !A.isReviewPassage(p)).length}本 / 復習在庫${A.personalPassages().filter(p => A.isReviewPassage(p)).length}本`);
+  // 「在庫にある」ではなく「一覧に並ぶ」を見る。日次が5枠を独占して復習が
+  // 一度も表示されない状態を、検査が見逃してはいけない（2026-09-24の事故）。
+  check("Q2 日次のビッグイシューと復習が同じ一覧に並ぶ",
+    A.unseenPassages().some(p => !A.isReviewPassage(p)) && A.unseenPassages().some(p => A.isReviewPassage(p)),
+    A.unseenPassages().map(p => (A.isReviewPassage(p) ? "復習" : "論点")).join(","));
   {
     const older = Object.assign({}, reviewStock[0], { id: "review-qa-old", addedOn: "2026-01-01", availableOn: A.daysFromToday(0), text: reviewStock[0].text.replace("。", "。 ") });
     A.state.personalLibrary = [older, ...A.state.personalLibrary];
