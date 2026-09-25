@@ -1,83 +1,83 @@
 {
-  "date": "2026-09-25",
+  "date": "2026-09-26",
   "status": "pass",
-  "checked_at": "2026-09-24T09:12:00.000Z",
+  "checked_at": "2026-09-25T18:11:40+09:00",
   "auditor": "Codex（本文だけを根拠に全6問を自力解答）",
   "avgScore": 5,
   "total": 6,
   "rewritten": 0,
   "items": [
     {
-      "passage": "20260925_asterisk_zambia_lenacapavir",
+      "passage": "20260926_commoncog_disruptive_change_time",
       "q": 1,
       "type": "Take-away",
-      "stem": "Take-away: 12日を可能にした仕組みは何か",
+      "stem": "Take-away: 5事例で共通していた条件は何か",
       "ans": 0,
       "readable": 5,
       "unique": 5,
       "concrete": 5,
       "score": 5,
-      "note": "共通審査を引き継ぎ、現地判断に絞った構造が本文に対応する"
+      "note": "5事例に共通する財務体力と考える時間が本文に明示され、正答が一意である"
     },
     {
-      "passage": "20260925_asterisk_zambia_lenacapavir",
+      "passage": "20260926_commoncog_disruptive_change_time",
       "q": 2,
       "type": "Strong evidence",
-      "stem": "Strong evidence: ザンビアが確かめたことは何か",
+      "stem": "Strong evidence: ブラックベリーの例が示す落とし穴は何か",
       "ans": 0,
       "readable": 5,
       "unique": 5,
       "concrete": 5,
       "score": 5,
-      "note": "製品の同一性と表示・現地条件の確認が本文に明示されている"
+      "note": "現金約20億ドルと在庫2億ドルから10億ドルへの増加が本文に対応する"
     },
     {
-      "passage": "20260925_asterisk_zambia_lenacapavir",
+      "passage": "20260926_commoncog_disruptive_change_time",
       "q": 3,
       "type": "Scenario",
-      "stem": "Scenario: 導入を速める分け方はどれか",
+      "stem": "Scenario: 新しい脅威が現れた時、先に確保するものは何か",
       "ans": 0,
       "readable": 5,
       "unique": 5,
       "concrete": 5,
       "score": 5,
-      "note": "共通部分と現地判断を分ける応用先が一意に読める"
+      "note": "生存期間を伸ばしてから枠組みと勝ち筋を探す本文の順序を応用できる"
     },
     {
-      "passage": "20260925_volts_pila_plugin_battery",
+      "passage": "20260926_utilitydive_microgrids_everyday_grid",
       "q": 1,
       "type": "Take-away",
-      "stem": "Take-away: 普及を止めていた手間は何か",
+      "stem": "Take-away: マイクログリッドに求められる変化は何か",
       "ans": 0,
       "readable": 5,
       "unique": 5,
       "concrete": 5,
       "score": 5,
-      "note": "許可申請と電気工事が本文に具体的に書かれている"
+      "note": "停電時だけでなく平時のピーク・電圧調整に使う主張が本文に明示されている"
     },
     {
-      "passage": "20260925_volts_pila_plugin_battery",
+      "passage": "20260926_utilitydive_microgrids_everyday_grid",
       "q": 2,
       "type": "Strong evidence",
-      "stem": "Strong evidence: ピラの電池の容量は何か",
+      "stem": "Strong evidence: 300MW級の需要で問題になるものは何か",
       "ans": 0,
       "readable": 5,
       "unique": 5,
       "concrete": 5,
       "score": 5,
-      "note": "1.6kWhが本文と選択肢にそのまま対応する"
+      "note": "PNMの約40MWの余力と300MW級負荷から電力の揺れを説明できる"
     },
     {
-      "passage": "20260925_volts_pila_plugin_battery",
+      "passage": "20260926_utilitydive_microgrids_everyday_grid",
       "q": 3,
       "type": "Scenario",
-      "stem": "Scenario: 電池を網の力に変える方法はどれか",
+      "stem": "Scenario: 実証から日常運用へ進める条件は何か",
       "ans": 0,
       "readable": 5,
       "unique": 5,
       "concrete": 5,
       "score": 5,
-      "note": "複数台をメッシュでつなぐという本文の因果を使って解ける"
+      "note": "予測・試験・計画への組み込みという本文の条件が一つに定まる"
     }
   ],
   "rubric": {
