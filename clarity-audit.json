@@ -1,89 +1,18 @@
 {
-  "date": "2026-09-26",
+  "date": "2026-09-27",
   "status": "pass",
-  "checked_at": "2026-09-25T18:11:40+09:00",
+  "checked_at": "2026-09-26T18:12:53+09:00",
   "auditor": "Codex（本文だけを根拠に全6問を自力解答）",
   "avgScore": 5,
   "total": 6,
   "rewritten": 0,
   "items": [
-    {
-      "passage": "20260926_commoncog_disruptive_change_time",
-      "q": 1,
-      "type": "Take-away",
-      "stem": "Take-away: 5事例で共通していた条件は何か",
-      "ans": 0,
-      "readable": 5,
-      "unique": 5,
-      "concrete": 5,
-      "score": 5,
-      "note": "5事例に共通する財務体力と考える時間が本文に明示され、正答が一意である"
-    },
-    {
-      "passage": "20260926_commoncog_disruptive_change_time",
-      "q": 2,
-      "type": "Strong evidence",
-      "stem": "Strong evidence: ブラックベリーの例が示す落とし穴は何か",
-      "ans": 0,
-      "readable": 5,
-      "unique": 5,
-      "concrete": 5,
-      "score": 5,
-      "note": "現金約20億ドルと在庫2億ドルから10億ドルへの増加が本文に対応する"
-    },
-    {
-      "passage": "20260926_commoncog_disruptive_change_time",
-      "q": 3,
-      "type": "Scenario",
-      "stem": "Scenario: 新しい脅威が現れた時、先に確保するものは何か",
-      "ans": 0,
-      "readable": 5,
-      "unique": 5,
-      "concrete": 5,
-      "score": 5,
-      "note": "生存期間を伸ばしてから枠組みと勝ち筋を探す本文の順序を応用できる"
-    },
-    {
-      "passage": "20260926_utilitydive_microgrids_everyday_grid",
-      "q": 1,
-      "type": "Take-away",
-      "stem": "Take-away: マイクログリッドに求められる変化は何か",
-      "ans": 0,
-      "readable": 5,
-      "unique": 5,
-      "concrete": 5,
-      "score": 5,
-      "note": "停電時だけでなく平時のピーク・電圧調整に使う主張が本文に明示されている"
-    },
-    {
-      "passage": "20260926_utilitydive_microgrids_everyday_grid",
-      "q": 2,
-      "type": "Strong evidence",
-      "stem": "Strong evidence: 300MW級の需要で問題になるものは何か",
-      "ans": 0,
-      "readable": 5,
-      "unique": 5,
-      "concrete": 5,
-      "score": 5,
-      "note": "PNMの約40MWの余力と300MW級負荷から電力の揺れを説明できる"
-    },
-    {
-      "passage": "20260926_utilitydive_microgrids_everyday_grid",
-      "q": 3,
-      "type": "Scenario",
-      "stem": "Scenario: 実証から日常運用へ進める条件は何か",
-      "ans": 0,
-      "readable": 5,
-      "unique": 5,
-      "concrete": 5,
-      "score": 5,
-      "note": "予測・試験・計画への組み込みという本文の条件が一つに定まる"
-    }
+    {"passage": "20260927_worksinprogress_landfill", "q": 1, "type": "Take-away", "stem": "Take-away: リサイクルの判断で先に見るものは何か", "ans": 0, "readable": 5, "unique": 5, "concrete": 5, "score": 5, "note": "素材別の資源収支を見るという本文の主張が明示され、他の選択肢と一意に区別できる"},
+    {"passage": "20260927_worksinprogress_landfill", "q": 2, "type": "Strong evidence", "stem": "Strong evidence: 綿袋が薄い袋に追いつく条件は何か", "ans": 0, "readable": 5, "unique": 5, "concrete": 5, "score": 5, "note": "173回という本文の具体的な数字に対応し、正答の根拠を一読で確認できる"},
+    {"passage": "20260927_worksinprogress_landfill", "q": 3, "type": "Scenario", "stem": "Scenario: 回収制度を作る時、本文に沿う判断はどれか", "ans": 0, "readable": 5, "unique": 5, "concrete": 5, "score": 5, "note": "素材ごとに工程と効果を測るという本文の論理を制度設計へ一意に応用できる"},
+    {"passage": "20260927_rieti_cbam_detail", "q": 1, "type": "Take-away", "stem": "Take-away: CBAMの負担を細かく見る単位は何か", "ans": 0, "readable": 5, "unique": 5, "concrete": 5, "score": 5, "note": "国別・品目別の8桁細目が本文に明示され、単位の問いとして曖昧さがない"},
+    {"passage": "20260927_rieti_cbam_detail", "q": 2, "type": "Strong evidence", "stem": "Strong evidence: 鉄鋼の影響を見る時、何を重ねるか", "ans": 0, "readable": 5, "unique": 5, "concrete": 5, "score": 5, "note": "CBAM以外の関税・制裁も見るという本文の具体的な根拠に対応している"},
+    {"passage": "20260927_rieti_cbam_detail", "q": 3, "type": "Scenario", "stem": "Scenario: 輸出企業が負担を下げる方法はどれか", "ans": 0, "readable": 5, "unique": 5, "concrete": 5, "score": 5, "note": "実排出量と低排出工程を使う本文の提案が正答として一つに定まる"}
   ],
-  "rubric": {
-    "one_read": 5,
-    "unique_logic": 5,
-    "concrete_options": 5,
-    "natural_faithful_japanese": 5
-  }
+  "rubric": {"one_read": 5, "unique_logic": 5, "concrete_options": 5, "natural_faithful_japanese": 5}
 }
