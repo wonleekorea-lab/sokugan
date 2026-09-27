@@ -183,7 +183,13 @@ function rank(note, section, state) {
 }
 
 function readable(dir) {
-  try { fs.readdirSync(dir); return true; } catch (e) { return false; }
+  try {
+    const files = fs.readdirSync(dir).filter(f => f.endsWith(".md"));
+    // iCloud配下はディレクトリ一覧だけ読めても、個別ファイルの本文が
+    // TCC/同期状態で読めないことがある。本文まで確認してから採用する。
+    for (const f of files) fs.readFileSync(path.join(dir, f), "utf8");
+    return true;
+  } catch (e) { return false; }
 }
 function main() {
   let source = VAULT, via = "vault";
