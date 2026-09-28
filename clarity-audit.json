@@ -1,83 +1,83 @@
 {
-  "date": "2026-09-28",
+  "date": "2026-09-29",
   "status": "pass",
-  "checked_at": "2026-09-27T19:57:29+0900",
+  "checked_at": "2026-09-28T18:11:50+0900",
   "auditor": "Codex（本文だけを根拠に全6問を自力解答）",
   "avgScore": 5,
   "total": 6,
   "rewritten": 0,
   "items": [
     {
-      "passage": "20260928_marginal_transport_density",
+      "passage": "20260929_statecraft_party_regime",
       "q": 1,
       "type": "Take-away",
-      "stem": "Take-away: 交通技術が都市へ与える影響は何か",
+      "stem": "Take-away: 党を持つ体制が長続きしやすい理由は何か",
       "ans": 0,
       "readable": 5,
       "unique": 5,
       "concrete": 5,
       "score": 5,
-      "note": "移動が楽になると中心部に人が集まる場合があるという主張が本文に明示され、他の選択肢と一意に区別できる"
+      "note": "党が昇進の道と長期の動機を与えるという本文の主張が明示され、他の選択肢と一意に区別できる"
     },
     {
-      "passage": "20260928_marginal_transport_density",
+      "passage": "20260929_statecraft_party_regime",
       "q": 2,
       "type": "Strong evidence",
-      "stem": "Strong evidence: 研究が比べた交通技術はどれか",
+      "stem": "Strong evidence: 軍事政権が短命になりやすい理由は何か",
       "ans": 0,
       "readable": 5,
       "unique": 5,
       "concrete": 5,
       "score": 5,
-      "note": "4つの交通技術という本文の具体的な列挙に対応し、他の組み合わせと一意に区別できる"
+      "note": "経済や社会の運営能力と悪化時の責任という本文の根拠が、そのまま一つの選択肢に対応する"
     },
     {
-      "passage": "20260928_marginal_transport_density",
+      "passage": "20260929_statecraft_party_regime",
       "q": 3,
       "type": "Scenario",
-      "stem": "Scenario: 分散型設備の計画で見るものはどれか",
+      "stem": "Scenario: 組織を長く保つ仕組みに近いものはどれか",
       "ans": 0,
       "readable": 5,
       "unique": 5,
       "concrete": 5,
       "score": 5,
-      "note": "人の往来が増える場所へサービスを集める余地という本文の含意を、一意に応用できる"
+      "note": "途中の人へ役割と次の席を示すという本文の含意を、職場の人事の道筋へ明確に移せる"
     },
     {
-      "passage": "20260928_commoncog_tdg",
+      "passage": "20260929_asterisk_pastors_wives",
       "q": 1,
       "type": "Take-away",
-      "stem": "Take-away: ゲームが判断力を鍛える理由は何か",
+      "stem": "Take-away: 牧師の妻に集まる難しい仕事は何か",
       "ans": 0,
       "readable": 5,
       "unique": 5,
       "concrete": 5,
       "score": 5,
-      "note": "未知の状況で質問と行動を繰り返すという本文の因果が明確で、選択肢も具体的である"
+      "note": "笑顔や相談を愛として続ける期待が本文の焦点で、設備や会計の作業と区別して読める"
     },
     {
-      "passage": "20260928_commoncog_tdg",
+      "passage": "20260929_asterisk_pastors_wives",
       "q": 2,
       "type": "Strong evidence",
-      "stem": "Strong evidence: 参加者の質問から分かることは何か",
+      "stem": "Strong evidence: 2017年の調査で示された数字はどれか",
       "ans": 0,
       "readable": 5,
       "unique": 5,
       "concrete": 5,
       "score": 5,
-      "note": "質問が観察と見立てを表すという本文の説明に直接対応し、単独の正解として読める"
+      "note": "55%という数字が本文に明示され、他の数字と混同しない具体的な根拠問題になっている"
     },
     {
-      "passage": "20260928_commoncog_tdg",
+      "passage": "20260929_asterisk_pastors_wives",
       "q": 3,
       "type": "Scenario",
-      "stem": "Scenario: 経営会議で応用するならどれか",
+      "stem": "Scenario: 本文の見方に近い職場の仕事はどれか",
       "ans": 0,
       "readable": 5,
       "unique": 5,
       "concrete": 5,
       "score": 5,
-      "note": "短いケースで全員が行動を出し比較するという本文の応用を、他の選択肢と混同しない"
+      "note": "安心感を作る役割を成果として数えないという本文の問題を、職場の評価場面へ一意に応用できる"
     }
   ],
   "rubric": {
