@@ -339,6 +339,7 @@ function defaultState() {
     clarityFlags: [],     // ユーザーが「わかりにくい」と報告した設問 {date, genre, q}
     contentFeedback: [],  // 読後評価 {date, passageId, genre, rating, questionFit, note, title}。次回の選定・設問設計を個人化する材料
     pickSignals: [],      // 一覧で選んだ/選ばなかった {date, passageId, genre, picked}。押す手間なく毎日溜まる選好の信号
+    shownOn: {},          // 復習教材を一覧に出した最初の日 {passageId: "YYYY-MM-DD"}。2日読まれなければ控えへ下げる
     personalLibrary: [], // 非公開の本人用教材。YouTube台本から作る翌日解禁の学習文を保存
     goal: null,           // {target, baseline, setAt, why, hit:[]} 週次の具体的困難目標(Locke&Latham)
     vocabBook: [],        // 語彙道場の習得記録 {term, plain, date, level} level:1=初見,2=曖昧,3=説明できる
@@ -714,6 +715,22 @@ function queueOrder(a, b) {
   const d = addedOnOf(b).localeCompare(addedOnOf(a));
   return d !== 0 ? d : String(a.id || "").localeCompare(String(b.id || ""));
 }
+// ---------- 復習は2日で入れ替える（4.1）----------
+// 選ばれなかった復習が枠に居座ると、新しく届いた3本が一度も表に出ない。
+// 一覧に出た日から2日たっても読まれていない復習は、控えへ下げて枠を空ける。
+// 日次のビッグイシューはその日のニュースなので、この規則の対象にしない。
+const REVIEW_SHELF_DAYS = 2;
+function shownOnOf(p) { return (state.shownOn || {})[p && p.id] || ""; }
+function isStaleReview(p, todayStr) {
+  if (!isReviewPassage(p)) return false;
+  const first = shownOnOf(p);
+  if (!first) return false;
+  return daysBetweenStr(first, todayStr || today()) >= REVIEW_SHELF_DAYS;
+}
+function daysBetweenStr(a, b) {
+  const ms = Date.parse(b + "T00:00:00Z") - Date.parse(a + "T00:00:00Z");
+  return Number.isFinite(ms) ? Math.round(ms / 86400000) : 0;
+}
 // 未読の全在庫（日次のビッグイシュー＋復習ライブラリ）。新しい順。
 function unseenStock() {
   const seen = seenPassageSet();
@@ -721,7 +738,33 @@ function unseenStock() {
     .filter(p => p && p.id && !isPassageSeen(p, seen))
     .sort(queueOrder);
 }
-function unseenPassages() { return unseenStock().slice(0, VISIBLE_SLOTS); }
+// 一覧に並べる5本。棚落ちした復習は後ろへ回し、新しいものを先に出す。
+function unseenPassages() {
+  const t = today();
+  const stock = unseenStock();
+  const fresh = stock.filter(p => !isStaleReview(p, t));
+  const stale = stock.filter(p => isStaleReview(p, t));
+  const list = [...fresh, ...stale].slice(0, VISIBLE_SLOTS);
+  markShown(list, t);
+  return list;
+}
+// 一覧に出た日を記録する。出していない教材に期限をつけない。
+function markShown(list, t) {
+  const map = state.shownOn || (state.shownOn = {});
+  let changed = false;
+  for (const p of list) {
+    if (!isReviewPassage(p) || map[p.id]) continue;
+    map[p.id] = t || today();
+    changed = true;
+  }
+  if (changed) {
+    // 在庫から消えた教材の記録は残さない（際限なく増やさない）
+    const live = new Set([...(content.passages || []), ...personalPassages()].map(x => x.id));
+    for (const k of Object.keys(map)) if (!live.has(k)) delete map[k];
+    stampField("shownOn");
+    saveState();
+  }
+}
 function totalTrainingDays() {
   return new Set(state.history.map(h => h.date)).size;
 }
@@ -1038,7 +1081,7 @@ function normalizeContentNumerals(c) {
 const MENUS = {
   1: { id: "speed",    ico: "bolt",    label: "速度ストレッチの日", desc: "反復読を+20%に" },
   2: { id: "depth",    ico: "lens",    label: "深読みの日",       desc: "深層読解を本文①②で実施" },
-  3: { id: "catch",    ico: "eye",     label: "瞬間キャッチの日",   desc: "キャッチを12回に増量" },
+  3: { id: "catch",    ico: "eye",     label: "瞬間キャッチの日",   desc: "キャッチを8回に増量" },
   4: { id: "weak",     ico: "target",  label: "弱点集中の日",      desc: "" },
   5: { id: "transfer", ico: "orbit",   label: "転移チェックの日",   desc: "週次アンカー測定に最適" },
   6: { id: "light",    ico: "leaf",    label: "軽めの日",         desc: "通常メニューを気楽に" },
@@ -1686,7 +1729,7 @@ function startSession(mode = "full", selectedIds) {
     rereadFactor: (menu.id === "speed" || menu.weak === "speed") ? 1.20 : REREAD_FACTOR,
     clozeBoth: (menu.id === "depth" || menu.weak === "deep" || menu.weak === "comp"),
     vocabN: (menu.id === "vocab" || menu.weak === "vocab") ? 6 : 3,
-    spanN: (menu.id === "catch" || menu.weak === "catch") ? 12 : SPAN_TRIALS,
+    spanN: (menu.id === "catch" || menu.weak === "catch") ? 8 : CATCH_TRIALS,
   };
   recordPickSignals(picked, selectable);
   // saveState() はログイン済みなら自動同期を予約する。先に画面を session と
@@ -1912,26 +1955,113 @@ function spanTrialSet(level) {
     .sort((a, b) => spanSim(b, fallback.target) - spanSim(a, fallback.target));
   return spanBuildTrial(fallback.target, fallback.lures.concat(rest), fallback.optN, fallback.lv);
 }
+// ---------- 4.1: 同じ形の反復をやめる ----------
+// 「いま見えた語はどれ？」を8回続けると、訓練しているのは語形の識別だけになる。
+// フラッシュ（視幅の測定）は残し、答えるところを回ごとに変える。
+//   context … 見えたまとまりが、どの文の一部だったか。文脈へ結び直す
+//   meaning … 見えた語の意味はどれか。語彙の深さは読解分散の約6割を説明する（Qian 2002）
+// 今日読む2本は素材から外す。先に中身を見せると、理解度の測定が甘くなる。
+const CATCH_TRIALS = 5;
+const CATCH_KINDS = ["context", "meaning", "context", "meaning", "context"];
+const SENT_HEAD = 26;   // 選択肢に出す文の冒頭字数
+function shuffled(a) { const x = [...a]; for (let i = x.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [x[i], x[j]] = [x[j], x[i]]; } return x; }
+function sessionPassageIds() { return [sess && sess.p1, sess && sess.p2].filter(Boolean).map(p => p.id); }
+function catchSourcePassages() {
+  const skip = new Set(sessionPassageIds());
+  const all = [...(content.passages || []), ...personalPassages(), ...(DEFAULT_CONTENT.passages || [])]
+    .filter(p => p && p.text && !skip.has(p.id));
+  return all.length ? all : [...(DEFAULT_CONTENT.passages || [])];
+}
+function splitSentences(t) {
+  return String(t || "").split(/(?<=。)/).map(x => x.trim()).filter(x => [...x].length >= 14);
+}
+function headOf(s, n) { const a = [...s]; return a.length <= n ? s : a.slice(0, n).join("") + "…"; }
+// 見えたまとまりが、どの文に入っていたか。選択肢は同じ本文の別の文にする。
+// 別の本文から取ると、話題だけで当たってしまい、文を読まなくなる。
+function catchContextTrial(level) {
+  const order = [level];
+  for (let d = 1; d <= 6; d++) { if (level - d >= 3) order.push(level - d); if (level + d <= 9) order.push(level + d); }
+  for (const p of shuffled(catchSourcePassages())) {
+    const sents = splitSentences(p.text);
+    if (sents.length < 4) continue;
+    for (const lv of order) {
+      const heads = sents.map(x => headOf(x, SENT_HEAD).replace(/…$/, ""));
+      for (const i of shuffled(sents.map((_, k) => k))) {
+        const cands = getChunks({ text: sents[i] })
+          .map(c => c.replace(/[、。！？「」『』（）・：；]/g, ""))
+          .filter(c => [...c].length === lv && !SKG_PARTICLE_HEAD.test(c) && !SKG_BAD_HEAD.test(c))
+          // 選択肢は文の冒頭しか出さない。そこに無いまとまりを出すと、照合しようがない
+          .filter(c => heads[i].includes(c))
+          // 他の文の冒頭にも出てくるなら、答えが一意にならない
+          .filter(c => heads.filter(h => h.includes(c)).length === 1);
+        if (!cands.length) continue;
+        const others = shuffled(sents.filter((_, j) => j !== i)).slice(0, 3).map(x => headOf(x, SENT_HEAD));
+        if (others.length < 3) continue;
+        const right = headOf(sents[i], SENT_HEAD);
+        const opts = shuffled([right, ...others]);
+        return { kind: "context", target: cands[Math.floor(Math.random() * cands.length)],
+                 opts, ans: opts.indexOf(right), level: lv,
+                 prompt: "いま見えたまとまりは、どの文の一部だった？" };
+      }
+    }
+  }
+  return null;
+}
+// 見えた語の意味。誤答は他の語の説明を使う。長さの揃った説明文が4つ並ぶので、
+// 長い選択肢を選べば当たる、という抜け道が生まれない。
+function catchMeaningTrial() {
+  const collect = (ps) => {
+    const out = [];
+    for (const p of ps) for (const t of (p.keyTerms || [])) if (t && t.term && t.plain) out.push(t);
+    return [...new Map(out.map(t => [t.term, t])).values()];
+  };
+  let uniq = collect(catchSourcePassages());
+  // 語の意味は本文の中身ではないので、足りなければ今日読む2本の語も使う。
+  // ここを空振りさせると、意味の試行が消えて形の識別だけに戻ってしまう。
+  if (uniq.length < 4) uniq = collect([...(content.passages || []), ...personalPassages(), ...(DEFAULT_CONTENT.passages || [])]);
+  if (uniq.length < 4) return null;
+  // 説明文の長さが揃っていないと、いちばん長い選択肢を選ぶだけで当たる。
+  // 正解より長い誤答を必ず1つ混ぜ、残りは長さの近いものから取る。
+  for (const t of shuffled(uniq)) {
+    const L = [...t.plain].length;
+    const rest = uniq.filter(x => x.term !== t.term && x.plain !== t.plain);
+    const near = [...rest].sort((a, b) => Math.abs([...a.plain].length - L) - Math.abs([...b.plain].length - L));
+    const longer = near.find(x => [...x.plain].length >= L);
+    if (!longer || near.length < 3) continue;
+    const chosen = [longer];
+    for (const x of near) { if (chosen.length >= 3) break; if (!chosen.includes(x)) chosen.push(x); }
+    if (chosen.length < 3) continue;
+    const opts = shuffled([t.plain, ...chosen.map(x => x.plain)]);
+    return { kind: "meaning", target: t.term, opts, ans: opts.indexOf(t.plain),
+             level: [...t.term].length, prompt: "いま見えた語の意味はどれ？" };
+  }
+  return null;
+}
+function catchTrial(level, kind) {
+  const t = kind === "meaning" ? (catchMeaningTrial() || catchContextTrial(level))
+                               : (catchContextTrial(level) || catchMeaningTrial());
+  return t || spanTrialSet(level);   // 教材が痩せた日でも出題を止めない
+}
 function renderSpanIntro() {
   screen().innerHTML = `
     ${phaseDots(phaseIdx("キャッチ"))}
     <div class="card">
       <div class="card-title">瞬間キャッチ <span class="tag">現在の視幅 ${state.spanLevel}字</span></div>
-      <div class="card-subtitle up">Flash catch</div><p class="small" style="margin:-6px 0 14px">${SPAN_EXPOSURE}ms呈示 → マスク → 似た語から選ぶ</p>
-      <p class="small" style="margin-bottom:12px">中央の<span style="color:var(--acc)">●</span>を凝視。語が一瞬光り、すぐマスクで隠れます。選択肢は<b>書き出しも字数も同じ</b>で語尾だけが違うので、最初の数文字では当たりません（全${(sess && sess.spanN) || SPAN_TRIALS}回）。</p>
+      <div class="card-subtitle up">Flash catch</div><p class="small" style="margin:-6px 0 14px">${SPAN_EXPOSURE}ms呈示 → マスク → 意味を選ぶ</p>
+      <p class="small" style="margin-bottom:12px">中央の<span style="color:var(--acc)">●</span>を凝視。まとまりが一瞬光り、すぐマスクで隠れます。答えるのは<b>見えたものの形ではなく、意味</b>です。どの文の一部だったか、あるいはその語が何を指すかを選びます（全${(sess && sess.spanN) || CATCH_TRIALS}回）。</p>
       <button class="btn" onclick="runSpanTrial(0,0)">スタート</button>
     </div>`;
 }
 function runSpanTrial(idx, score) {
-  const NT = (sess && sess.spanN) || SPAN_TRIALS;
+  const NT = (sess && sess.spanN) || CATCH_TRIALS;
   if (idx >= NT) { finishSpan(score); return; }
-  const trial = spanTrialSet(state.spanLevel);
+  const trial = catchTrial(state.spanLevel, CATCH_KINDS[idx % CATCH_KINDS.length]);
   if (!trial) { finishSpan(score); return; }
   sess.spanTrial = trial;
   screen().innerHTML = `
     ${phaseDots(phaseIdx("キャッチ"))}
     <div class="card">
-      <div class="card-title">瞬間キャッチ ${idx + 1}/${(sess && sess.spanN) || SPAN_TRIALS} <span class="tag">${trial.level}字</span></div>
+      <div class="card-title">瞬間キャッチ ${idx + 1}/${(sess && sess.spanN) || CATCH_TRIALS} <span class="tag">${trial.level}字</span><span class="tag sci" style="margin-left:4px">${trial.kind === "meaning" ? "意味" : "文脈"}</span></div>
       <div style="height:130px;display:flex;align-items:center;justify-content:center">
         <div id="span-stage" style="font-size:30px;font-weight:800;letter-spacing:.04em"><span style="color:var(--coral)">●</span></div>
       </div>
@@ -1949,7 +2079,7 @@ function runSpanTrial(idx, score) {
         st.style.color = "";
         st.innerHTML = "&nbsp;";
         const box = document.getElementById("span-opts");
-        if (box) box.innerHTML = `<p class="muted" style="margin-bottom:8px">いま見えた語はどれ？（似た語が並びます）</p>` +
+        if (box) box.innerHTML = `<p class="muted" style="margin-bottom:8px">${esc(trial.prompt || "いま見えた語はどれ？")}</p>` +
           trial.opts.map((o, i) => `<button class="opt" id="so${i}" onclick="answerSpan(${idx},${score},${i})">${esc(o)}</button>`).join("");
       }, SPAN_MASK);                                       // ③ 選択肢呈示
     }, SPAN_EXPOSURE);
@@ -1965,7 +2095,9 @@ function answerSpan(idx, score, i) {
     if (j === trial.ans) el.classList.add("correct");
     else if (j === i) el.classList.add("wrong");
   });
+  const movesLevel = trial.kind !== "meaning";   // 一目量の指標は「文脈」試行だけで動かす
   if (correct) {
+    if (!movesLevel) { saveState(); setTimeout(() => runSpanTrial(idx + 1, score + 1), 700); return; }
     state.spanStreak = (state.spanStreak || 0) + 1;
     if (state.spanStreak >= 3 && state.spanLevel < 9) {
       const old = state.spanLevel;
@@ -1976,13 +2108,13 @@ function answerSpan(idx, score, i) {
     }
   } else {
     state.spanStreak = 0;
-    if (state.spanLevel > 3) { state.spanLevel -= 1; stampField("spanLevel"); }
+    if (movesLevel && state.spanLevel > 3) { state.spanLevel -= 1; stampField("spanLevel"); }
   }
   saveState();
   setTimeout(() => runSpanTrial(idx + 1, score + (correct ? 1 : 0)), 700);
 }
 function finishSpan(score) {
-  sess.spanResult = { score, total: (sess && sess.spanN) || SPAN_TRIALS };
+  sess.spanResult = { score, total: (sess && sess.spanN) || CATCH_TRIALS };
   renderRead(1);   // 語彙道場は一旦流れから外している（sessionKeyTerms は残置）
 }
 // ---------- PHASE 3.5: 語彙道場（学校語彙を12歳の言葉で深く） ----------
@@ -2870,6 +3002,10 @@ function mergeStates(local, remote) {
   out.contentFeedback = mergeContentFeedback(local.contentFeedback, remote.contentFeedback);
   // 選択の記録も端末をまたいでunionする（同じ日・同じ本文は1件）
   out.pickSignals = unionBy(local.pickSignals, remote.pickSignals, x => [x.date, x.passageId].join("|")).slice(-600);
+  // 一覧に出した日は早い方を残す。端末を替えるたびに期限が延びると、2日の規則が効かない。
+  out.shownOn = {};
+  for (const src of [local.shownOn || {}, remote.shownOn || {}])
+    for (const [k, v] of Object.entries(src)) if (!out.shownOn[k] || v < out.shownOn[k]) out.shownOn[k] = v;
   // YouTube教材は動画IDを正本キーにする。同じ動画の旧分割教材が端末に
   // 残っていても、サーバーの新しい1教材へ収束させる。
   const youtubeVideoId = (p) => {

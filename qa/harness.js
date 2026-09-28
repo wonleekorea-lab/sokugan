@@ -108,7 +108,7 @@ const _si = global.setInterval;
 global.setInterval = (f, d) => _si(f, Math.max(1, Math.min(d || 0, 5)));
 
 // ---------- アプリ実コードを実行 ----------
-eval(js + "\nglobal.__app = { get state(){return state}, set state(v){state=v}, get ui(){return ui}, get sess(){return sess}, get view(){return view}, get content(){return content}, get syncState(){return syncState}, DEFAULT_CONTENT, ANCHOR_POOL, chunkText, getChunks, validChunks, chunkPool, spanTrialSet, pickSessionPassages, selectedPassageIds, togglePassageSelection, patchPassageSelectionUi, startSession, abortSession, renderShortIntro, renderShortResult, unseenPassages, unseenStock, isReviewPassage, addedOnOf, allPassages, personalPassages, normalizePersonalPassage, importPersonalContent, daysFromToday, passageKey, passageKeys, sourceUrlKey, isPassageSeen, markPassagesSeen, markPassageRead, textFingerprint, sourceUrlKey, renderHome, renderHistory, contentStatus, renderFreshnessPanel, guardedStart, renderPacer, renderPacerQuiz, answerPacer, renderSpanIntro, answerSpan, finishSpan, renderRead, startReading, finishReading, renderQuiz, finishQuiz, renderReread, startReread, finishReread, renderResult, textStats, adjustSpeed, makeDeepCloze, answerDeepCloze, normalizeNumerals, parseKanjiNum, startAnchor, renderAnchorRead, startAnchorRead, finishAnchorRead, renderAnchorQuiz, answerAnchor, anchorDue, todayMenu, goalProgress, gazeSpan, sessionKeyTerms, passageTakeaway, finishVocab, proceedAfterCloze1, weakestSkill, feedbackGenreScore, preferByFeedback, recordContentFeedback, recordContentFeedbackById, recordQuestionFeedback, recordQuestionFeedbackById, renderContentFeedback, contentFeedbackFor, contentFeedbackKey, findPassageById, defaultState, newSessionId, stampField, saveState, mergeStates, syncableState, unionBy, PHASES, render, pickSessionPassages, sessionQuestions, mergeContentFeedback, recordContentNote, recordContentNoteById, renderRestoreCard, restoreFromCloud, PASSWORD_RE, uiSendMagicLink, uiSetPassword, uiPasteAuthLink, authParamsFrom, applyAuthTokens, histKey, syncCfg, syncEnabled, signedIn, loadAuth, saveAuth, syncNow, pullRemote, pushRemote, scheduleSync, flushSyncQueue, syncStatusText, renderSyncCard, renderSyncLine, syncSignOut, KEY, AUTH_KEY, UI_KEY };");
+eval(js + "\nglobal.__app = { get state(){return state}, set state(v){state=v}, get ui(){return ui}, get sess(){return sess}, get view(){return view}, get content(){return content}, get syncState(){return syncState}, DEFAULT_CONTENT, ANCHOR_POOL, chunkText, getChunks, validChunks, chunkPool, spanTrialSet, catchTrial, catchContextTrial, catchMeaningTrial, catchSourcePassages, CATCH_KINDS, CATCH_TRIALS, splitSentences, pickSessionPassages, selectedPassageIds, togglePassageSelection, patchPassageSelectionUi, startSession, abortSession, renderShortIntro, renderShortResult, unseenPassages, unseenStock, isReviewPassage, addedOnOf, isStaleReview, markShown, REVIEW_SHELF_DAYS, allPassages, personalPassages, normalizePersonalPassage, importPersonalContent, daysFromToday, passageKey, passageKeys, sourceUrlKey, isPassageSeen, markPassagesSeen, markPassageRead, textFingerprint, sourceUrlKey, renderHome, renderHistory, contentStatus, renderFreshnessPanel, guardedStart, renderPacer, renderPacerQuiz, answerPacer, renderSpanIntro, answerSpan, finishSpan, renderRead, startReading, finishReading, renderQuiz, finishQuiz, renderReread, startReread, finishReread, renderResult, textStats, adjustSpeed, makeDeepCloze, answerDeepCloze, normalizeNumerals, parseKanjiNum, startAnchor, renderAnchorRead, startAnchorRead, finishAnchorRead, renderAnchorQuiz, answerAnchor, anchorDue, todayMenu, goalProgress, gazeSpan, sessionKeyTerms, passageTakeaway, finishVocab, proceedAfterCloze1, weakestSkill, feedbackGenreScore, preferByFeedback, recordContentFeedback, recordContentFeedbackById, recordQuestionFeedback, recordQuestionFeedbackById, renderContentFeedback, contentFeedbackFor, contentFeedbackKey, findPassageById, defaultState, newSessionId, stampField, saveState, mergeStates, syncableState, unionBy, PHASES, render, pickSessionPassages, sessionQuestions, mergeContentFeedback, recordContentNote, recordContentNoteById, renderRestoreCard, restoreFromCloud, PASSWORD_RE, uiSendMagicLink, uiSetPassword, uiPasteAuthLink, authParamsFrom, applyAuthTokens, histKey, syncCfg, syncEnabled, signedIn, loadAuth, saveAuth, syncNow, pullRemote, pushRemote, scheduleSync, flushSyncQueue, syncStatusText, renderSyncCard, renderSyncLine, syncSignOut, KEY, AUTH_KEY, UI_KEY };");
 
 (async () => {
   await new Promise(r => _st(r, 80)); // init完了待ち
@@ -482,6 +482,30 @@ eval(js + "\nglobal.__app = { get state(){return state}, set state(v){state=v}, 
       `${A.unseenPassages().length}枠`);
     A.state.personalLibrary = A.state.personalLibrary.filter(p => p.id !== "review-qa-old");
   }
+  // ---------- 4.1: 読まれない復習は2日で棚から下ろす ----------
+  // 選ばれなかった復習が枠に居座ると、毎日届く3本が一度も表に出ない。
+  {
+    const before = A.unseenPassages().map(p => p.id);
+    check("Q5 一覧に出した復習には、出した日が記録される",
+      before.filter(id => (A.state.shownOn || {})[id]).length >= 1,
+      JSON.stringify(A.state.shownOn || {}).slice(0, 80));
+    const rv = A.unseenPassages().find(p => A.isReviewPassage(p));
+    A.state.shownOn[rv.id] = A.daysFromToday(-A.REVIEW_SHELF_DAYS);
+    check("Q6 2日読まれなかった復習は棚から下ろす", A.isStaleReview(rv), `${rv.id} shownOn=${A.state.shownOn[rv.id]}`);
+    const after = A.unseenPassages();
+    check("Q7 棚落ちの分だけ控えから繰り上がる（5枠は埋まったまま）",
+      after.length === before.length && (after.indexOf(after.find(p => p.id === rv.id)) === after.length - 1 || !after.some(p => p.id === rv.id)),
+      after.map(p => p.id.slice(0, 14)).join(","));
+    A.state.shownOn[rv.id] = A.daysFromToday(0);
+    check("Q8 日次のビッグイシューは棚落ちの対象にしない",
+      A.content.passages.every(p => !A.isStaleReview(Object.assign({}, p, { id: p.id }))), "issueは対象外");
+    // 同期で期限が延びない（早い方を残す）
+    const M = A.mergeStates(
+      { shownOn: { "review-x": "2026-09-01" }, history: [], seenPassageKeys: [], wins: [], flags: {}, anchorHistory: [], personalLibrary: [], contentFeedback: [], pickSignals: [], contentNotes: [] },
+      { shownOn: { "review-x": "2026-09-05" }, history: [], seenPassageKeys: [], wins: [], flags: {}, anchorHistory: [], personalLibrary: [], contentFeedback: [], pickSignals: [], contentNotes: [] });
+    check("Q9 同期しても『出した日』は早い方が残る（期限が延びない）",
+      M.shownOn["review-x"] === "2026-09-01", M.shownOn["review-x"]);
+  }
   A.state.selectedPassageIds = [];
   A.togglePassageSelection(visibleDaily.id);
   A.togglePassageSelection("youtube-private-01");
@@ -539,6 +563,30 @@ eval(js + "\nglobal.__app = { get state(){return state}, set state(v){state=v}, 
   for (let lv = 3; lv <= 9; lv++) {
     const t = A.spanTrialSet(lv);
     if (t && !t.opts.every(o => [...o].length === [...t.target].length)) lenOK = false;
+  }
+  // ---------- 4.1: キャッチは「形の識別」の反復をやめた ----------
+  // 同じ問いを8回続けると、訓練は語形の弁別だけになる。1回ごとに問い方を変え、
+  // 見えたものを文脈か意味へ結び直させる。
+  check("B10e キャッチは意味を問う（文脈・意味の2種類を混ぜる）",
+    A.CATCH_TRIALS === 5 && new Set(A.CATCH_KINDS).size === 2 && A.CATCH_KINDS.includes("context") && A.CATCH_KINDS.includes("meaning"),
+    `${A.CATCH_TRIALS}回 / ${[...new Set(A.CATCH_KINDS)].join(",")}`);
+  {
+    const ct = A.catchContextTrial(5);
+    const okCtx = ct && ct.kind === "context" && ct.opts.length === 4 && ct.opts[ct.ans] &&
+      new Set(ct.opts).size === 4 && /どの文の一部/.test(ct.prompt || "");
+    check("B10f 文脈の試行は、見えたまとまりを含む文を4つの文から選ばせる", !!okCtx,
+      ct ? `${ct.target} → ${ct.opts[ct.ans].slice(0, 16)}` : "出題できない");
+    // 正解の文だけが、そのまとまりを含んでいること（他の文にもあると答えが割れる）
+    if (ct) {
+      const hit = ct.opts.filter(o => o.replace(/…$/, "").includes(ct.target)).length;
+      check("B10g 見えたまとまりを含む選択肢は1つだけ（答えが一意）", hit === 1, `${hit}件`);
+    }
+    const mt = A.catchMeaningTrial();
+    const lens = mt ? mt.opts.map(o => [...o].length) : [];
+    const longest = lens.length ? Math.max(...lens) : 0;
+    const soleLongest = mt && lens.filter(l => l === longest).length === 1 && lens[mt.ans] === longest;
+    check("B10h 意味の試行は説明文4つを並べ、単独最長＝正解にしない",
+      !!mt && mt.opts.length === 4 && !soleLongest, mt ? `字数 ${lens.join("/")} ans=${mt.ans}` : "出題できない");
   }
   check("B10d 選択肢の字数は的と同じ（マスク長からの消去法を封じる）", lenOK);
   A.sess.spanTrial = trial; A.answerSpan(0, 0, trial.ans);
