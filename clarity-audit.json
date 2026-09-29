@@ -1,89 +1,89 @@
 {
- "date": "2026-09-29",
- "status": "pass",
- "checked_at": "2026-09-29T08:05:07.178083Z",
- "auditor": "Claude Opus 5（本文だけを根拠に全6問を自力解答）",
- "avgScore": 5.0,
- "total": 6,
- "rewritten": 0,
- "items": [
-  {
-   "passage": "20260929_canary_fervo_geothermal",
-   "q": 1,
-   "type": "Take-away",
-   "stem": "Take-away: この記事が分けて見ている2つはどれか",
-   "ans": 1,
-   "readable": 5,
-   "unique": 5,
-   "concrete": 5,
-   "score": 5,
-   "note": "本文は稼働の事実と1キロワットあたりの費用を分けて置いており、対応は一意。"
-  },
-  {
-   "passage": "20260929_canary_fervo_geothermal",
-   "q": 2,
-   "type": "Strong evidence",
-   "stem": "Strong evidence: 第1期の1キロワットあたりの費用はいくらか",
-   "ans": 2,
-   "readable": 5,
-   "unique": 5,
-   "concrete": 5,
-   "score": 5,
-   "note": "第1期7000ドル、第2期5500ドル、ガス2157ドルと本文に明示されている。"
-  },
-  {
-   "passage": "20260929_canary_fervo_geothermal",
-   "q": 3,
-   "type": "Scenario",
-   "stem": "Scenario: 次に見るべき数字として本文が示すのはどれか",
-   "ans": 0,
-   "readable": 5,
-   "unique": 5,
-   "concrete": 5,
-   "score": 5,
-   "note": "本文の結びが、重いのは1基目の写真ではなく2基目の単価だと述べている。"
-  },
-  {
-   "passage": "20260929_cp_dji_margin",
-   "q": 1,
-   "type": "Take-away",
-   "stem": "Take-away: この数字が揺らしている前提はどれか",
-   "ans": 0,
-   "readable": 5,
-   "unique": 5,
-   "concrete": 5,
-   "score": 5,
-   "note": "粗利79%を示し、ハードは薄利という前提のほうが揺れていると本文が書いている。"
-  },
-  {
-   "passage": "20260929_cp_dji_margin",
-   "q": 2,
-   "type": "Strong evidence",
-   "stem": "Strong evidence: 産業用ロボットの据え付け台数はどこが突出しているか",
-   "ans": 2,
-   "readable": 5,
-   "unique": 5,
-   "concrete": 5,
-   "score": 5,
-   "note": "米国38,400台、日本36,200台、中国354,000台と本文に並んでいる。"
-  },
-  {
-   "passage": "20260929_cp_dji_margin",
-   "q": 3,
-   "type": "Scenario",
-   "stem": "Scenario: この記事から読み取れないものはどれか",
-   "ans": 0,
-   "readable": 5,
-   "unique": 5,
-   "concrete": 5,
-   "score": 5,
-   "note": "なぜ利ざやが高いのかにこの記事は答えていない、と本文が明示している。"
+  "date": "2026-09-30",
+  "status": "pass",
+  "checked_at": "2026-09-29T09:11:49Z",
+  "auditor": "Codex（本文だけを根拠に全6問を自力解答）",
+  "avgScore": 5,
+  "total": 6,
+  "rewritten": 0,
+  "items": [
+    {
+      "passage": "20260930_commoncog_bandag_moat",
+      "q": 1,
+      "type": "Take-away",
+      "stem": "Take-away: アクリーがタイヤ会社ではないと考えた理由は何か",
+      "ans": 2,
+      "readable": 5,
+      "unique": 5,
+      "concrete": 5,
+      "score": 5,
+      "note": "本文が示す資本利益率の差に対応する選択肢が一つだけで、他は本文にない理由である。"
+    },
+    {
+      "passage": "20260930_commoncog_bandag_moat",
+      "q": 2,
+      "type": "Strong evidence",
+      "stem": "Strong evidence: バンダグが利益を代理店へ戻した条件は何か",
+      "ans": 1,
+      "readable": 5,
+      "unique": 5,
+      "concrete": 5,
+      "score": 5,
+      "note": "利益を代理店へ配り、自分の店への再投資を条件にした事実が本文に明記されている。"
+    },
+    {
+      "passage": "20260930_commoncog_bandag_moat",
+      "q": 3,
+      "type": "Scenario",
+      "stem": "Scenario: 本文から見えるバンダグの競争優位はどれか",
+      "ans": 0,
+      "readable": 5,
+      "unique": 5,
+      "concrete": 5,
+      "score": 5,
+      "note": "代理店のネットワークを太くする流通の仕組みが競争優位になったという本文に一致する。"
+    },
+    {
+      "passage": "20260930_canary_ny_storage_contracts",
+      "q": 1,
+      "type": "Take-away",
+      "stem": "Take-away: ニューヨーク州が解いた問題は何か",
+      "ans": 1,
+      "readable": 5,
+      "unique": 5,
+      "concrete": 5,
+      "score": 5,
+      "note": "6か月の収入しか見えず20年投資が止まったという本文の事実に対応している。"
+    },
+    {
+      "passage": "20260930_canary_ny_storage_contracts",
+      "q": 2,
+      "type": "Strong evidence",
+      "stem": "Strong evidence: 8つの契約で増える予定の容量はいくらか",
+      "ans": 2,
+      "readable": 5,
+      "unique": 5,
+      "concrete": 5,
+      "score": 5,
+      "note": "8つの契約の合計950メガワットが本文に明記され、80、335、1500は別の数字である。"
+    },
+    {
+      "passage": "20260930_canary_ny_storage_contracts",
+      "q": 3,
+      "type": "Scenario",
+      "stem": "Scenario: 契約で事業者の収入が足りないとき、どうなるか",
+      "ans": 0,
+      "readable": 5,
+      "unique": 5,
+      "concrete": 5,
+      "score": 5,
+      "note": "市場価格が必要額を下回ると州が差額を補う仕組みが本文に直接書かれている。"
+    }
+  ],
+  "rubric": {
+    "one_read": 5,
+    "unique_logic": 5,
+    "concrete_options": 5,
+    "natural_faithful_japanese": 5
   }
- ],
- "rubric": {
-  "one_read": 5,
-  "unique_logic": 5,
-  "concrete_options": 5,
-  "natural_faithful_japanese": 5
- }
 }
