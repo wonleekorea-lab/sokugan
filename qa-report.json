@@ -1,9 +1,9 @@
 {
  "date": "2026-09-29",
  "status": "pass",
- "checked_at": "2026-09-28T09:16:02.268Z",
- "passed": 239,
- "total": 239,
+ "checked_at": "2026-09-29T08:05:39.307Z",
+ "passed": 242,
+ "total": 242,
  "failures": [],
- "notes": "daily: 2026-09-28"
+ "notes": "4.2: 段落とoutline・正解位置の分散"
 }

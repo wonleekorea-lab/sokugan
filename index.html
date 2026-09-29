@@ -127,6 +127,8 @@ code{background:var(--card2);border:1px solid var(--border);border-radius:2px;pa
 
 /* ---- 読書面（和紙に墨） ---- */
 .reading-text{font-size:19.5px;line-height:2.15;letter-spacing:.02em;padding:8px 2px;text-align:justify;color:var(--ink)}
+.reading-text p{margin:0 0 1.1em}
+.reading-text p:last-child{margin-bottom:0}
 .reading-text.hidden-text{filter:blur(7px);user-select:none}
 .chunk{border-radius:2px;padding:1px 1px;transition:background .12s}
 .chunk.lit{background:var(--acc-dim);box-shadow:inset 0 -1.5px 0 var(--acc)}
@@ -1597,6 +1599,12 @@ function togglePassageSelection(id) {
   // 選択だけでは同期しない。PCで一覧を先頭へ戻さず、ネットワーク遅延にも影響されない。
   if (!patchPassageSelectionUi()) renderHome();
 }
+// 設問の並びは表示の直前に混ぜる。日次教材は読み込み時に混ぜていたが、
+// 復習教材（personalLibrary）は素通りしていて、書いた順（正解が先頭に寄る）のまま出ていた。
+function withShuffledQuestions(p) {
+  if (!p || !Array.isArray(p.questions)) return p;
+  return Object.assign({}, p, { questions: p.questions.map(q => shuffleQuestionOptions(q)) });
+}
 function pickSessionPassages(mode = "full", selectedIds) {
   const pool = preferByFeedback(unseenPassages());
   const need = mode === "short" ? 1 : 2;
@@ -1605,9 +1613,9 @@ function pickSessionPassages(mode = "full", selectedIds) {
   const news = pool.filter(p => !isDeep(p));
   const wanted = (Array.isArray(selectedIds) ? selectedIds : selectedPassageIds()).map(id => pool.find(p => p.id === id)).filter(Boolean);
   const p1 = wanted[0] || news[0] || pool[0];
-  if (mode === "short") return { p1, p2: null, warm: null };
+  if (mode === "short") return { p1: withShuffledQuestions(p1), p2: null, warm: null };
   const p2 = wanted[1] || deep.find(p => p.id !== p1.id) || pool.find(p => p.id !== p1.id) || pool[0];
-  return { p1, p2, warm: null };   // warm はペーサー用。流れから外したので取らない
+  return { p1: withShuffledQuestions(p1), p2: withShuffledQuestions(p2), warm: null };
 }
 // =============================================================
 // コンテンツ鮮度ゲート（開始前に「今日の最新か」を確認できる仕組み）
@@ -2178,6 +2186,12 @@ function authorLine(p) {
   const media = sourceLabel(p).replace(/（[^）]*）/g, "").trim();
   return media || "";
 }
+// 本文は段落で見せる。1つの塊にすると、話がどこで切り替わったのか目で追えない。
+// 教材側は空行（\n\n）で区切る。区切りの無い古い教材は1段落として出す。
+function paragraphsHtml(text) {
+  const ps = String(text || "").split(/\n\s*\n/).map(x => x.trim()).filter(Boolean);
+  return (ps.length ? ps : [String(text || "")]).map(x => `<p>${esc(x)}</p>`).join("");
+}
 function renderRead(which) {
   const p = which === 1 ? sess.p1 : sess.p2;
   const phase = which === 1 ? phaseIdx("本文①") : phaseIdx("本文②");
@@ -2190,7 +2204,7 @@ function renderRead(which) {
       <div class="card-title" style="margin-top:4px">${esc(p.title)}</div>
       <div class="card-subtitle">本文${which === 1 ? "①" : "②"} 初読 · ${n}字 · 読了後に設問2問</div>
       <div class="bigtime" id="read-clock">00:00</div>
-      <div class="reading-text hidden-text" id="read-text">${esc(p.text)}</div>
+      <div class="reading-text hidden-text" id="read-text">${paragraphsHtml(p.text)}</div>
       <div style="margin-top:14px;display:flex;gap:8px">
         <button class="btn" id="read-btn" onclick="startReading(${which})">計測開始</button>
         <button class="btn secondary" style="width:auto;flex:none;padding:15px 18px" onclick="abortSession()">中断</button>

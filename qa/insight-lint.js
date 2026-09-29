@@ -41,6 +41,13 @@ const IMPERATIVE = /(しよう|しましょう|するとよい|すべきだ|心�
 function sentences(text) {
   return String(text || "").split(/(?<=[。？！])/).map(s => s.trim()).filter(Boolean);
 }
+function paragraphs(text) {
+  return String(text || "").split(/\n\s*\n/).map(s => s.trim()).filter(Boolean);
+}
+// 「誰々が〜を調べた」で始めると、最初の一文が中身ではなく手続きの説明になる。
+// 読み手はそこで一度降りる。事実か場面から入る。
+// 「Xは、Yを調べた」の形だけを落とす。場面の描写（「教授が何かと聞いた」）は残す。
+const META_OPENER = /^[^。]{2,24}は、[^。]{0,40}(調べた|調べている|尋ねた|扱う|扱っている|論じる|論じている|説明する|問い直す)。/;
 function len(s) { return [...String(s || "")].length; }
 function tail(s) { return String(s || "").replace(/[。？！]$/, "").slice(-3); }
 
@@ -49,9 +56,15 @@ function naturalJaIssues(text) {
   const ss = sentences(text);
   if (!ss.length) return ["本文が空"];
 
+  // 文の長さが揃うと、内容に関係なく単調に聞こえて頭に入らない。
+  // 読める文章には必ず短い文が混ざる。実測でも、読みづらい教材は短文がゼロだった。
+  if (ss.length >= 6 && !ss.some(s => len(s) <= 16))
+    issues.push("短い文が1つも無い（全部が同じ長さに見える）");
+  if (ss.length && META_OPENER.test(ss[0]))
+    issues.push(`冒頭が手続きの説明になっている: ${ss[0].slice(0, 24)}`);
   for (const s of ss) {
     const L = len(s);
-    if (L > 60) issues.push(`一文が長い(${L}字): ${s.slice(0, 18)}…`);
+    if (L > 52) issues.push(`一文が長い(${L}字): ${s.slice(0, 18)}…`);
     if (L > 45 && !s.includes("、")) issues.push(`読点なしで${L}字: ${s.slice(0, 18)}…`);
     // 連体詞・形式名詞の「の」は数えない（そのもの・このほう などは連結ではない）
     const noChain = s.replace(/(その|この|あの|どの|もの|ため|のに|ので)/g, "＿");
@@ -111,6 +124,46 @@ function coverage(claim, text) {
 // 語をひとつに固定すると型になるので、広めに取って「どれも無い」だけを落とす。
 const REVERSAL = /(ではない|ではなく|に見えて|実は|逆に|裏を返せば|ところが|ように思えるが|と思われがちだ|どころか|むしろ|それでも|にもかかわらず)/;
 
+// タイトルの語が本文に出てこないと、読み終えても見出しと中身がつながらない。
+function titleIssues(p) {
+  const issues = [];
+  const text = String(p.text || "");
+  const ks = [...new Set([...(String(p.title || "").match(/[一-龥]{2,}|[ァ-ヴー]{3,}|\d+/g) || [])])];
+  if (ks.length >= 2) {
+    const hit = ks.filter(k => text.includes(k)).length / ks.length;
+    if (hit < 0.5) issues.push(`タイトルの語が本文に出てこない（${Math.round(hit * 100)}%）`);
+  }
+  return issues;
+}
+// 構成を先に決めて JSON に残す。書いたあとで辻褄を合わせると、必ず要約になる。
+function outlineIssues(p) {
+  const issues = [];
+  const ol = p.outline;
+  const ps = paragraphs(p.text);
+  if (!Array.isArray(ol) || ol.length < 3 || ol.length > 4) {
+    issues.push(`outline（構成の骨）が3〜4行でない: ${Array.isArray(ol) ? ol.length : "なし"}`);
+    return issues;
+  }
+  for (const line of ol) {
+    const L = len(line);
+    if (L < 12 || L > 44) issues.push(`outlineの行が12-44字でない(${L}): ${String(line).slice(0, 18)}`);
+  }
+  if (ps.length !== ol.length) issues.push(`段落数(${ps.length})とoutlineの行数(${ol.length})が違う`);
+  else {
+    // 骨と中身が対応しているか。書いた順に並んでいなければ、構成が守られていない。
+    ol.forEach((line, i) => {
+      const ks = keywords(line);
+      if (!ks.length) return;
+      const hit = ks.filter(k => ps[i].includes(k)).length / ks.length;
+      if (hit < 0.34) issues.push(`第${i + 1}段落がoutlineと対応していない（${Math.round(hit * 100)}%）: ${String(line).slice(0, 16)}`);
+    });
+  }
+  for (const [i, para] of ps.entries()) {
+    const L = len(para.replace(/\s/g, ""));
+    if (L < 90 || L > 280) issues.push(`第${i + 1}段落が90-280字でない(${L})`);
+  }
+  return issues;
+}
 function insightIssues(p, brief) {
   const issues = [];
   const text = String(p.text || "");
@@ -164,7 +217,7 @@ function insightIssues(p, brief) {
 
 function lintPassage(p, opts) {
   const o = opts || {};
-  const errors = [...naturalJaIssues(p.text), ...insightIssues(p, o.brief)];
+  const errors = [...naturalJaIssues(p.text), ...titleIssues(p), ...outlineIssues(p), ...insightIssues(p, o.brief)];
   // 設問・タイトル・持ち帰りも同じ日本語の基準で見る
   for (const q of p.questions || []) {
     for (const bad of ["ことが重要", "という点", "と述べている", "話者"]) {
@@ -175,7 +228,7 @@ function lintPassage(p, opts) {
   return errors;
 }
 
-module.exports = { lintPassage, naturalJaIssues, insightIssues, coverage, sentences };
+module.exports = { lintPassage, naturalJaIssues, insightIssues, titleIssues, outlineIssues, coverage, sentences, paragraphs };
 
 // ---------- 単体実行 ----------
 if (require.main === module) {
