@@ -1,83 +1,83 @@
 {
-  "date": "2026-09-30",
+  "date": "2026-10-01",
   "status": "pass",
-  "checked_at": "2026-09-29T09:11:49Z",
+  "checked_at": "2026-09-30T09:13:19Z",
   "auditor": "Codex（本文だけを根拠に全6問を自力解答）",
   "avgScore": 5,
   "total": 6,
   "rewritten": 0,
   "items": [
     {
-      "passage": "20260930_commoncog_bandag_moat",
+      "passage": "20261001_marginalrevolution_time_tax",
       "q": 1,
       "type": "Take-away",
-      "stem": "Take-away: アクリーがタイヤ会社ではないと考えた理由は何か",
-      "ans": 2,
-      "readable": 5,
-      "unique": 5,
-      "concrete": 5,
-      "score": 5,
-      "note": "本文が示す資本利益率の差に対応する選択肢が一つだけで、他は本文にない理由である。"
-    },
-    {
-      "passage": "20260930_commoncog_bandag_moat",
-      "q": 2,
-      "type": "Strong evidence",
-      "stem": "Strong evidence: バンダグが利益を代理店へ戻した条件は何か",
+      "stem": "Take-away: 時間税とは何を指すか",
       "ans": 1,
       "readable": 5,
       "unique": 5,
       "concrete": 5,
       "score": 5,
-      "note": "利益を代理店へ配り、自分の店への再投資を条件にした事実が本文に明記されている。"
+      "note": "電話の保留や申請の手間を時間で負う負担だと本文に明記され、他の選択肢と一意に区別できる。"
     },
     {
-      "passage": "20260930_commoncog_bandag_moat",
-      "q": 3,
-      "type": "Scenario",
-      "stem": "Scenario: 本文から見えるバンダグの競争優位はどれか",
+      "passage": "20261001_marginalrevolution_time_tax",
+      "q": 2,
+      "type": "Strong evidence",
+      "stem": "Strong evidence: ローリーが手続きの役割として挙げたものはどれか",
       "ans": 0,
       "readable": 5,
       "unique": 5,
       "concrete": 5,
       "score": 5,
-      "note": "代理店のネットワークを太くする流通の仕組みが競争優位になったという本文に一致する。"
+      "note": "詐欺防止、手術の選別、支援対象の確認という本文の具体例に対応する選択肢が一つだけである。"
     },
     {
-      "passage": "20260930_canary_ny_storage_contracts",
+      "passage": "20261001_marginalrevolution_time_tax",
+      "q": 3,
+      "type": "Scenario",
+      "stem": "Scenario: 制度の負担を見るとき本文が問う視点はどれか",
+      "ans": 3,
+      "readable": 5,
+      "unique": 5,
+      "concrete": 5,
+      "score": 5,
+      "note": "手間の総量ではなく、誰が待ち、誰が諦めるかまで問うという本文の結論をそのまま確認できる。"
+    },
+    {
+      "passage": "20261001_construction_physics_asml_europe",
       "q": 1,
       "type": "Take-away",
-      "stem": "Take-away: ニューヨーク州が解いた問題は何か",
+      "stem": "Take-away: 欧州の工場投資とASMLの売上が一致しなかった理由は何か",
       "ans": 1,
       "readable": 5,
       "unique": 5,
       "concrete": 5,
       "score": 5,
-      "note": "6か月の収入しか見えず20年投資が止まったという本文の事実に対応している。"
+      "note": "成熟チップ中心の工場では最先端装置の需要が生まれないという本文の因果を一つの選択肢が示している。"
     },
     {
-      "passage": "20260930_canary_ny_storage_contracts",
+      "passage": "20261001_construction_physics_asml_europe",
       "q": 2,
       "type": "Strong evidence",
-      "stem": "Strong evidence: 8つの契約で増える予定の容量はいくらか",
-      "ans": 2,
-      "readable": 5,
-      "unique": 5,
-      "concrete": 5,
-      "score": 5,
-      "note": "8つの契約の合計950メガワットが本文に明記され、80、335、1500は別の数字である。"
-    },
-    {
-      "passage": "20260930_canary_ny_storage_contracts",
-      "q": 3,
-      "type": "Scenario",
-      "stem": "Scenario: 契約で事業者の収入が足りないとき、どうなるか",
+      "stem": "Strong evidence: EUV装置が使う光の波長はどれか",
       "ans": 0,
       "readable": 5,
       "unique": 5,
       "concrete": 5,
       "score": 5,
-      "note": "市場価格が必要額を下回ると州が差額を補う仕組みが本文に直接書かれている。"
+      "note": "本文に13.5ナノメートルと明記され、他の数字は本文中の別の数値を混ぜた誤答になっている。"
+    },
+    {
+      "passage": "20261001_construction_physics_asml_europe",
+      "q": 3,
+      "type": "Scenario",
+      "stem": "Scenario: 産業政策の投資を読むとき、本文が重視する確認はどれか",
+      "ans": 3,
+      "readable": 5,
+      "unique": 5,
+      "concrete": 5,
+      "score": 5,
+      "note": "工場の数ではなく、成熟チップか最先端チップかという製造内容まで確認するという結論に一致する。"
     }
   ],
   "rubric": {
