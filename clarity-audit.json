@@ -1,83 +1,83 @@
 {
-  "date": "2026-10-01",
+  "date": "2026-10-02",
   "status": "pass",
-  "checked_at": "2026-09-30T09:13:19Z",
+  "checked_at": "2026-10-01T11:50:43Z",
   "auditor": "Codex（本文だけを根拠に全6問を自力解答）",
   "avgScore": 5,
   "total": 6,
   "rewritten": 0,
   "items": [
     {
-      "passage": "20261001_marginalrevolution_time_tax",
+      "passage": "20261002_marginalrevolution_false_crocodile",
       "q": 1,
       "type": "Take-away",
-      "stem": "Take-away: 時間税とは何を指すか",
+      "stem": "Take-away: この事件が示した誤情報の影響は何か",
       "ans": 1,
       "readable": 5,
       "unique": 5,
       "concrete": 5,
       "score": 5,
-      "note": "電話の保留や申請の手間を時間で負う負担だと本文に明記され、他の選択肢と一意に区別できる。"
+      "note": "偽画像の影響が行政の確認と現場作業の停止へ及ぶことを本文から一読で確認できる。"
     },
     {
-      "passage": "20261001_marginalrevolution_time_tax",
+      "passage": "20261002_marginalrevolution_false_crocodile",
       "q": 2,
       "type": "Strong evidence",
-      "stem": "Strong evidence: ローリーが手続きの役割として挙げたものはどれか",
+      "stem": "Strong evidence: 行政が通報を無視できない理由はどれか",
       "ans": 0,
       "readable": 5,
       "unique": 5,
       "concrete": 5,
       "score": 5,
-      "note": "詐欺防止、手術の選別、支援対象の確認という本文の具体例に対応する選択肢が一つだけである。"
+      "note": "通報を確かめて現場の安全を判断する必要が本文に明記され、他の選択肢と区別できる。"
     },
     {
-      "passage": "20261001_marginalrevolution_time_tax",
+      "passage": "20261002_marginalrevolution_false_crocodile",
       "q": 3,
       "type": "Scenario",
-      "stem": "Scenario: 制度の負担を見るとき本文が問う視点はどれか",
+      "stem": "Scenario: 水道の信頼を測るとき見るべき点はどれか",
       "ans": 3,
       "readable": 5,
       "unique": 5,
       "concrete": 5,
       "score": 5,
-      "note": "手間の総量ではなく、誰が待ち、誰が諦めるかまで問うという本文の結論をそのまま確認できる。"
+      "note": "正しい情報を集める速さでも信頼を測るという結論が本文にあり、答えが一つに決まる。"
     },
     {
-      "passage": "20261001_construction_physics_asml_europe",
+      "passage": "20261002_rieti_reallocation_exit",
       "q": 1,
       "type": "Take-away",
-      "stem": "Take-away: 欧州の工場投資とASMLの売上が一致しなかった理由は何か",
+      "stem": "Take-away: 研究が示した企業退出の意外な点は何か",
+      "ans": 0,
+      "readable": 5,
+      "unique": 5,
+      "concrete": 5,
+      "score": 5,
+      "note": "合併で退出した企業の生産性が高かったという本文の中心を、他の選択肢と混同せず読める。"
+    },
+    {
+      "passage": "20261002_rieti_reallocation_exit",
+      "q": 2,
+      "type": "Strong evidence",
+      "stem": "Strong evidence: 調査に含まれた企業データの規模はどれか",
       "ans": 1,
       "readable": 5,
       "unique": 5,
       "concrete": 5,
       "score": 5,
-      "note": "成熟チップ中心の工場では最先端装置の需要が生まれないという本文の因果を一つの選択肢が示している。"
+      "note": "年間23万社以上という数字が本文に明記され、他の規模の選択肢と一意に区別できる。"
     },
     {
-      "passage": "20261001_construction_physics_asml_europe",
-      "q": 2,
-      "type": "Strong evidence",
-      "stem": "Strong evidence: EUV装置が使う光の波長はどれか",
-      "ans": 0,
-      "readable": 5,
-      "unique": 5,
-      "concrete": 5,
-      "score": 5,
-      "note": "本文に13.5ナノメートルと明記され、他の数字は本文中の別の数値を混ぜた誤答になっている。"
-    },
-    {
-      "passage": "20261001_construction_physics_asml_europe",
+      "passage": "20261002_rieti_reallocation_exit",
       "q": 3,
       "type": "Scenario",
-      "stem": "Scenario: 産業政策の投資を読むとき、本文が重視する確認はどれか",
+      "stem": "Scenario: 企業数が減ったとき、本文が確認する点はどれか",
       "ans": 3,
       "readable": 5,
       "unique": 5,
       "concrete": 5,
       "score": 5,
-      "note": "工場の数ではなく、成熟チップか最先端チップかという製造内容まで確認するという結論に一致する。"
+      "note": "企業数だけでなく人材や設備の移動を見るという本文の含意を、応用設問として一意に解ける。"
     }
   ],
   "rubric": {
