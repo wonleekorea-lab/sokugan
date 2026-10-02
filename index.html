@@ -504,17 +504,24 @@ async function loadQaReport() {
 // =============================================================
 // HELPERS
 // =============================================================
-function today() {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+// ---------- 1日の境目は朝7時（4.3）----------
+// 教材は前夜のうちに作って公開し、朝7時に入れ替える。0時で切り替えると、
+// 夜に作った翌日分が深夜の時点で表に出てしまい、朝に開いたときには
+// 「もう昨日の分」になっている。生成を朝に動かさないのは、その時間に
+// Macが寝ていると更新そのものが来ないから。作るのは夜、出すのは朝。
+const DAY_START_HOUR = 7;
+function dayStamp(d) {
+  const x = new Date(d.getTime() - DAY_START_HOUR * 3600 * 1000);
+  return `${x.getFullYear()}-${String(x.getMonth()+1).padStart(2,"0")}-${String(x.getDate()).padStart(2,"0")}`;
 }
+function today() { return dayStamp(new Date()); }
 function daysAgoStr(n) {
   const d = new Date(); d.setDate(d.getDate() - n);
-  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+  return dayStamp(d);
 }
 function daysFromToday(n) {
   const d = new Date(); d.setDate(d.getDate() + n);
-  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+  return dayStamp(d);
 }
 // 2つのYYYY-MM-DD間の日数差（d2 - d1）。ローカル時刻基準。
 function daysBetween(d1, d2) {
@@ -740,9 +747,17 @@ function daysBetweenStr(a, b) {
   return Number.isFinite(ms) ? Math.round(ms / 86400000) : 0;
 }
 // 未読の全在庫（日次のビッグイシュー＋復習ライブラリ）。新しい順。
+// 公開ファイルは直近2日分のビッグイシューを持つ。addedOn が「今日」を
+// 超えているものは、まだ出す日が来ていないので一覧に載せない（4.3）。
+function releasedIssues() {
+  const t = today();
+  const ps = (content.passages || []).filter(p => !p.addedOn || p.addedOn <= t);
+  // 日付の付いていない古い教材やフォールバックは、そのまま出す
+  return ps.length ? ps : (content.passages || []);
+}
 function unseenStock() {
   const seen = seenPassageSet();
-  return [...(content.passages || []), ...personalPassages()]
+  return [...releasedIssues(), ...personalPassages()]
     .filter(p => p && p.id && !isPassageSeen(p, seen))
     .sort(queueOrder);
 }

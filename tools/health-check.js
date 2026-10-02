@@ -103,6 +103,14 @@ async function remoteState() {
       issues.push(`今日届いた復習${arrived.length}本が全部すでに既読扱い（${swallowed[0].id}）`);
     else if (arrived.length) notes.push(`今日届いた復習 ${arrived.length}本（うち既読扱い ${swallowed.length}本）`);
     else notes.push("今日届いた復習は0本");
+
+    // 明日の朝7時に何が出るか。ここが空なら、明日の朝は入れ替わらない。
+    const tomorrow = new Date(Date.parse(today + "T00:00:00+09:00") + 86400000).toISOString().slice(0, 10);
+    const nextIssues = (daily.passages || []).filter(p => p.addedOn === tomorrow).length;
+    const nextReviews = (state.personalLibrary || []).filter(p => (p.availableOn || "") === tomorrow).length;
+    if (nextIssues < 2) issues.push(`明日(${tomorrow})の論点が仕込まれていない（${nextIssues}本）`);
+    if (nextReviews < 1) issues.push(`明日(${tomorrow})の復習が仕込まれていない（${nextReviews}本）`);
+    if (nextIssues >= 2 && nextReviews >= 1) notes.push(`明日7時に出る分 論点${nextIssues}・復習${nextReviews}`);
   }
 
   const out = { date: today, ok: issues.length === 0, issues, notes };

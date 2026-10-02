@@ -8,12 +8,33 @@ SOKUGAN 4.0 の教材を生成する。**CLAUDE.md の絶対ルールに従う�
 一覧には未読が新しい順に5本まで並び、1本読み終えるごとに控えから繰り上がる。
 10本を毎日入れ替えていた頃は、選ぶことが重くなり、在庫が滞留して質も落ちていた。
 
-## 1. 対象日の決定
+## 1. 対象日の決定 ── 作るのは夜、出すのは朝7時
+
+**アプリの1日は朝7時に始まる**（`DAY_START_HOUR`）。前夜に作って公開した分は、
+翌朝7時に一覧へ繰り上がる。0時で切り替えると、夜に作った翌日分が深夜に表へ出てしまい、
+朝に開いたときには「もう昨日の分」になる。生成を朝へ動かさないのは、その時間にMacが
+寝ていると更新そのものが来ないから。
+
 `TZ=Asia/Tokyo date "+%Y-%m-%d %H:%M"` を実行。
-- **JST14:00以降** → `target_date` = 翌日（先回り生成）
-- **JST14:00より前** → `target_date` = 当日（前夜の取りこぼしを埋める）
+- **JST07:00以降** → `target_date` = 翌日（夜のうちに仕込む。朝7時に出る）
+- **JST07:00より前** → `target_date` = 当日（前夜の取りこぼしを埋める）
 
 既存 `daily-content.json` の date が target_date と同じで、`node qa/harness.js` がPASSするなら日次分は「生成不要」と報告し、**手順3（復習）だけ実行して終了**する。
+
+### 公開ファイルは直近2日分を持つ（A2d2）
+
+朝7時までは前日の2本が一覧に並ぶ。だから `daily-content.json` には
+**前日の2本を残したまま、当日分の2本を足す**（計4本・3日前の分は落とす）。
+
+```
+passages = [今日の2本（addedOn=target_date）, 前日の2本（addedOn=target_date-1）]
+date     = target_date      ← 最新日
+days     = 2
+```
+
+前日分を消すと、夜から朝7時までのあいだ、一覧の論点が空になる。
+**既存ファイルを `archive/{既存date}.json` へ退避したあと、その2本を新しいファイルへ引き継ぐこと。**
+前日と同じジャンルの組み合わせにしない（A14d。朝の入れ替えで中身が動いた感じが出ない）。
 
 ---
 
@@ -163,9 +184,9 @@ launchd 配下の codex は macOS の権限で iCloud を読めない（EPERM）
 
 出力先: `private-imports/review-<target_date>.json`
 
-**`availableOn` は target_date ではなく「生成した日（今日）」にする。**
-日次のビッグイシューは翌日分でもその場で読めるが、私用教材は `availableOn` を過ぎるまで一覧に出ない。
-target_date を入れると、生成した当日は論点2本しか並ばず、5枠のうち3枠が空のまま一日が終わる。
+**`availableOn` は `target_date` にする**（4.3で変更）。
+アプリの1日は朝7時に始まるので、`target_date` を入れた復習は**翌朝7時に論点2本と一緒に繰り上がる**。
+夜のあいだは前日の復習が並んだままなので、枠が空くことはない。
 
 ```json
 { "schema": "sokugan-private-review-v1", "date": "<target_date>", "availableOn": "<生成した日>",
@@ -221,7 +242,8 @@ node tools/publish-private-youtube.js private-imports/review-<target_date>.json
 `chunks` は書かない（アプリが自動生成）。
 
 ## 5. 書き込み
-既存 `daily-content.json` を `archive/{既存date}.json` へ退避してから上書きする。
+既存 `daily-content.json` を `archive/{既存date}.json` へ退避する。
+そのうえで、**退避した2本を新しいファイルへ引き継ぎ**、当日分2本と合わせて4本にする（手順1を見る）。
 
 ## 6. 明快さ自己監査 → clarity-audit.json（必須）
 全6問を自分で解き、①一読で分かる ②論理が一意 ③選択肢が具体的 ④日本語が自然で根拠記事に忠実 を1〜5で採点。

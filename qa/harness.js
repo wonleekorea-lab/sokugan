@@ -108,7 +108,7 @@ const _si = global.setInterval;
 global.setInterval = (f, d) => _si(f, Math.max(1, Math.min(d || 0, 5)));
 
 // ---------- アプリ実コードを実行 ----------
-eval(js + "\nglobal.__app = { get state(){return state}, set state(v){state=v}, get ui(){return ui}, get sess(){return sess}, get view(){return view}, get content(){return content}, get syncState(){return syncState}, DEFAULT_CONTENT, ANCHOR_POOL, chunkText, getChunks, validChunks, chunkPool, spanTrialSet, catchTrial, catchContextTrial, catchMeaningTrial, catchSourcePassages, CATCH_KINDS, CATCH_TRIALS, splitSentences, pickSessionPassages, withShuffledQuestions, paragraphsHtml, selectedPassageIds, togglePassageSelection, patchPassageSelectionUi, startSession, abortSession, renderShortIntro, renderShortResult, unseenPassages, unseenStock, isReviewPassage, addedOnOf, isStaleReview, markShown, REVIEW_SHELF_DAYS, allPassages, personalPassages, normalizePersonalPassage, importPersonalContent, daysFromToday, passageKey, passageKeys, sourceUrlKey, isPassageSeen, markPassagesSeen, markPassageRead, textFingerprint, sourceUrlKey, renderHome, renderHistory, contentStatus, renderFreshnessPanel, guardedStart, renderPacer, renderPacerQuiz, answerPacer, renderSpanIntro, answerSpan, finishSpan, renderRead, startReading, finishReading, renderQuiz, finishQuiz, renderReread, startReread, finishReread, renderResult, textStats, adjustSpeed, makeDeepCloze, answerDeepCloze, normalizeNumerals, parseKanjiNum, startAnchor, renderAnchorRead, startAnchorRead, finishAnchorRead, renderAnchorQuiz, answerAnchor, anchorDue, todayMenu, goalProgress, gazeSpan, sessionKeyTerms, passageTakeaway, finishVocab, proceedAfterCloze1, weakestSkill, feedbackGenreScore, preferByFeedback, recordContentFeedback, recordContentFeedbackById, recordQuestionFeedback, recordQuestionFeedbackById, renderContentFeedback, contentFeedbackFor, contentFeedbackKey, findPassageById, defaultState, newSessionId, stampField, saveState, mergeStates, syncableState, unionBy, PHASES, render, pickSessionPassages, sessionQuestions, mergeContentFeedback, recordContentNote, recordContentNoteById, renderRestoreCard, restoreFromCloud, PASSWORD_RE, uiSendMagicLink, uiSetPassword, uiPasteAuthLink, authParamsFrom, applyAuthTokens, histKey, syncCfg, syncEnabled, signedIn, loadAuth, saveAuth, syncNow, pullRemote, pushRemote, scheduleSync, flushSyncQueue, syncStatusText, renderSyncCard, renderSyncLine, syncSignOut, KEY, AUTH_KEY, UI_KEY };");
+eval(js + "\nglobal.__app = { get state(){return state}, set state(v){state=v}, get ui(){return ui}, get sess(){return sess}, get view(){return view}, get content(){return content}, get syncState(){return syncState}, DEFAULT_CONTENT, ANCHOR_POOL, chunkText, getChunks, validChunks, chunkPool, spanTrialSet, catchTrial, catchContextTrial, catchMeaningTrial, catchSourcePassages, CATCH_KINDS, CATCH_TRIALS, splitSentences, pickSessionPassages, withShuffledQuestions, paragraphsHtml, selectedPassageIds, togglePassageSelection, patchPassageSelectionUi, startSession, abortSession, renderShortIntro, renderShortResult, unseenPassages, unseenStock, releasedIssues, isReviewPassage, addedOnOf, dayStamp, DAY_START_HOUR, isStaleReview, markShown, REVIEW_SHELF_DAYS, allPassages, personalPassages, normalizePersonalPassage, importPersonalContent, daysFromToday, passageKey, passageKeys, sourceUrlKey, isPassageSeen, markPassagesSeen, markPassageRead, textFingerprint, sourceUrlKey, renderHome, renderHistory, contentStatus, renderFreshnessPanel, guardedStart, renderPacer, renderPacerQuiz, answerPacer, renderSpanIntro, answerSpan, finishSpan, renderRead, startReading, finishReading, renderQuiz, finishQuiz, renderReread, startReread, finishReread, renderResult, textStats, adjustSpeed, makeDeepCloze, answerDeepCloze, normalizeNumerals, parseKanjiNum, startAnchor, renderAnchorRead, startAnchorRead, finishAnchorRead, renderAnchorQuiz, answerAnchor, anchorDue, todayMenu, goalProgress, gazeSpan, sessionKeyTerms, passageTakeaway, finishVocab, proceedAfterCloze1, weakestSkill, feedbackGenreScore, preferByFeedback, recordContentFeedback, recordContentFeedbackById, recordQuestionFeedback, recordQuestionFeedbackById, renderContentFeedback, contentFeedbackFor, contentFeedbackKey, findPassageById, defaultState, newSessionId, stampField, saveState, mergeStates, syncableState, unionBy, PHASES, render, pickSessionPassages, sessionQuestions, mergeContentFeedback, recordContentNote, recordContentNoteById, renderRestoreCard, restoreFromCloud, PASSWORD_RE, uiSendMagicLink, uiSetPassword, uiPasteAuthLink, authParamsFrom, applyAuthTokens, histKey, syncCfg, syncEnabled, signedIn, loadAuth, saveAuth, syncNow, pullRemote, pushRemote, scheduleSync, flushSyncQueue, syncStatusText, renderSyncCard, renderSyncLine, syncSignOut, KEY, AUTH_KEY, UI_KEY };");
 
 (async () => {
   await new Promise(r => _st(r, 80)); // init完了待ち
@@ -121,8 +121,15 @@ eval(js + "\nglobal.__app = { get state(){return state}, set state(v){state=v}, 
   const GENRE5 = ["スタートアップ・新規事業", "社会・価値観", "市場・経済・地政学", "経営・リーダーシップ", "未来の兆し"];
   // 4.0: 日次はビッグイシュー2本だけ。残りの枠は復習教材（Obsidianのリサーチ由来）が埋める。
   // ここを10本へ戻すと、同じ日付の日次だけで5枠が埋まり、復習が一生繰り上がらない。
-  const N = (daily.passages || []).length;
-  check("A2 日次はビッグイシュー2本（4.0）", N === 2, `n=${N}`);
+  // 4.3: 公開ファイルは直近2日分を持ち、朝7時に当日分が一覧へ繰り上がる。
+  // 「当日分だけ」に効く検査（重複・ジャンル・監査）と、全教材に効く検査（本文の質）を分ける。
+  const TODAY_PS = (daily.passages || []).filter(p => !p.addedOn || p.addedOn === daily.date);
+  const DAYS = [...new Set((daily.passages || []).map(p => p.addedOn || daily.date))];
+  const N = TODAY_PS.length;
+  check("A2d2 公開ファイルは直近2日分を持つ（朝7時に繰り上げるため）",
+    DAYS.length <= 2 && (daily.passages || []).length === N * DAYS.length,
+    `${DAYS.join(" / ")} 計${(daily.passages || []).length}本`);
+  check("A2 当日のビッグイシューは2本（4.0）", N === 2, `n=${N} / ${DAYS.join(",")}`);
   check("A2b 全教材に kind と addedOn がある（新しい順のキューに並べるため）",
     (daily.passages || []).every(p => p.kind === "issue" && /^\d{4}-\d{2}-\d{2}$/.test(String(p.addedOn || ""))),
     (daily.passages || []).map(p => `${p.kind}/${p.addedOn}`).join(" "));
@@ -216,7 +223,7 @@ eval(js + "\nglobal.__app = { get state(){return state}, set state(v){state=v}, 
     if (OFFICIAL_HOST.test(h) || OFFICIAL_HOST.test(u) || OFFICIAL_PATH.test(new URL(u).pathname)) return "official";
     return "media";   // 種類が分からない外部サイトは報道扱い（発表ものと数えない）
   };
-  const kinds = (daily.passages || []).map(sourceKind);
+  const kinds = TODAY_PS.map(sourceKind);
   const noUrl = kinds.filter(k => k === "none").length;
   check("A18 全教材の出典にURLがある（種類判定と重複排除の前提）", noUrl === 0, `URLなし ${noUrl}本`);
   const officialN = kinds.filter(k => k === "official").length;
@@ -245,7 +252,7 @@ eval(js + "\nglobal.__app = { get state(){return state}, set state(v){state=v}, 
   // 直近まで、10本すべての末尾に同じ一般論（「数字は結果だけでなく…」）が付いていた。
   // 使い回しの定型句は、読み手にとって読む価値がゼロの行になる。
   const boiler = [];
-  const texts = (daily.passages || []).map(p => String(p.text || "").replace(/\s/g, ""));
+  const texts = TODAY_PS.map(p => String(p.text || "").replace(/\s/g, ""));
   for (let i = 0; i < texts.length; i++) {
     for (let j = i + 1; j < texts.length; j++) {
       for (let k = 0; k + 30 <= texts[i].length; k += 10) {
@@ -275,7 +282,7 @@ eval(js + "\nglobal.__app = { get state(){return state}, set state(v){state=v}, 
 
   // ---------- A19. 誰が書いたか ----------
   // 洞察は書き手の立場で重みが変わる。個人名か組織名と、立場が分かる一言を必ず付ける。
-  const noAuthor = (daily.passages || []).filter(p => !(p.author && p.author.name && p.author.role));
+  const noAuthor = TODAY_PS.filter(p => !(p.author && p.author.name && p.author.role));
   if (sourcePolicyOn) {
     check("A19 全教材に author（誰が・どんな立場で書いたか）がある", noAuthor.length === 0, noAuthor.map(p => p.id).slice(0, 3).join(" "));
   } else {
@@ -286,11 +293,11 @@ eval(js + "\nglobal.__app = { get state(){return state}, set state(v){state=v}, 
   // 直近30日を数えると、takeawayフックの48%が「AではなくB」の対比構文だった。
   // 驚きを文型で作ると、読み手は3日で型に気づき、内容に関係なく飽きる。
   // 同様に、第1文が「〜が〜を発表した」の記事が39%を占めていた（プレスリリース型）。
-  const hooks = (daily.passages || []).map(p => ((p.takeaway || {}).hook) || "");
+  const hooks = TODAY_PS.map(p => ((p.takeaway || {}).hook) || "");
   const contrastHooks = hooks.filter(h => /ではなく|でなく|より/.test(h));
   check("A17 takeawayフックの対比構文は3割以下（驚きを文型で作らない）",
     contrastHooks.length <= Math.max(1, Math.round(N * 0.3)), `${contrastHooks.length}/${N}本`);
-  const announceLead = (daily.passages || []).filter(p =>
+  const announceLead = TODAY_PS.filter(p =>
     /(発表した|公表した|明らかにした|開始した|募った|決めた)/.test(String(p.text || "").split("。")[0]));
   // 閾値は「いま以上に悪くしない床」。2026-09-10時点の実測が7/10なので、まず7で止める。
   // 生成側の目標は daily.md に書いた3本以下。次の生成で下がったらここも下げる。
@@ -303,7 +310,7 @@ eval(js + "\nglobal.__app = { get state(){return state}, set state(v){state=v}, 
   check("A17c フックの書き出しが揃いすぎていない", dupHead === 0, `重複${dupHead}件`);
 
   // ---------- A16. タイトルの日本語（読む気が起きる形になっているか） ----------
-  const titles = (daily.passages || []).map(p => String(p.title || ""));
+  const titles = TODAY_PS.map(p => String(p.title || ""));
   const titleIssues = [];
   for (const p of (daily.passages || [])) {
     const iss = titleLint(p.title);
@@ -331,17 +338,22 @@ eval(js + "\nglobal.__app = { get state(){return state}, set state(v){state=v}, 
 
   // ---------- A14. テーマ多様性（AI記事に偏っていないか） ----------
   const AI_RE = /AI|人工知能|生成AI|ＡＩ|LLM|ChatGPT|GPT|エージェント|機械学習|ディープラーニング|大規模言語/;
-  const aiCentric = (daily.passages || []).filter(p => {
+  const aiCentric = TODAY_PS.filter(p => {
     if (AI_RE.test(p.title || "")) return true;
     const hits = ((p.text || "").match(new RegExp(AI_RE.source, "g")) || []).length;
     return hits >= 4; // 本文でAI語が頻出＝AI中心
   });
-  const genres = new Set((daily.passages || []).map(p => p.genre));
+  const genres = new Set(TODAY_PS.map(p => p.genre));
   check("A14 AI中心の記事は半分以下（テーマ多様性）", aiCentric.length <= Math.floor(N / 2), `AI中心 ${aiCentric.length}/${N}: ${aiCentric.map(p => p.genre).join(",")}`);
   check("A14b 非AIテーマが1本以上", N - aiCentric.length >= 1, `非AI ${N - aiCentric.length}本`);
   // 4.0: 2本を同じジャンルで埋めない（5系統から毎日2つ選ぶ）
   check("A14c 当日の2本は別ジャンル（5系統から選ぶ）",
     genres.size === N && [...genres].every(g => GENRE5.includes(g)), `${[...genres].join(" / ")}`);
+  // 前日分と同じ組み合わせだと、朝の入れ替えで中身が動いた感じが出ない
+  const prevGenres = new Set((daily.passages || []).filter(p => p.addedOn && p.addedOn !== daily.date).map(p => p.genre));
+  check("A14d 前日と同じジャンルの組み合わせにしない",
+    prevGenres.size === 0 || [...genres].some(g => !prevGenres.has(g)),
+    `当日 ${[...genres].join(",")} / 前日 ${[...prevGenres].join(",")}`);
   // 実際に崩れた表現をfixture化。単語境界と意味の閉じ方の両方を固定する。
   const semanticFixtures = [
     ["新たな好奇心の対象が見つかる。", "新たな好奇心の対象が"],
@@ -405,7 +417,9 @@ eval(js + "\nglobal.__app = { get state(){return state}, set state(v){state=v}, 
     }
   } catch (e) {}
   const dupTitle = [], dupText = [], dupUrl = [];
-  for (const p of (daily.passages || [])) {
+  // 前日分は意図して公開ファイルへ残している（朝7時までの表示用）ので、
+  // 自分自身の archive と一致して当然。照合は当日分だけにする。
+  for (const p of TODAY_PS) {
     if (archTitles.has(norm(p.title))) dupTitle.push(`${p.id}=${archTitles.get(norm(p.title))}`);
     if (archFps.has(fp(p.text))) dupText.push(`${p.id}=${archFps.get(fp(p.text))}`);
     const u = String(p.source || "").match(/https?:\/\/[^\s、。）)"']+/);
@@ -482,6 +496,23 @@ eval(js + "\nglobal.__app = { get state(){return state}, set state(v){state=v}, 
       `${A.unseenPassages().length}枠`);
     A.state.personalLibrary = A.state.personalLibrary.filter(p => p.id !== "review-qa-old");
   }
+  // ---------- 4.3: 1日の境目は朝7時 ----------
+  // 前夜に作った翌日分を0時で出すと、朝に開いたときには「もう昨日の分」になる。
+  // 作るのは夜、出すのは朝7時。
+  {
+    const at = (iso) => A.dayStamp(new Date(iso));
+    check("Q10 1日の境目が朝7時になっている",
+      A.DAY_START_HOUR === 7 && at("2026-10-03T06:59:00+09:00") === "2026-10-02" && at("2026-10-03T07:00:00+09:00") === "2026-10-03",
+      `06:59→${at("2026-10-03T06:59:00+09:00")} / 07:00→${at("2026-10-03T07:00:00+09:00")}`);
+    const ahead = A.content.passages.filter(p => p.addedOn > A.dayStamp(new Date()));
+    check("Q11 出す日が来ていない教材は一覧に載せない",
+      A.releasedIssues().every(p => !p.addedOn || p.addedOn <= A.dayStamp(new Date())),
+      `控え ${ahead.length}本 / 表 ${A.releasedIssues().length}本`);
+    check("Q12 翌日分が前夜のうちに仕込まれている（朝7時に繰り上がる）",
+      new Set(A.content.passages.map(p => p.addedOn)).size === 2,
+      [...new Set(A.content.passages.map(p => p.addedOn))].join(" / "));
+  }
+
   // ---------- 4.1: 読まれない復習は2日で棚から下ろす ----------
   // 選ばれなかった復習が枠に居座ると、毎日届く3本が一度も表に出ない。
   {
@@ -605,7 +636,7 @@ eval(js + "\nglobal.__app = { get state(){return state}, set state(v){state=v}, 
     const seen = new Set();
     for (let i = 0; i < 40; i++) seen.add(A.withShuffledQuestions(src).questions[0].ans);
     check("B13f 復習教材の設問も表示前に混ぜる（正解が先頭に寄らない）", seen.size >= 3, `出た位置 ${[...seen].sort().join(",")}`);
-    const authored = [...(daily.passages || []), ...(DC.passages || [])].flatMap(p => (p.questions || []).map(q => q.ans));
+    const authored = [...TODAY_PS, ...(DC.passages || [])].flatMap(p => (p.questions || []).map(q => q.ans));
     check("A11b 生成時の正解位置が1か所に固まっていない", new Set(authored).size >= 2, `位置 ${JSON.stringify(authored)}`);
     const html = A.paragraphsHtml("ひとつめ。\n\nふたつめ。");
     check("B12c 本文は段落で表示する（空行で区切る）", (html.match(/<p>/g) || []).length === 2, html);
@@ -615,7 +646,7 @@ eval(js + "\nglobal.__app = { get state(){return state}, set state(v){state=v}, 
   check("B13 設問画面に遷移（2問構成）", screenEl().includes("設問 1 / 2"), screenEl().match(/設問 \d \/ \d/) || "");
   check("B13b 設問画面に『わかりにくい』報告ボタン", screenEl().includes("わかりにくい"));
   // B13c: 1セッションの出題は本文2本×2問＝4問。ここが増えると6分に収まらない。
-  const perPassageQ = (daily.passages || []).map(p => A.sessionQuestions(p).length);
+  const perPassageQ = TODAY_PS.map(p => A.sessionQuestions(p).length);
   check("B13c 出題は各本文2問（1セッション計4問）", perPassageQ.every(n => n === 2), perPassageQ.join(","));
   // B13e: 入口は「2本パッケージ」ひとつだけ。フル版が約6分になり、ショート版との
   // 差が無くなった。毎回どちらかを選ばせること自体が続ける摩擦になる。
@@ -625,7 +656,7 @@ eval(js + "\nglobal.__app = { get state(){return state}, set state(v){state=v}, 
     homeStart.includes("start-full") && !homeStart.includes("start-short") && !homeStart.includes("1本でショート"),
     homeStart.includes("start-short") ? "ショートが残っている" : "2本のみ");
   // B13d: 論旨型があるときは1問目に置く（全体をつかんでから根拠へ降りる順序）
-  const withMain = (daily.passages || []).filter(p => (p.questions || []).some(q => /^take-?away/i.test(q.q)));
+  const withMain = TODAY_PS.filter(p => (p.questions || []).some(q => /^take-?away/i.test(q.q)));
   check("B13d 論旨型があれば1問目に出す",
     withMain.every(p => /^take-?away/i.test(A.sessionQuestions(p)[0].q)), `${withMain.length}本で確認`);
   A.finishQuiz(1, [true, true]);
@@ -763,9 +794,9 @@ eval(js + "\nglobal.__app = { get state(){return state}, set state(v){state=v}, 
 
   // ---------- E. SOKUGAN 3.0 (語彙道場/持ち帰り/キャッチv3/メニュー/目標) ----------
   const ktPass = (daily.passages || []).filter(p => (p.keyTerms || []).length >= 2);
-  check("E1 keyTerms: 全教材に2語以上・各語 plain+lures3", ktPass.length === N && ktPass.every(p => p.keyTerms.every(t => t.term && (t.plain || "").length >= 15 && (t.lures || []).length >= 3)), `${ktPass.length}/${N}本`);
+  check("E1 keyTerms: 全教材に2語以上・各語 plain+lures3", ktPass.length === (daily.passages || []).length && ktPass.every(p => p.keyTerms.every(t => t.term && (t.plain || "").length >= 15 && (t.lures || []).length >= 3)), `${ktPass.length}/${(daily.passages || []).length}本`);
   const tkPass = (daily.passages || []).filter(p => p.takeaway && (p.takeaway.hook || "").length >= 10 && (p.takeaway.hook || "").length <= 70);
-  check("E2 takeaway: 全教材に10-70字のフック", tkPass.length === N, `${tkPass.length}/${N}本`);
+  check("E2 takeaway: 全教材に10-70字のフック", tkPass.length === (daily.passages || []).length, `${tkPass.length}/${(daily.passages || []).length}本`);
   // キャッチ: 合成した文字列を使わず、選択肢のすべてが本文から得た自然なチャンクである
   let naturalSpanOK = true, naturalSpanDetail = [];
   const sourceChunks = new Set(Object.values(A.chunkPool()).flat());
@@ -1204,7 +1235,7 @@ eval(js + "\nglobal.__app = { get state(){return state}, set state(v){state=v}, 
   // 設問の日本語の自然さ・明快さは機械では測りきれないため、LLM監査の実施を「記録・ゲート」で強制する。
   let ca = null;
   try { ca = JSON.parse(fs.readFileSync(path.join(ROOT, "clarity-audit.json"), "utf8")); } catch (e) {}
-  const totalQ = (daily.passages || []).reduce((s, p) => s + (p.questions || []).length, 0);
+  const totalQ = TODAY_PS.reduce((s, p) => s + (p.questions || []).length, 0);
   check("D1 明快さ監査ファイルが存在", !!ca, ca ? "" : "clarity-audit.json なし（QA監督が未実施）");
   check("D2 監査が当日コンテンツを対象", ca && ca.date === daily.date, ca ? `audit=${ca.date} / content=${daily.date}` : "");
   check("D3 監査が全設問をカバー", ca && Array.isArray(ca.items) && ca.items.length === totalQ, ca ? `${(ca.items || []).length}/${totalQ}` : "");
@@ -1213,19 +1244,19 @@ eval(js + "\nglobal.__app = { get state(){return state}, set state(v){state=v}, 
   // D3b〜D3d: 件数だけ合っていれば通る抜け道を閉じる。
   // 実際に「passage未指定の項目15件」で件数だけ合わせ、5本が未監査のまま
   // D3をPASSしていた（過去editionの監査で代替）。実在IDへの紐づけを必須にする。
-  const paIds = new Set((daily.passages || []).map(p => p.id));
+  const paIds = new Set(TODAY_PS.map(p => p.id));
   const orphan = ((ca && ca.items) || []).filter(i => !i.passage || !paIds.has(i.passage));
   check("D3b 監査項目すべてが実在する本文IDに紐づく（未指定・架空IDなし）",
     !!ca && orphan.length === 0, `孤立 ${orphan.length}件`);
   const perPassage = {};
   for (const i of ((ca && ca.items) || [])) if (i.passage) perPassage[i.passage] = (perPassage[i.passage] || 0) + 1;
-  const uncovered = (daily.passages || []).filter(p => (perPassage[p.id] || 0) !== (p.questions || []).length);
+  const uncovered = TODAY_PS.filter(p => (perPassage[p.id] || 0) !== (p.questions || []).length);
   check("D3c 全教材が設問数ぶん監査されている（1本も素通りしていない）",
     uncovered.length === 0, uncovered.map(p => p.id + ":" + (perPassage[p.id] || 0)).join(" "));
   // 監査対象が実際にその設問か（stemの実体照合）。IDだけ付け替える偽装を防ぐ
   const stemMismatch = [];
   for (const i of ((ca && ca.items) || [])) {
-    const p = (daily.passages || []).find(x => x.id === i.passage);
+    const p = TODAY_PS.find(x => x.id === i.passage);
     if (!p) continue;
     const q = (p.questions || [])[(i.q || 1) - 1];
     if (!q || !String(q.q || "").includes(String(i.stem || " "))) stemMismatch.push(i.passage + "#" + i.q);
