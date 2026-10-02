@@ -11,6 +11,7 @@
 | `supabase/schema.sql` | 同期テーブル定義とRLS。`supabase/セットアップ手順.md` に導入手順 |
 | `daily-content.json` | その日の**ビッグイシュー2本**（公開）。`slots: 5` と各本の `kind`/`addedOn` を持つ |
 | `tools/build-review-briefs.js` | Obsidianのリサーチから**復習に回す論点を決める**（決定論・日本語は書かない） |
+| `tools/health-check.js` | **本人の画面に並ぶか**を実アプリのコードで数える。公開の成否とは別の問い |
 | `tools/mirror-vault.js` | vault → `private-imports/vault-mirror/` の複製。**夜間のcodexはiCloudを読めない**ため、vaultを読めるセッションが用意する（`sync-check.sh` が毎回実行） |
 | `private-imports/review-*.json` | 復習教材3本（**非公開**。Supabaseの本人ライブラリへだけ届ける） |
 | `qa/insight-lint.js` | **変換ロジックの検査**。自然な日本語と、洞察が残っているかを機械で落とす |
@@ -67,7 +68,7 @@
 | コマンド | 用途 | 自動実行 |
 |---|---|---|
 | `/daily` | 翌日分のビッグイシュー2本＋復習3本を生成 → 明快さ自己監査 → ハーネス → 公開 | 毎日18:00 JST（launchd） |
-| `/qa` | 生成物を監督（**自分で解いて検証**・書き直し）→ ハーネス → 公開 | 毎日19:00 JST（launchd） |
+| `/qa` | 生成物を監督（**自分で解いて検証**・書き直し）→ ハーネス → 公開 | **手動**（19:00のlaunchdジョブは存在しない。/daily が監査まで通す） |
 | `/feature <内容>` | 機能追加・改善（リサーチ→実装→回帰チェック追加→公開） | 手動 |
 | `/fix <症状>` | バグ修正（再現→原因特定→修正→**再発防止の検査を追加**） | 手動 |
 | `/report [path]` | 学習実績のバックアップJSONを分析してレポート化 | 手動 |
@@ -95,11 +96,22 @@
 - **公開の順序は `origin` → QA合格 → `production`**。QA不合格のものを `production` に出さない。
 - `production` は `origin` の早送りであること。`production` にだけ存在するコミットを作らない（作ると公開物と正本がずれる）。
 
+## 公開できたか、と、本人の画面に出るか
+
+この2つは別の問いで、**前者だけを見ていた期間に不具合が2回素通りした**。
+`/daily` の最後に `node tools/health-check.js` を必ず走らせる。
+一覧が5枠を埋めているか、復習が並んでいるか、今日届いた分が既読扱いで消えていないかを、
+実アプリのコードに本人のクラウド状態を入れて数える（判定ロジックを書き写さない。写すとずれる）。
+
 ## 日次更新の実行主体
 
 - **現在の担当はローカルの launchd ジョブ** `local.wota.codex-sokugan-daily-refresh`（18:00 JST、`codex exec`）。
   両リモートへの push 権限を持つのがここだけなので、生成から公開まで一貫して行える。
   ログ: `~/Library/Logs/codex-launchd/`。設定: `~/.codex/launchd/`。
+- **実行は毎日18:00に起動している**（2026-09-19〜10-02を実測。Macが寝ていた日は起きた時刻に繰り越して実行される）。
+  `run-automation.sh` はログに `ERROR codex_core` があると rc=91 を付けるが、`tools::router` の
+  apply_patch 貼り直しは日常的に出てエージェント自身がやり直すため、**router だけの日は成功扱い**にした
+  （2026-10-02まで、全部成功している日が毎回 rc=91 になっていて、失敗の判別に使えなかった）。
 - `.github/workflows/` の2本は **cron を停止中**（`workflow_dispatch` のみ）。
   `GITHUB_TOKEN` はリポジトリを跨げず、このワークフローだけでは `production` に公開できないため。
   復活させるなら `production` への push 権限を持つ PAT を Secret に入れ、公開ステップを追加してから。

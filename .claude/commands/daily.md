@@ -238,5 +238,19 @@ node qa/harness.js --write-report --note "daily: $(TZ=Asia/Tokyo date +%F)"
 git add -A && git commit -m "daily: $(TZ=Asia/Tokyo date +%F)" && git push origin main && git push production main
 ```
 
-## 8. 報告
-target_date（当日/翌日の理由）／ビッグイシュー2本のタイトル・genre・出典・種類／復習3本のタイトルと元ノート（ハイライト有無）／archive重複検査／リンター結果／clarity avg／ハーネス PASS数／公開結果。
+## 8. 本人の画面に出るかを確かめる（必須）
+
+公開できたことと、本人のアプリに並ぶことは別の問いだ。
+2026-10-02、QA合格・push成功・Pages更新まで確認して「完了」と報告した日に、
+届いた復習3本は当日のうちに一覧から消えていた。アプリ側の既読判定で落ちていた。
+
+```bash
+set -a; . .sokugan-private.env; set +a
+node tools/health-check.js
+```
+
+**終了コードが0でなければ完了ではない。** 一覧が5枠を埋めているか、復習が並んでいるか、
+今日届いた分が既読扱いで消えていないかを見る。落ちたら原因を報告して止まる。
+
+## 9. 報告
+target_date（当日/翌日の理由）／ビッグイシュー2本のタイトル・genre・出典・種類／復習3本のタイトルと元ノート（ハイライト有無）／archive重複検査／リンター結果／clarity avg／ハーネス PASS数／公開結果／**health-check の出力（一覧が何本並ぶか）**。
