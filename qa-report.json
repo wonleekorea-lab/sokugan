@@ -1,9 +1,9 @@
 {
  "date": "2026-10-03",
  "status": "pass",
- "checked_at": "2026-10-02T09:42:51.877Z",
- "passed": 242,
- "total": 242,
+ "checked_at": "2026-10-02T09:50:55.997Z",
+ "passed": 243,
+ "total": 243,
  "failures": [],
- "notes": "daily: 2026-10-02"
+ "notes": "fix: 復習は論点が単位。出典URLで既読にしない"
 }

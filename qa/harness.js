@@ -833,6 +833,12 @@ eval(js + "\nglobal.__app = { get state(){return state}, set state(v){state=v}, 
   check("G3d YouTubeは動画IDで別物と判定する（1本読んで全部が既読にならない）",
     A.isPassageSeen(ytA) && !A.isPassageSeen(ytB), `A=${A.sourceUrlKey(ytA)} / B=${A.sourceUrlKey(ytB)}`);
   // 計測用パラメータの有無で別記事にしない
+  // G3f: 1本の動画から論点ごとに作る復習教材を、出典URLで同一視しない
+  const rvA = { id: "review-a", kind: "review", title: "論点A", text: "本文A", source: "https://www.youtube.com/watch?v=SAME1234567" };
+  const rvB = { id: "review-b", kind: "review", title: "論点B", text: "本文B", source: "https://www.youtube.com/watch?v=SAME1234567" };
+  A.state.seenPassageKeys = []; A.markPassagesSeen([rvA]);
+  check("G3f 同じ動画から作った別の論点を既読にしない（復習は論点が単位）",
+    A.isPassageSeen(rvA) && !A.isPassageSeen(rvB), `鍵 ${A.passageKeys(rvB).join(" , ")}`);
   const utmA = { id: "u-a", title: "記事A", text: "本文", source: "https://example.com/p/1?utm_source=news&si=xyz" };
   const utmB = { id: "u-b", title: "記事B", text: "本文2", source: "https://example.com/p/1" };
   A.state.seenPassageKeys = []; A.markPassagesSeen([utmA]);

@@ -680,7 +680,13 @@ function sourceUrlKey(p) {
 }
 function passageKeys(p) {
   if (!p) return [];
-  return [passageKey(p), textFingerprint(p.text), sourceUrlKey(p)].filter(Boolean);
+  // 復習教材は「1本の動画から論点ごとに何本も」作る。出典URLを同一性の鍵にすると、
+  // その動画の1本目を読んだ時点で、以後その動画から作る教材が全部既読になる。
+  // 2026-10-02に、届いた3本が当日のうちに消えていた原因がこれ。
+  // タイトルと本文の指紋は論点ごとに違うので、同じ教材の再配信はそちらで止まる。
+  const keys = [passageKey(p), textFingerprint(p.text)];
+  if (!isReviewPassage(p)) keys.push(sourceUrlKey(p));
+  return keys.filter(Boolean);
 }
 function seenPassageSet() { return new Set(state.seenPassageKeys || []); }
 function personalPassages() {
