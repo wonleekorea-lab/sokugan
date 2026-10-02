@@ -1643,7 +1643,10 @@ function pickSessionPassages(mode = "full", selectedIds) {
 // =============================================================
 function contentSignature() { return (content.passages || []).map(p => p.id).join("|"); }
 function contentStatus() {
-  const d = content.date;
+  // 公開ファイルは2日分を持つ（4.3）。鮮度として見せるのは、いま一覧に出ている日。
+  // ファイルの最新日（＝明日7時に出る分）を出すと、夜に開いたとき未来の日付が見える。
+  const released = releasedIssues().map(p => p.addedOn).filter(Boolean).sort();
+  const d = released.length ? released[released.length - 1] : content.date;
   const isToday = d === today();
   const isAhead = d && d !== "fallback" && d > today();   // 翌日分を先取り生成済み（夕方に開いた場合）
   const isStale = d && d !== "fallback" && d < today();    // 過去日付のみ「古い」
@@ -1653,7 +1656,7 @@ function contentStatus() {
     if (!isNaN(g)) genTxt = `${g.getFullYear()}/${g.getMonth()+1}/${g.getDate()} ${String(g.getHours()).padStart(2,"0")}:${String(g.getMinutes()).padStart(2,"0")} 生成`;
   }
   const trainedToday = (state.history || []).some(h => h.date === today());
-  const titles = (content.passages || []).map(p => ({ genre: genreOf(p), title: p.title }));
+  const titles = releasedIssues().map(p => ({ genre: genreOf(p), title: p.title }));
   return { date: d, isToday, isAhead, isStale, source: contentSource, genTxt, trainedToday, titles };
 }
 function renderFreshnessPanel(fr) {

@@ -457,6 +457,8 @@ eval(js + "\nglobal.__app = { get state(){return state}, set state(v){state=v}, 
   check("B3a ホーム: 鮮度ゲート＋更新確認ボタン描画", screenEl().includes("更新を確認") && /fresh (ok|stale|err)/.test(screenEl()));
   const fr = A.contentStatus();
   // 夕方実行では翌日分を先取り生成するため、アプリ設計上の正常状態 isAhead も許容する（isStaleのみNG）
+  check("B3b2 鮮度に出す日付は、いま一覧に出ている日（明日の分を先に見せない）",
+    !fr.date || fr.date <= A.dayStamp(new Date()), `表示 ${fr.date} / 今日 ${A.dayStamp(new Date())}`);
   check("B3b 鮮度判定: 今日(isToday)または先取り翌日分(isAhead)と認識", fr.date !== daily.date ? true : (fr.isToday || fr.isAhead), `date=${fr.date} isToday=${fr.isToday} isAhead=${fr.isAhead}`);
   check("B3c 鮮度パネルは更新状態だけを簡潔に表示", A.renderFreshnessPanel(fr).includes("更新を確認") && !A.renderFreshnessPanel(fr).includes(daily.passages[0].title));
   check("B3e 鮮度パネルはQA詳細をホームから外し、開始画面を簡潔に保つ", !A.renderFreshnessPanel(fr).includes("設問明快さ"));

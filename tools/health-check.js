@@ -105,7 +105,10 @@ async function remoteState() {
     else notes.push("今日届いた復習は0本");
 
     // 明日の朝7時に何が出るか。ここが空なら、明日の朝は入れ替わらない。
-    const tomorrow = new Date(Date.parse(today + "T00:00:00+09:00") + 86400000).toISOString().slice(0, 10);
+    // toISOString はUTCに戻すので、JSTの日付を足すときに1日ずれる。
+    // 日本時間で数え直す（ここを間違えて「明日の分」を今日の分で数えていた）。
+    const tomorrow = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Tokyo", year: "numeric", month: "2-digit", day: "2-digit" })
+      .format(new Date(Date.parse(today + "T12:00:00+09:00") + 86400000));
     const nextIssues = (daily.passages || []).filter(p => p.addedOn === tomorrow).length;
     const nextReviews = (state.personalLibrary || []).filter(p => (p.availableOn || "") === tomorrow).length;
     if (nextIssues < 2) issues.push(`明日(${tomorrow})の論点が仕込まれていない（${nextIssues}本）`);

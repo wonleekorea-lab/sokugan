@@ -1,9 +1,9 @@
 {
  "date": "2026-10-03",
  "status": "pass",
- "checked_at": "2026-10-02T09:50:55.997Z",
- "passed": 243,
- "total": 243,
+ "checked_at": "2026-10-02T10:53:37.250Z",
+ "passed": 277,
+ "total": 277,
  "failures": [],
- "notes": "fix: 復習は論点が単位。出典URLで既読にしない"
+ "notes": "4.3検収: 朝7時の入れ替え"
 }
