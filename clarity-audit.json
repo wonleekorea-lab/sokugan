@@ -1,83 +1,83 @@
 {
-  "date": "2026-10-02",
+  "date": "2026-10-03",
   "status": "pass",
-  "checked_at": "2026-10-01T11:50:43Z",
+  "checked_at": "2026-10-02T09:38:17Z",
   "auditor": "Codex（本文だけを根拠に全6問を自力解答）",
   "avgScore": 5,
   "total": 6,
   "rewritten": 0,
   "items": [
     {
-      "passage": "20261002_marginalrevolution_false_crocodile",
+      "passage": "20261003_marginalrevolution_shipping_routes",
       "q": 1,
       "type": "Take-away",
-      "stem": "Take-away: この事件が示した誤情報の影響は何か",
-      "ans": 1,
-      "readable": 5,
-      "unique": 5,
-      "concrete": 5,
-      "score": 5,
-      "note": "偽画像の影響が行政の確認と現場作業の停止へ及ぶことを本文から一読で確認できる。"
-    },
-    {
-      "passage": "20261002_marginalrevolution_false_crocodile",
-      "q": 2,
-      "type": "Strong evidence",
-      "stem": "Strong evidence: 行政が通報を無視できない理由はどれか",
+      "stem": "Take-away: 港が混む前に何が起きていたか",
       "ans": 0,
       "readable": 5,
       "unique": 5,
       "concrete": 5,
       "score": 5,
-      "note": "通報を確かめて現場の安全を判断する必要が本文に明記され、他の選択肢と区別できる。"
+      "note": "港の行列に先行して船の利用率が20〜40ポイント落ちたと本文にあり、答えを一読で特定できる。"
     },
     {
-      "passage": "20261002_marginalrevolution_false_crocodile",
-      "q": 3,
-      "type": "Scenario",
-      "stem": "Scenario: 水道の信頼を測るとき見るべき点はどれか",
-      "ans": 3,
-      "readable": 5,
-      "unique": 5,
-      "concrete": 5,
-      "score": 5,
-      "note": "正しい情報を集める速さでも信頼を測るという結論が本文にあり、答えが一つに決まる。"
-    },
-    {
-      "passage": "20261002_rieti_reallocation_exit",
-      "q": 1,
-      "type": "Take-away",
-      "stem": "Take-away: 研究が示した企業退出の意外な点は何か",
-      "ans": 0,
-      "readable": 5,
-      "unique": 5,
-      "concrete": 5,
-      "score": 5,
-      "note": "合併で退出した企業の生産性が高かったという本文の中心を、他の選択肢と混同せず読める。"
-    },
-    {
-      "passage": "20261002_rieti_reallocation_exit",
+      "passage": "20261003_marginalrevolution_shipping_routes",
       "q": 2,
       "type": "Strong evidence",
-      "stem": "Strong evidence: 調査に含まれた企業データの規模はどれか",
+      "stem": "Strong evidence: 船を別の航路へ動かすと何が起きるか",
       "ans": 1,
       "readable": 5,
       "unique": 5,
       "concrete": 5,
       "score": 5,
-      "note": "年間23万社以上という数字が本文に明記され、他の規模の選択肢と一意に区別できる。"
+      "note": "船団を別航路へ移すと移動先で新しい混雑が生まれると本文が説明し、他の選択肢と混同しない。"
     },
     {
-      "passage": "20261002_rieti_reallocation_exit",
+      "passage": "20261003_marginalrevolution_shipping_routes",
       "q": 3,
       "type": "Scenario",
-      "stem": "Scenario: 企業数が減ったとき、本文が確認する点はどれか",
+      "stem": "Scenario: 物流の危機を早く見る指標はどれか",
       "ans": 3,
       "readable": 5,
       "unique": 5,
       "concrete": 5,
       "score": 5,
-      "note": "企業数だけでなく人材や設備の移動を見るという本文の含意を、応用設問として一意に解ける。"
+      "note": "利用率の低下が港の混雑に先行した事実から、航路の移動と利用率を確認する答えが一意に決まる。"
+    },
+    {
+      "passage": "20261003_constructionphysics_robot_vla",
+      "q": 1,
+      "type": "Take-away",
+      "stem": "Take-away: VLAがまとめて予測するものは何か",
+      "ans": 2,
+      "readable": 5,
+      "unique": 5,
+      "concrete": 5,
+      "score": 5,
+      "note": "VLAが50個の動作をまとめて予測すると本文冒頭にあり、数字と対象が明確である。"
+    },
+    {
+      "passage": "20261003_constructionphysics_robot_vla",
+      "q": 2,
+      "type": "Strong evidence",
+      "stem": "Strong evidence: 動作用の変換器は何をするか",
+      "ans": 0,
+      "readable": 5,
+      "unique": 5,
+      "concrete": 5,
+      "score": 5,
+      "note": "50個の仮の動作を10回修正して使える動きに近づける説明が本文にあり、役割を一意に読める。"
+    },
+    {
+      "passage": "20261003_constructionphysics_robot_vla",
+      "q": 3,
+      "type": "Scenario",
+      "stem": "Scenario: ロボットの性能を左右する段取りはどれか",
+      "ans": 1,
+      "readable": 5,
+      "unique": 5,
+      "concrete": 5,
+      "score": 5,
+      "note": "予測した動作を制御器からモーターへ渡す流れが本文の結論にあり、応用先を一つに絞れる。"
     }
   ],
   "rubric": {
