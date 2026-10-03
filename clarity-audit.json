@@ -1,83 +1,83 @@
 {
-  "date": "2026-10-03",
+  "date": "2026-10-04",
   "status": "pass",
-  "checked_at": "2026-10-02T09:38:17Z",
+  "checked_at": "2026-10-03T09:15:08Z",
   "auditor": "Codex（本文だけを根拠に全6問を自力解答）",
   "avgScore": 5,
   "total": 6,
   "rewritten": 0,
   "items": [
     {
-      "passage": "20261003_marginalrevolution_shipping_routes",
+      "passage": "20261004_asterisk_diplomatic_cables",
       "q": 1,
       "type": "Take-away",
-      "stem": "Take-away: 港が混む前に何が起きていたか",
+      "stem": "Take-away: 外交官が輸入品を見た理由は何か",
       "ans": 0,
       "readable": 5,
       "unique": 5,
       "concrete": 5,
       "score": 5,
-      "note": "港の行列に先行して船の利用率が20〜40ポイント落ちたと本文にあり、答えを一読で特定できる。"
+      "note": "政府統計が2年に1度しか出ないため、電気ケトルなどの輸入を暮らしの変化の手がかりにしたと本文にあり、答えが一意に決まる。"
     },
     {
-      "passage": "20261003_marginalrevolution_shipping_routes",
+      "passage": "20261004_asterisk_diplomatic_cables",
       "q": 2,
       "type": "Strong evidence",
-      "stem": "Strong evidence: 船を別の航路へ動かすと何が起きるか",
+      "stem": "Strong evidence: 外交官の報告が目指すものは何か",
       "ans": 1,
       "readable": 5,
       "unique": 5,
       "concrete": 5,
       "score": 5,
-      "note": "船団を別航路へ移すと移動先で新しい混雑が生まれると本文が説明し、他の選択肢と混同しない。"
+      "note": "危機や突破口ではなく、小さな変化と現場の声を積み上げる報告だと本文が説明し、他の選択肢と混同しない。"
     },
     {
-      "passage": "20261003_marginalrevolution_shipping_routes",
+      "passage": "20261004_asterisk_diplomatic_cables",
       "q": 3,
       "type": "Scenario",
-      "stem": "Scenario: 物流の危機を早く見る指標はどれか",
-      "ans": 3,
-      "readable": 5,
-      "unique": 5,
-      "concrete": 5,
-      "score": 5,
-      "note": "利用率の低下が港の混雑に先行した事実から、航路の移動と利用率を確認する答えが一意に決まる。"
-    },
-    {
-      "passage": "20261003_constructionphysics_robot_vla",
-      "q": 1,
-      "type": "Take-away",
-      "stem": "Take-away: VLAがまとめて予測するものは何か",
+      "stem": "Scenario: 現地の状況を早く見誤らない方法はどれか",
       "ans": 2,
       "readable": 5,
       "unique": 5,
       "concrete": 5,
       "score": 5,
-      "note": "VLAが50個の動作をまとめて予測すると本文冒頭にあり、数字と対象が明確である。"
+      "note": "輸入品や実務家の声など複数の情報を照らし合わせる仕組みが本文の結論であり、応用先も明確である。"
     },
     {
-      "passage": "20261003_constructionphysics_robot_vla",
-      "q": 2,
-      "type": "Strong evidence",
-      "stem": "Strong evidence: 動作用の変換器は何をするか",
-      "ans": 0,
-      "readable": 5,
-      "unique": 5,
-      "concrete": 5,
-      "score": 5,
-      "note": "50個の仮の動作を10回修正して使える動きに近づける説明が本文にあり、役割を一意に読める。"
-    },
-    {
-      "passage": "20261003_constructionphysics_robot_vla",
-      "q": 3,
-      "type": "Scenario",
-      "stem": "Scenario: ロボットの性能を左右する段取りはどれか",
+      "passage": "20261004_brookings_summit_channels",
+      "q": 1,
+      "type": "Take-away",
+      "stem": "Take-away: 首脳会談が残したものは何か",
       "ans": 1,
       "readable": 5,
       "unique": 5,
       "concrete": 5,
       "score": 5,
-      "note": "予測した動作を制御器からモーターへ渡す流れが本文の結論にあり、応用先を一つに絞れる。"
+      "note": "年内の再会談、貿易、AI、軍事の対話を続ける回線が本文に列挙され、解決済みの合意と取り違えにくい。"
+    },
+    {
+      "passage": "20261004_brookings_summit_channels",
+      "q": 2,
+      "type": "Strong evidence",
+      "stem": "Strong evidence: 対話の回線だけでは足りない理由は何か",
+      "ans": 1,
+      "readable": 5,
+      "unique": 5,
+      "concrete": 5,
+      "score": 5,
+      "note": "回線や作業部会が増えても重要鉱物や供給網の問題が残るという本文の根拠に直結し、正解が一つに定まる。"
+    },
+    {
+      "passage": "20261004_brookings_summit_channels",
+      "q": 3,
+      "type": "Scenario",
+      "stem": "Scenario: 首脳会談を評価するとき、同時に見る点はどれか",
+      "ans": 0,
+      "readable": 5,
+      "unique": 5,
+      "concrete": 5,
+      "score": 5,
+      "note": "新しい回線と未解決の争点を同時に見るという本文の含意を、そのまま評価場面へ移せる。"
     }
   ],
   "rubric": {
