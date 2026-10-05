@@ -1,89 +1,18 @@
 {
- "date": "2026-10-05",
- "status": "pass",
- "checked_at": "2026-10-04T10:37:57Z",
- "auditor": "Codex（本文だけを根拠に全6問を自力解答）",
- "avgScore": 5,
- "total": 6,
- "rewritten": 0,
- "items": [
-  {
-   "passage": "20261005_volts_smart_water_heater",
-   "q": 1,
-   "type": "Take-away",
-   "stem": "Take-away: 給湯器が学ぶものは何か",
-   "ans": 1,
-   "readable": 5,
-   "unique": 5,
-   "concrete": 5,
-   "score": 5,
-   "note": "本文がリザーバーは家族の水の使い方を学ぶと明示し、他の選択肢は本文にない対象なので一意に解ける。"
-  },
-  {
-   "passage": "20261005_volts_smart_water_heater",
-   "q": 2,
-   "type": "Strong evidence",
-   "stem": "Strong evidence: ヒートポンプ式が普及しにくい理由は何か",
-   "ans": 2,
-   "readable": 5,
-   "unique": 5,
-   "concrete": 5,
-   "score": 5,
-   "note": "値段、大きさ、音、工事という本文の列挙が正解へ直結し、効率だけでは普及しない論点も確認できる。"
-  },
-  {
-   "passage": "20261005_volts_smart_water_heater",
-   "q": 3,
-   "type": "Scenario",
-   "stem": "Scenario: 電力の需給を調整する動きはどれか",
-   "ans": 0,
-   "readable": 5,
-   "unique": 5,
-   "concrete": 5,
-   "score": 5,
-   "note": "余る時間に温め、需要が高い時間を避けるという本文の仕組みを、そのまま具体的な場面へ移せる。"
-  },
-  {
-   "passage": "20261005_commoncog_four_seasons",
-   "q": 1,
-   "type": "Take-away",
-   "stem": "Take-away: フォーシーズンズが多くのホテルで持たないものは何か",
-   "ans": 2,
-   "readable": 5,
-   "unique": 5,
-   "concrete": 5,
-   "score": 5,
-   "note": "建物を所有せず長期契約で運営するという本文の中心事実が明確で、サービス基準や契約との混同も起きにくい。"
-  },
-  {
-   "passage": "20261005_commoncog_four_seasons",
-   "q": 2,
-   "type": "Strong evidence",
-   "stem": "Strong evidence: シャープが広告費の代わりに絞ったものは何か",
-   "ans": 0,
-   "readable": 5,
-   "unique": 5,
-   "concrete": 5,
-   "score": 5,
-   "note": "シャンプー、厚いタオル、ラジオ放送という本文の具体例が、客が感じる品質という答えを支える。"
-  },
-  {
-   "passage": "20261005_commoncog_four_seasons",
-   "q": 3,
-   "type": "Scenario",
-   "stem": "Scenario: 資産を軽くしても残すべきものは何か",
-   "ans": 1,
-   "readable": 5,
-   "unique": 5,
-   "concrete": 5,
-   "score": 5,
-   "note": "建物の所有を手放してもサービスの設計と基準を残すという本文の含意を、経営の判断へ一意に移せる。"
-  }
- ],
- "rubric": {
-  "one_read": 5,
-  "unique_logic": 5,
-  "concrete_options": 5,
-  "natural_faithful_japanese": 5
- }
+  "date": "2026-10-06",
+  "status": "pass",
+  "checked_at": "2026-10-05T09:13:32Z",
+  "auditor": "Codex（本文だけを根拠に全6問を自力解答）",
+  "avgScore": 5,
+  "total": 6,
+  "rewritten": 0,
+  "items": [
+    {"passage": "20261006_rieti_nepal_access", "q": 1, "type": "Take-away", "stem": "Take-away: 直接の被災より多かったものは何か", "ans": 1, "readable": 5, "unique": 5, "concrete": 5, "score": 5, "note": "直接の被災8,033人と孤立した1万3906人を本文が明示し、人数の比較で一意に解ける。"},
+    {"passage": "20261006_rieti_nepal_access", "q": 2, "type": "Strong evidence", "stem": "Strong evidence: 復旧の効果が大きかった区間は何本か", "ans": 2, "readable": 5, "unique": 5, "concrete": 5, "score": 5, "note": "194区間を比べて効果が大きかったのは2区間という本文の数字が、そのまま根拠になる。"},
+    {"passage": "20261006_rieti_nepal_access", "q": 3, "type": "Scenario", "stem": "Scenario: 支援の順番を決めるときに見るものは何か", "ans": 0, "readable": 5, "unique": 5, "concrete": 5, "score": 5, "note": "破損量でなく、誰が何から切り離されたかを見るという本文の結論を具体的な判断へ移せる。"},
+    {"passage": "20261006_rieti_iso_market", "q": 1, "type": "Take-away", "stem": "Take-away: 米国ISOが同時に扱うものは何か", "ans": 0, "readable": 5, "unique": 5, "concrete": 5, "score": 5, "note": "電力エネルギーと予備力・調整力を同時に最適化する本文の中心事実が明確である。"},
+    {"passage": "20261006_rieti_iso_market", "q": 2, "type": "Strong evidence", "stem": "Strong evidence: 約定に組み込まれた設備の制約は何か", "ans": 1, "readable": 5, "unique": 5, "concrete": 5, "score": 5, "note": "発電所の起動費と最低出力を含めた提案方式という本文の説明が正解を直接支える。"},
+    {"passage": "20261006_rieti_iso_market", "q": 3, "type": "Scenario", "stem": "Scenario: 市場制度を移すときに確かめる点は何か", "ans": 2, "readable": 5, "unique": 5, "concrete": 5, "score": 5, "note": "海外の形を移すだけでなく、扱う制約と価格への反映方法を確かめるという含意を一意に問う。"}
+  ],
+  "rubric": {"one_read": 5, "unique_logic": 5, "concrete_options": 5, "natural_faithful_japanese": 5}
 }
