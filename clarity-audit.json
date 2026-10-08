@@ -1,18 +1,18 @@
 {
-  "date": "2026-10-08",
+  "date": "2026-10-09",
   "status": "pass",
-  "checked_at": "2026-10-07T18:06:52+0900",
+  "checked_at": "2026-10-08T18:20:00+0900",
   "auditor": "Codex（本文だけを根拠に対象日6問を自力解答）",
   "avgScore": 5,
   "total": 6,
   "rewritten": 0,
   "items": [
-    {"passage": "20261008_nber_safe_tier", "q": 1, "type": "Take-away", "stem": "Take-away: 安全枠が残すものは何か", "ans": 1, "readable": 5, "unique": 5, "concrete": 5, "score": 5, "note": "安全枠が友人とのつながりを残し、推薦フィードを制限する本文の中心を一読で選べる。"},
-    {"passage": "20261008_nber_safe_tier", "q": 2, "type": "Strong evidence", "stem": "Strong evidence: 禁止だけで遵守が難しい理由は何か", "ans": 3, "readable": 5, "unique": 5, "concrete": 5, "score": 5, "note": "若者が失うのは機能だけでなく友人とのネットワークだという根拠が選択肢で一意になる。"},
-    {"passage": "20261008_nber_safe_tier", "q": 3, "type": "Scenario", "stem": "Scenario: 規制後もつながりを保つ設計はどれか", "ans": 0, "readable": 5, "unique": 5, "concrete": 5, "score": 5, "note": "推薦フィードを外して友人との連絡を残す安全枠の応用が、本文から迷わず選べる。"},
-    {"passage": "20261008_wip_victorian_network", "q": 1, "type": "Take-away", "stem": "Take-away: 英国の上流層を支えた時間の使い方は何か", "ans": 0, "readable": 5, "unique": 5, "concrete": 5, "score": 5, "note": "社交を情報交換の場にしたという論旨を、長時間労働と混同せずに答えられる。"},
-    {"passage": "20261008_wip_victorian_network", "q": 2, "type": "Strong evidence", "stem": "Strong evidence: 社交の場が生んだものは何か", "ans": 2, "readable": 5, "unique": 5, "concrete": 5, "score": 5, "note": "昼食や夜会が投資先や人材の情報網になったという具体的根拠を問えている。"},
-    {"passage": "20261008_wip_victorian_network", "q": 3, "type": "Scenario", "stem": "Scenario: 契約以外の協力を組織に残す仕組みはどれか", "ans": 1, "readable": 5, "unique": 5, "concrete": 5, "score": 5, "note": "共通の記憶と評判が協力を促すという構造を組織へ移す問いとして一意に解ける。"}
+    {"passage": "20261009_nber_microenterprise_benefit", "q": 1, "type": "Take-away", "stem": "Take-away: 融資の効果がより大きかったのは誰か", "ans": 1, "readable": 5, "unique": 5, "concrete": 5, "score": 5, "note": "借り手の利益292ドルと客の便益494ドルを本文で比べ、客を一意に選べる。"},
+    {"passage": "20261009_nber_microenterprise_benefit", "q": 2, "type": "Strong evidence", "stem": "Strong evidence: 客への効果が移し替えだけでない根拠は何か", "ans": 2, "readable": 5, "unique": 5, "concrete": 5, "score": 5, "note": "融資を受けなかった同じ市場の企業も調べたという根拠が、他の選択肢と混同されない。"},
+    {"passage": "20261009_nber_microenterprise_benefit", "q": 3, "type": "Scenario", "stem": "Scenario: 支援の効果を広く測る方法はどれか", "ans": 0, "readable": 5, "unique": 5, "concrete": 5, "score": 5, "note": "借り手の利益と客の得を合わせて測るという本文の含意を、具体的な方法として問えている。"},
+    {"passage": "20261009_wip_ogallala_traffic", "q": 1, "type": "Take-away", "stem": "Take-away: 無人車の普及で起こりうることは何か", "ans": 0, "readable": 5, "unique": 5, "concrete": 5, "score": 5, "note": "便利さが移動量を増やし、渋滞が戻る可能性を本文から一意に選べる。"},
+    {"passage": "20261009_wip_ogallala_traffic", "q": 2, "type": "Strong evidence", "stem": "Strong evidence: 便利さが渋滞を戻しうる理由は何か", "ans": 1, "readable": 5, "unique": 5, "concrete": 5, "score": 5, "note": "道路の利用料がなく移動量が増えうるという本文の因果を、他の選択肢と区別できる。"},
+    {"passage": "20261009_wip_ogallala_traffic", "q": 3, "type": "Scenario", "stem": "Scenario: 無人車を広げるときに測るべきものはどれか", "ans": 2, "readable": 5, "unique": 5, "concrete": 5, "score": 5, "note": "車の性能だけでなく、道路の利用量と余白への影響も測るという含意を具体化できる。"}
   ],
   "rubric": {"one_read": 5, "unique_logic": 5, "concrete_options": 5, "natural_faithful_japanese": 5}
 }
