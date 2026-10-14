@@ -1,18 +1,18 @@
 {
-  "date": "2026-10-09",
+  "date": "2026-10-15",
   "status": "pass",
-  "checked_at": "2026-10-08T18:20:00+0900",
+  "checked_at": "2026-10-14T18:50:00+0900",
   "auditor": "Codex（本文だけを根拠に対象日6問を自力解答）",
   "avgScore": 5,
   "total": 6,
   "rewritten": 0,
   "items": [
-    {"passage": "20261009_nber_microenterprise_benefit", "q": 1, "type": "Take-away", "stem": "Take-away: 融資の効果がより大きかったのは誰か", "ans": 1, "readable": 5, "unique": 5, "concrete": 5, "score": 5, "note": "借り手の利益292ドルと客の便益494ドルを本文で比べ、客を一意に選べる。"},
-    {"passage": "20261009_nber_microenterprise_benefit", "q": 2, "type": "Strong evidence", "stem": "Strong evidence: 客への効果が移し替えだけでない根拠は何か", "ans": 2, "readable": 5, "unique": 5, "concrete": 5, "score": 5, "note": "融資を受けなかった同じ市場の企業も調べたという根拠が、他の選択肢と混同されない。"},
-    {"passage": "20261009_nber_microenterprise_benefit", "q": 3, "type": "Scenario", "stem": "Scenario: 支援の効果を広く測る方法はどれか", "ans": 0, "readable": 5, "unique": 5, "concrete": 5, "score": 5, "note": "借り手の利益と客の得を合わせて測るという本文の含意を、具体的な方法として問えている。"},
-    {"passage": "20261009_wip_ogallala_traffic", "q": 1, "type": "Take-away", "stem": "Take-away: 無人車の普及で起こりうることは何か", "ans": 0, "readable": 5, "unique": 5, "concrete": 5, "score": 5, "note": "便利さが移動量を増やし、渋滞が戻る可能性を本文から一意に選べる。"},
-    {"passage": "20261009_wip_ogallala_traffic", "q": 2, "type": "Strong evidence", "stem": "Strong evidence: 便利さが渋滞を戻しうる理由は何か", "ans": 1, "readable": 5, "unique": 5, "concrete": 5, "score": 5, "note": "道路の利用料がなく移動量が増えうるという本文の因果を、他の選択肢と区別できる。"},
-    {"passage": "20261009_wip_ogallala_traffic", "q": 3, "type": "Scenario", "stem": "Scenario: 無人車を広げるときに測るべきものはどれか", "ans": 2, "readable": 5, "unique": 5, "concrete": 5, "score": 5, "note": "車の性能だけでなく、道路の利用量と余白への影響も測るという含意を具体化できる。"}
+    {"passage": "20261015_wip_china_growth_machines", "q": 1, "type": "Take-away", "stem": "Take-away: 中国の成長を支えた地方政府の役割は何か", "ans": 1, "readable": 5, "unique": 5, "concrete": 5, "score": 5, "note": "地方政府が投資や制度で競うという本文の中心を、他の選択肢と混同せず選べる。"},
+    {"passage": "20261015_wip_china_growth_machines", "q": 2, "type": "Strong evidence", "stem": "Strong evidence: 合肥市の投資が示すことは何か", "ans": 0, "readable": 5, "unique": 5, "concrete": 5, "score": 5, "note": "2008年のBOEへの5億ドル投資が、地域産業の入口になった事実を一意に確認できる。"},
+    {"passage": "20261015_wip_china_growth_machines", "q": 3, "type": "Scenario", "stem": "Scenario: 地域の成長を促す制度設計はどれか", "ans": 1, "readable": 5, "unique": 5, "concrete": 5, "score": 5, "note": "中央が分野を示し、地方が投資や規制で競う本文の仕組みを具体的に応用できる。"},
+    {"passage": "20261015_canary_small_town_coalition", "q": 1, "type": "Take-away", "stem": "Take-away: エンフィールドが作ろうとしたものは何か", "ans": 0, "readable": 5, "unique": 5, "concrete": 5, "score": 5, "note": "小さな町の町長を結ぶ連合という本文の事実を、他の制度案と区別して選べる。"},
+    {"passage": "20261015_canary_small_town_coalition", "q": 2, "type": "Strong evidence", "stem": "Strong evidence: 小さな町が連合を必要とする理由は何か", "ans": 1, "readable": 5, "unique": 5, "concrete": 5, "score": 5, "note": "専門家や資金へ単独では届きにくいという本文の理由が、他の選択肢と明確に分かれる。"},
+    {"passage": "20261015_canary_small_town_coalition", "q": 3, "type": "Scenario", "stem": "Scenario: 小さな自治体の声を大きくする方法はどれか", "ans": 2, "readable": 5, "unique": 5, "concrete": 5, "score": 5, "note": "人口3万人未満の町が連合を作るという本文の考えを、具体的な設計として選べる。"}
   ],
   "rubric": {"one_read": 5, "unique_logic": 5, "concrete_options": 5, "natural_faithful_japanese": 5}
 }

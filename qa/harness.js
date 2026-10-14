@@ -477,12 +477,15 @@ eval(js + "\nglobal.__app = { get state(){return state}, set state(v){state=v}, 
   // 4.0: 実運用の在庫を再現する。日次2本＋復習（Obsidianリサーチ由来）で一覧5枠が埋まる。
   // 復習の在庫は本番で常に3本以上ある（毎日3本届く）。2本しか積まないと
   // 瞬間キャッチの語プールが本番より痩せ、B10cが実機と違う結果になる。
+  // いま一覧に出ている日（朝7時に繰り上がった側）。前夜に仕込んだ翌日分は含めない。
+  const RELEASED_DAY = (A.releasedIssues().map(p => p.addedOn).filter(Boolean).sort().pop()) || daily.date;
   const reviewSeed = [...(A.DEFAULT_CONTENT.passages || []), ...(A.ANCHOR_POOL || [])];
   const reviewStock = reviewSeed.map((p, i) => Object.assign({}, p, {
     // 検査するのは並び順の構造であって、カレンダーではない。
-    // 日付を「今日」で固定すると、教材が数日古い日に並びが逆転して検査が落ちる。
+    // 日付は「いま一覧に出ている日」に合わせる。今日で固定すると教材が古い日に、
+    // ファイルの最新日で固定すると前夜に仕込んだ分がある日に、並びが逆転して落ちる。
     id: `review-qa-0${i + 1}`, kind: "review", genre: "学び方", tag: "学び方",
-    availableOn: A.daysFromToday(0), addedOn: daily.date,
+    availableOn: A.daysFromToday(0), addedOn: RELEASED_DAY,
     author: p.author || { name: "検証", role: "検証用の復習教材" }
   }));
   A.state.personalLibrary = [...A.state.personalLibrary, ...reviewStock];
