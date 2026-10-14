@@ -208,6 +208,14 @@ function insightIssues(p, brief) {
     }
     // ハイライトは本人の読書メモであって、教材に載せるべき中身ではない。
     // 2026-09-27に必須をやめた。選定の signal としては引き続き使う。
+
+    // 核になりうる文（反転・数字・本人の言葉を含む行）を機械で5本まで拾ってある。
+    // そのどれか1本が本文に残っていること。どれも残っていないなら、
+    // 節の中の薄いところだけを書いたか、一般論にまとめてしまっている。
+    // 5本から選べるので、特定の言い回しを強制することにはならない。
+    const sharp = brief.sharpLines || [];
+    if (sharp.length && !sharp.some(l => coverage(l, text) >= 0.4))
+      issues.push(`核になる文がどれも残っていない（候補${sharp.length}本）: ${sharp[0].slice(0, 26)}`);
     const url = String(p.source || "") + String(p.sourceUrl || "");
     if (brief.videoUrl && !url.includes(brief.videoUrl.split("v=")[1] || brief.videoUrl))
       issues.push("出典が元動画を指していない");

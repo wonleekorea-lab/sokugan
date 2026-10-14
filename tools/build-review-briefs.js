@@ -85,6 +85,40 @@ function highlightsIn(text) {
 
 const SKIP_HEADING = /^(一言でいうと|ほかに触れていたこと|言葉の意味|何を見たか|他に見つかったもの)/;
 
+// ---------- 鋭さを測る（2026-10-14）----------
+// これまで選定は、ハイライト・新しさ・再登場の間隔だけを見ていた。
+// 節の中身が鋭いかどうかは一度も見ていない。実測すると、同じ日の候補でも
+// 反転0・数字1・引用0の薄い節と、反転2・数字4・引用2の濃い節が並んでいた。
+// 洞察が宿るのは、読み手の予想を裏切る文、数字の入った文、本人の言葉。
+const REVERSAL_LINE = /(ではない|ではなく|に見えて|実は|逆に|裏を返せば|ところが|むしろ|と思われがち|にもかかわらず|どころか|勘違い|誤解|思い込)/;
+const QUOTE_LINE = /\*「|^\s*>/;
+const NUM_LINE = /\d/;
+function lineScore(l) {
+  let v = 0;
+  if (REVERSAL_LINE.test(l)) v += 3;
+  if (NUM_LINE.test(l)) v += 2;
+  if (QUOTE_LINE.test(l)) v += 2;
+  if (/(だから|なぜなら|からだ|その結果|つまり)/.test(l)) v += 1;
+  return v;
+}
+function cleanLine(l) {
+  return l.replace(/^[\s>\-*•]+/, "").replace(/\*\*?/g, "").replace(/^==|==$/g, "").trim();
+}
+// 節の中から「核になりうる文」を取り出す。書き手はこの中から1つを選んで掘る。
+function sharpLinesOf(body) {
+  const lines = String(body || "").split("\n").map(cleanLine)
+    .filter(l => charCount(l) >= 18 && charCount(l) <= 160 && !/^[|#]/.test(l));
+  return [...new Map(lines.map(l => [l, l])).values()]
+    .map(l => ({ l, v: lineScore(l) }))
+    .filter(x => x.v >= 2)
+    .sort((a, b) => b.v - a.v)
+    .slice(0, 5)
+    .map(x => x.l);
+}
+function sharpness(body) {
+  return String(body || "").split("\n").reduce((a, l) => a + lineScore(l), 0);
+}
+
 // 生成物フォルダのファイル名は `YYYY-MM-DD_テーマ.md`、vault側は日付なし。
 // 同じ論点が経路の違いで別IDになると、45日の重複防止が2系統に割れる。
 function noteIdOf(file) {
@@ -142,7 +176,9 @@ function parseNote(file) {
       claim: heading,
       body: raw,
       quotes,
-      highlights: highlightsIn(raw)
+      highlights: highlightsIn(raw),
+      sharpLines: sharpLinesOf(raw),
+      sharpness: sharpness(raw)
     });
   }
 
@@ -179,6 +215,10 @@ function rank(note, section, state) {
   if (note.created) score += Math.max(0, 20 - Math.max(0, daysBetween(note.created, DATE)) / 3);
   if (last) score += Math.min(15, (age - RECALL_DAYS) / 6);
   if (section.quotes.length) score += 5;                  // 本人の言葉がある＝核の論点
+  // 鋭さ。反転・数字・本人の言葉が多い節ほど、掘る価値がある。
+  // 上限を付けるのは、長いだけの節が常に勝つのを防ぐため。
+  score += Math.min(40, section.sharpness * 2);
+  if (!section.sharpLines.length) score -= 25;            // 核になる文が1つも無い節は後回し
   return score;
 }
 
@@ -255,6 +295,8 @@ function main() {
     claim: section.claim,
     body: section.body,
     quotes: section.quotes,
+    sharpLines: section.sharpLines,
+    sharpness: section.sharpness,
     highlights: section.highlights,
     noteHighlights: note.noteHighlights,
     backToQuestion: note.backToQuestion,

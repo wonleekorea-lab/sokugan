@@ -108,7 +108,7 @@ const _si = global.setInterval;
 global.setInterval = (f, d) => _si(f, Math.max(1, Math.min(d || 0, 5)));
 
 // ---------- アプリ実コードを実行 ----------
-eval(js + "\nglobal.__app = { get state(){return state}, set state(v){state=v}, get ui(){return ui}, get sess(){return sess}, get view(){return view}, get content(){return content}, get syncState(){return syncState}, DEFAULT_CONTENT, ANCHOR_POOL, chunkText, getChunks, validChunks, chunkPool, spanTrialSet, catchTrial, catchContextTrial, catchMeaningTrial, catchSourcePassages, CATCH_KINDS, CATCH_TRIALS, splitSentences, pickSessionPassages, withShuffledQuestions, paragraphsHtml, selectedPassageIds, togglePassageSelection, patchPassageSelectionUi, startSession, abortSession, renderShortIntro, renderShortResult, unseenPassages, unseenStock, releasedIssues, isReviewPassage, addedOnOf, dayStamp, DAY_START_HOUR, isStaleReview, markShown, REVIEW_SHELF_DAYS, allPassages, personalPassages, normalizePersonalPassage, importPersonalContent, daysFromToday, passageKey, passageKeys, sourceUrlKey, isPassageSeen, markPassagesSeen, markPassageRead, textFingerprint, sourceUrlKey, renderHome, renderHistory, contentStatus, renderFreshnessPanel, guardedStart, renderPacer, renderPacerQuiz, answerPacer, renderSpanIntro, answerSpan, finishSpan, renderRead, startReading, finishReading, renderQuiz, finishQuiz, renderReread, startReread, finishReread, renderResult, textStats, adjustSpeed, makeDeepCloze, answerDeepCloze, normalizeNumerals, parseKanjiNum, startAnchor, renderAnchorRead, startAnchorRead, finishAnchorRead, renderAnchorQuiz, answerAnchor, anchorDue, todayMenu, goalProgress, gazeSpan, sessionKeyTerms, passageTakeaway, finishVocab, proceedAfterCloze1, weakestSkill, feedbackGenreScore, preferByFeedback, recordContentFeedback, recordContentFeedbackById, recordQuestionFeedback, recordQuestionFeedbackById, renderContentFeedback, contentFeedbackFor, contentFeedbackKey, findPassageById, defaultState, newSessionId, stampField, saveState, mergeStates, syncableState, unionBy, PHASES, render, pickSessionPassages, sessionQuestions, mergeContentFeedback, recordContentNote, recordContentNoteById, renderRestoreCard, restoreFromCloud, PASSWORD_RE, uiSendMagicLink, uiSetPassword, uiPasteAuthLink, authParamsFrom, applyAuthTokens, histKey, syncCfg, syncEnabled, signedIn, loadAuth, saveAuth, syncNow, pullRemote, pushRemote, scheduleSync, flushSyncQueue, syncStatusText, renderSyncCard, renderSyncLine, syncSignOut, KEY, AUTH_KEY, UI_KEY };");
+eval(js + "\nglobal.__app = { get state(){return state}, set state(v){state=v}, get ui(){return ui}, get sess(){return sess}, get view(){return view}, get content(){return content}, get syncState(){return syncState}, DEFAULT_CONTENT, ANCHOR_POOL, chunkText, getChunks, validChunks, chunkPool, spanTrialSet, catchTrial, catchClosingTrial, catchMeaningTrial, catchSourcePassages, CATCH_KINDS, CATCH_TRIALS, splitSentences, pickSessionPassages, withShuffledQuestions, paragraphsHtml, selectedPassageIds, togglePassageSelection, patchPassageSelectionUi, startSession, abortSession, renderShortIntro, renderShortResult, unseenPassages, unseenStock, releasedIssues, isReviewPassage, addedOnOf, dayStamp, DAY_START_HOUR, isStaleReview, markShown, REVIEW_SHELF_DAYS, allPassages, personalPassages, normalizePersonalPassage, importPersonalContent, daysFromToday, passageKey, passageKeys, sourceUrlKey, isPassageSeen, markPassagesSeen, markPassageRead, textFingerprint, sourceUrlKey, renderHome, renderHistory, contentStatus, renderFreshnessPanel, guardedStart, renderPacer, renderPacerQuiz, answerPacer, renderSpanIntro, answerSpan, finishSpan, renderRead, startReading, finishReading, renderQuiz, finishQuiz, renderReread, startReread, finishReread, renderResult, textStats, adjustSpeed, makeDeepCloze, answerDeepCloze, normalizeNumerals, parseKanjiNum, startAnchor, renderAnchorRead, startAnchorRead, finishAnchorRead, renderAnchorQuiz, answerAnchor, anchorDue, todayMenu, goalProgress, gazeSpan, sessionKeyTerms, passageTakeaway, finishVocab, proceedAfterCloze1, weakestSkill, feedbackGenreScore, preferByFeedback, recordContentFeedback, recordContentFeedbackById, recordQuestionFeedback, recordQuestionFeedbackById, renderContentFeedback, contentFeedbackFor, contentFeedbackKey, findPassageById, defaultState, newSessionId, stampField, saveState, mergeStates, syncableState, unionBy, PHASES, render, pickSessionPassages, sessionQuestions, mergeContentFeedback, recordContentNote, recordContentNoteById, renderRestoreCard, restoreFromCloud, PASSWORD_RE, uiSendMagicLink, uiSetPassword, uiPasteAuthLink, authParamsFrom, applyAuthTokens, histKey, syncCfg, syncEnabled, signedIn, loadAuth, saveAuth, syncNow, pullRemote, pushRemote, scheduleSync, flushSyncQueue, syncStatusText, renderSyncCard, renderSyncLine, syncSignOut, KEY, AUTH_KEY, UI_KEY };");
 
 (async () => {
   await new Promise(r => _st(r, 80)); // init完了待ち
@@ -267,6 +267,9 @@ eval(js + "\nglobal.__app = { get state(){return state}, set state(v){state=v}, 
     && /sokugan-private-review-v1/.test(fs.readFileSync(path.join(ROOT, "tools", "publish-private-youtube.js"), "utf8"))
     && fs.existsSync(path.join(ROOT, "tools", "mirror-vault.js"))
     && /vault-mirror/.test(fs.readFileSync(path.join(ROOT, "tools", "build-review-briefs.js"), "utf8"))
+    && /sharpLines/.test(fs.readFileSync(path.join(ROOT, "tools", "build-review-briefs.js"), "utf8"))
+    && /sharpLines/.test(fs.readFileSync(path.join(ROOT, "qa", "insight-lint.js"), "utf8"))
+    && /sharpLines/.test(fs.readFileSync(path.join(ROOT, ".claude", "commands", "daily.md"), "utf8"))
     && /mirror-vault/.test(fs.readFileSync(path.join(ROOT, ".claude", "hooks", "sync-check.sh"), "utf8"))
     && /build-review-briefs/.test(fs.readFileSync(path.join(ROOT, ".claude", "commands", "daily.md"), "utf8"))
     && /insight-lint/.test(fs.readFileSync(path.join(ROOT, ".claude", "commands", "daily.md"), "utf8")));
@@ -476,8 +479,10 @@ eval(js + "\nglobal.__app = { get state(){return state}, set state(v){state=v}, 
   // 瞬間キャッチの語プールが本番より痩せ、B10cが実機と違う結果になる。
   const reviewSeed = [...(A.DEFAULT_CONTENT.passages || []), ...(A.ANCHOR_POOL || [])];
   const reviewStock = reviewSeed.map((p, i) => Object.assign({}, p, {
+    // 検査するのは並び順の構造であって、カレンダーではない。
+    // 日付を「今日」で固定すると、教材が数日古い日に並びが逆転して検査が落ちる。
     id: `review-qa-0${i + 1}`, kind: "review", genre: "学び方", tag: "学び方",
-    availableOn: A.daysFromToday(0), addedOn: A.daysFromToday(0),
+    availableOn: A.daysFromToday(0), addedOn: daily.date,
     author: p.author || { name: "検証", role: "検証用の復習教材" }
   }));
   A.state.personalLibrary = [...A.state.personalLibrary, ...reviewStock];
@@ -604,17 +609,18 @@ eval(js + "\nglobal.__app = { get state(){return state}, set state(v){state=v}, 
     A.CATCH_TRIALS === 5 && new Set(A.CATCH_KINDS).size === 2 && A.CATCH_KINDS.includes("context") && A.CATCH_KINDS.includes("meaning"),
     `${A.CATCH_TRIALS}回 / ${[...new Set(A.CATCH_KINDS)].join(",")}`);
   {
-    const ct = A.catchContextTrial(5);
+    const ct = A.catchClosingTrial(5, []);
     const okCtx = ct && ct.kind === "context" && ct.opts.length === 4 && ct.opts[ct.ans] &&
-      new Set(ct.opts).size === 4 && /どの文の一部/.test(ct.prompt || "");
-    check("B10f 文脈の試行は、見えたまとまりを含む文を4つの文から選ばせる", !!okCtx,
+      new Set(ct.opts).size === 4 && /どの書き出し/.test(ct.prompt || "");
+    check("B10f 文脈の試行は、見えた結びから書き出しを選ばせる", !!okCtx,
       ct ? `${ct.target} → ${ct.opts[ct.ans].slice(0, 16)}` : "出題できない");
     // 正解の文だけが、そのまとまりを含んでいること（他の文にもあると答えが割れる）
     if (ct) {
-      const hit = ct.opts.filter(o => o.replace(/…$/, "").includes(ct.target)).length;
-      check("B10g 見えたまとまりを含む選択肢は1つだけ（答えが一意）", hit === 1, `${hit}件`);
+      // 的が選択肢に写っていたら、読まずに文字列照合で解けてしまう（2026-10-14に発覚）
+      const leak = ct.opts.filter(o => o.replace(/…$/, "").includes(ct.target)).length;
+      check("B10g 的の文字列が選択肢に現れない（照合では解けない）", leak === 0, `漏れ ${leak}件 / 的=${ct.target}`);
     }
-    const mt = A.catchMeaningTrial();
+    const mt = A.catchMeaningTrial([]);
     const lens = mt ? mt.opts.map(o => [...o].length) : [];
     const longest = lens.length ? Math.max(...lens) : 0;
     const soleLongest = mt && lens.filter(l => l === longest).length === 1 && lens[mt.ans] === longest;

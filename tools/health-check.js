@@ -56,9 +56,24 @@ function loadApp(daily) {
   return new Promise((r) => _st(() => r(global.__app), 120));
 }
 
+// 環境変数が無ければ、自分で .sokugan-private.env を読む。
+// launchd から /bin/zsh で読もうとすると、macOSの保護（Documents配下）で
+// operation not permitted になる。nodeは読めるので、ここで読む。
+function envFile() {
+  const out = {};
+  try {
+    for (const line of fs.readFileSync(path.join(ROOT, ".sokugan-private.env"), "utf8").split("\n")) {
+      const m = line.match(/^\s*([A-Z_][A-Z0-9_]*)\s*=\s*(.*)$/);
+      if (m) out[m[1]] = m[2].replace(/^["']|["']$/g, "").trim();
+    }
+  } catch (e) {}
+  return out;
+}
 async function remoteState() {
-  const url = (process.env.SOKUGAN_SUPABASE_URL || "").replace(/\/+$/, "");
-  const key = process.env.SOKUGAN_SUPABASE_SECRET_API_KEY || process.env.SOKUGAN_SUPABASE_SERVICE_ROLE_KEY;
+  const env = Object.assign(envFile(), Object.fromEntries(
+    Object.entries(process.env).filter(([k, v]) => k.startsWith("SOKUGAN_") && v)));
+  const url = (env.SOKUGAN_SUPABASE_URL || "").replace(/\/+$/, "");
+  const key = env.SOKUGAN_SUPABASE_SECRET_API_KEY || env.SOKUGAN_SUPABASE_SERVICE_ROLE_KEY;
   if (!url || !key) return null;
   const rows = await fetch(url + "/rest/v1/sokugan_state?select=state,rev", { headers: { apikey: key, Authorization: "Bearer " + key } }).then(r => r.json());
   const row = Array.isArray(rows) ? rows.find(x => x && x.state && (x.state.personalLibrary || []).length) : null;
