@@ -108,7 +108,7 @@ const _si = global.setInterval;
 global.setInterval = (f, d) => _si(f, Math.max(1, Math.min(d || 0, 5)));
 
 // ---------- アプリ実コードを実行 ----------
-eval(js + "\nglobal.__app = { get state(){return state}, set state(v){state=v}, get ui(){return ui}, get sess(){return sess}, get view(){return view}, get content(){return content}, get syncState(){return syncState}, DEFAULT_CONTENT, ANCHOR_POOL, chunkText, getChunks, validChunks, chunkPool, spanTrialSet, catchTrial, catchClosingTrial, catchMeaningTrial, catchSourcePassages, CATCH_KINDS, CATCH_TRIALS, splitSentences, pickSessionPassages, withShuffledQuestions, paragraphsHtml, selectedPassageIds, togglePassageSelection, patchPassageSelectionUi, startSession, abortSession, renderShortIntro, renderShortResult, unseenPassages, unseenStock, releasedIssues, isReviewPassage, addedOnOf, dayStamp, DAY_START_HOUR, isStaleReview, markShown, REVIEW_SHELF_DAYS, allPassages, personalPassages, normalizePersonalPassage, importPersonalContent, daysFromToday, passageKey, passageKeys, sourceUrlKey, isPassageSeen, markPassagesSeen, markPassageRead, textFingerprint, sourceUrlKey, renderHome, renderHistory, contentStatus, renderFreshnessPanel, guardedStart, renderPacer, renderPacerQuiz, answerPacer, renderSpanIntro, answerSpan, finishSpan, renderRead, startReading, finishReading, renderQuiz, finishQuiz, renderReread, startReread, finishReread, renderResult, textStats, adjustSpeed, makeDeepCloze, answerDeepCloze, normalizeNumerals, parseKanjiNum, startAnchor, renderAnchorRead, startAnchorRead, finishAnchorRead, renderAnchorQuiz, answerAnchor, anchorDue, todayMenu, goalProgress, gazeSpan, sessionKeyTerms, passageTakeaway, finishVocab, proceedAfterCloze1, weakestSkill, feedbackGenreScore, preferByFeedback, recordContentFeedback, recordContentFeedbackById, recordQuestionFeedback, recordQuestionFeedbackById, renderContentFeedback, contentFeedbackFor, contentFeedbackKey, findPassageById, defaultState, newSessionId, stampField, saveState, mergeStates, syncableState, unionBy, PHASES, render, pickSessionPassages, sessionQuestions, mergeContentFeedback, recordContentNote, recordContentNoteById, renderRestoreCard, restoreFromCloud, PASSWORD_RE, uiSendMagicLink, uiSetPassword, uiPasteAuthLink, authParamsFrom, applyAuthTokens, histKey, syncCfg, syncEnabled, signedIn, loadAuth, saveAuth, syncNow, pullRemote, pushRemote, scheduleSync, flushSyncQueue, syncStatusText, renderSyncCard, renderSyncLine, syncSignOut, KEY, AUTH_KEY, UI_KEY };");
+eval(js + "\nglobal.__app = { get state(){return state}, set state(v){state=v}, get ui(){return ui}, get sess(){return sess}, get view(){return view}, get content(){return content}, get syncState(){return syncState}, DEFAULT_CONTENT, ANCHOR_POOL, chunkText, getChunks, validChunks, chunkPool, spanTrialSet, catchTrial, catchMeaningTrial, catchSourcePassages, catchExposure, CATCH_TRIALS, splitSentences, pickSessionPassages, withShuffledQuestions, paragraphsHtml, selectedPassageIds, togglePassageSelection, patchPassageSelectionUi, startSession, abortSession, renderShortIntro, renderShortResult, unseenPassages, unseenStock, releasedIssues, isReviewPassage, addedOnOf, dayStamp, DAY_START_HOUR, isStaleReview, markShown, REVIEW_SHELF_DAYS, allPassages, personalPassages, normalizePersonalPassage, importPersonalContent, daysFromToday, passageKey, passageKeys, sourceUrlKey, isPassageSeen, markPassagesSeen, markPassageRead, textFingerprint, sourceUrlKey, renderHome, renderHistory, contentStatus, renderFreshnessPanel, guardedStart, renderPacer, renderPacerQuiz, answerPacer, renderSpanIntro, answerSpan, finishSpan, renderRead, startReading, finishReading, renderQuiz, finishQuiz, renderReread, startReread, finishReread, renderResult, textStats, adjustSpeed, makeDeepCloze, answerDeepCloze, normalizeNumerals, parseKanjiNum, startAnchor, renderAnchorRead, startAnchorRead, finishAnchorRead, renderAnchorQuiz, answerAnchor, anchorDue, todayMenu, goalProgress, gazeSpan, sessionKeyTerms, passageTakeaway, finishVocab, proceedAfterCloze1, weakestSkill, feedbackGenreScore, preferByFeedback, recordContentFeedback, recordContentFeedbackById, recordQuestionFeedback, recordQuestionFeedbackById, renderContentFeedback, contentFeedbackFor, contentFeedbackKey, findPassageById, defaultState, newSessionId, stampField, saveState, mergeStates, syncableState, unionBy, PHASES, render, pickSessionPassages, sessionQuestions, mergeContentFeedback, recordContentNote, recordContentNoteById, renderRestoreCard, restoreFromCloud, PASSWORD_RE, uiSendMagicLink, uiSetPassword, uiPasteAuthLink, authParamsFrom, applyAuthTokens, histKey, syncCfg, syncEnabled, signedIn, loadAuth, saveAuth, syncNow, pullRemote, pushRemote, scheduleSync, flushSyncQueue, syncStatusText, renderSyncCard, renderSyncLine, syncSignOut, KEY, AUTH_KEY, UI_KEY };");
 
 (async () => {
   await new Promise(r => _st(r, 80)); // init完了待ち
@@ -570,7 +570,7 @@ eval(js + "\nglobal.__app = { get state(){return state}, set state(v){state=v}, 
   check("B7 フル版はキャッチから始まる", screenEl().includes("瞬間キャッチ") && !screenEl().includes("チャンクペーサー"));
   check("B8 フル版に必要な未読は2本（ペーサー用の3本目が不要）", A.pickSessionPassages("full", []) !== null);
   A.renderSpanIntro();
-  check("B9 瞬間キャッチ導入画面", screenEl().includes("瞬間キャッチ") && screenEl().includes("視幅"));
+  check("B9 瞬間キャッチ導入画面（難度と、形ではなく意味を問う旨）", screenEl().includes("瞬間キャッチ") && screenEl().includes("難度 Lv.") && screenEl().includes("形ではなく意味"));
   const trial = A.spanTrialSet(A.state.spanLevel);
   const optsDistinct = trial && new Set(trial.opts).size === trial.opts.length;
   check("B10 瞬間キャッチ出題 (4-6択・正解整合・重複なし)",
@@ -605,30 +605,36 @@ eval(js + "\nglobal.__app = { get state(){return state}, set state(v){state=v}, 
     const t = A.spanTrialSet(lv);
     if (t && !t.opts.every(o => [...o].length === [...t.target].length)) lenOK = false;
   }
-  // ---------- 4.1: キャッチは「形の識別」の反復をやめた ----------
-  // 同じ問いを8回続けると、訓練は語形の弁別だけになる。1回ごとに問い方を変え、
-  // 見えたものを文脈か意味へ結び直させる。
-  check("B10e キャッチは意味を問う（文脈・意味の2種類を混ぜる）",
-    A.CATCH_TRIALS === 5 && new Set(A.CATCH_KINDS).size === 2 && A.CATCH_KINDS.includes("context") && A.CATCH_KINDS.includes("meaning"),
-    `${A.CATCH_TRIALS}回 / ${[...new Set(A.CATCH_KINDS)].join(",")}`);
+  // ---------- 4.5: キャッチは「見えた語の意味」だけ ----------
+  // 問いが2種類あると、画面の読み方を切り替える手間が入って訓練の密度が落ちる。
+  // 一瞬で受け取って意味に変える、の1点に絞った。
+  check("B10e キャッチは全5回とも意味を問う", A.CATCH_TRIALS === 5, `${A.CATCH_TRIALS}回`);
   {
-    const ct = A.catchClosingTrial(5, []);
-    const okCtx = ct && ct.kind === "context" && ct.opts.length === 4 && ct.opts[ct.ans] &&
-      new Set(ct.opts).size === 4 && /どの書き出し/.test(ct.prompt || "");
-    check("B10f 文脈の試行は、見えた結びから書き出しを選ばせる", !!okCtx,
-      ct ? `${ct.target} → ${ct.opts[ct.ans].slice(0, 16)}` : "出題できない");
-    // 正解の文だけが、そのまとまりを含んでいること（他の文にもあると答えが割れる）
-    if (ct) {
-      // 的が選択肢に写っていたら、読まずに文字列照合で解けてしまう（2026-10-14に発覚）
-      const leak = ct.opts.filter(o => o.replace(/…$/, "").includes(ct.target)).length;
-      check("B10g 的の文字列が選択肢に現れない（照合では解けない）", leak === 0, `漏れ ${leak}件 / 的=${ct.target}`);
+    const used = [];
+    const trials = [];
+    for (let i = 0; i < A.CATCH_TRIALS; i++) {
+      const t = A.catchMeaningTrial(used, 4);
+      if (!t) break;
+      used.push(t.key); trials.push(t);
     }
-    const mt = A.catchMeaningTrial([]);
-    const lens = mt ? mt.opts.map(o => [...o].length) : [];
-    const longest = lens.length ? Math.max(...lens) : 0;
-    const soleLongest = mt && lens.filter(l => l === longest).length === 1 && lens[mt.ans] === longest;
-    check("B10h 意味の試行は説明文4つを並べ、単独最長＝正解にしない",
-      !!mt && mt.opts.length === 4 && !soleLongest, mt ? `字数 ${lens.join("/")} ans=${mt.ans}` : "出題できない");
+    check("B10f 5回ぶん出題でき、すべて意味の問い", trials.length === A.CATCH_TRIALS && trials.every(t => t.kind === "meaning"),
+      `${trials.length}回 / ${[...new Set(trials.map(t => t.kind))].join(",")}`);
+    check("B10g 同じ語を2度出さない", new Set(trials.map(t => t.key)).size === trials.length,
+      trials.map(t => t.target).join(","));
+    // 的は語、選択肢は説明文。的の文字列が選択肢に写ると、読まずに照合で解ける
+    const leak = trials.filter(t => t.opts.some(o => o.includes(t.target))).length;
+    check("B10g2 的の語が選択肢に現れない（照合では解けない）", leak === 0, `漏れ ${leak}件`);
+    const soleLongest = trials.filter(t => {
+      const L = t.opts.map(o => [...o].length), mx = Math.max(...L);
+      return L.filter(x => x === mx).length === 1 && L[t.ans] === mx;
+    }).length;
+    check("B10h 単独最長＝正解の出題を作らない", soleLongest === 0, `${soleLongest}件`);
+    // 難度は字数ではなく、呈示時間と選択肢の数で上げ下げする
+    check("B10i レベルが上がると呈示が短くなる", A.catchExposure(3) > A.catchExposure(6) && A.catchExposure(6) > A.catchExposure(9),
+      `Lv3=${A.catchExposure(3)}ms Lv6=${A.catchExposure(6)}ms Lv9=${A.catchExposure(9)}ms`);
+    const n4 = (A.catchMeaningTrial([], 4) || {}).opts || [];
+    const n8 = (A.catchMeaningTrial([], 8) || {}).opts || [];
+    check("B10j レベルが上がると選択肢が増える", n8.length > n4.length, `Lv4=${n4.length}択 Lv8=${n8.length}択`);
   }
   check("B10d 選択肢の字数は的と同じ（マスク長からの消去法を封じる）", lenOK);
   A.sess.spanTrial = trial; A.answerSpan(0, 0, trial.ans);

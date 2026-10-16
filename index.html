@@ -1993,8 +1993,13 @@ function spanTrialSet(level) {
 //   context … 見えたまとまりが、どの文の一部だったか。文脈へ結び直す
 //   meaning … 見えた語の意味はどれか。語彙の深さは読解分散の約6割を説明する（Qian 2002）
 // 今日読む2本は素材から外す。先に中身を見せると、理解度の測定が甘くなる。
+// 4.5: 全5回を「一瞬見えた語が何を意味するか」だけにした。
+// 問いが2種類あると画面の読み方を切り替える手間が入り、訓練の密度が落ちる。
+// 一瞬で受け取って意味に変える、の1点に絞る。
 const CATCH_TRIALS = 5;
-const CATCH_KINDS = ["context", "meaning", "context", "meaning", "context"];
+// 難度は字数ではなく、呈示時間と選択肢の数で上げ下げする。
+// 語の長さは教材まかせで揃わないので、字数を難度の軸にできない。
+function catchExposure(level) { return Math.max(110, 230 - (Math.min(9, Math.max(3, level)) - 3) * 18); }
 const SENT_HEAD = 26;   // 選択肢に出す文の冒頭字数
 function shuffled(a) { const x = [...a]; for (let i = x.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [x[i], x[j]] = [x[j], x[i]]; } return x; }
 function sessionPassageIds() { return [sess && sess.p1, sess && sess.p2].filter(Boolean).map(p => p.id); }
@@ -2044,8 +2049,9 @@ function catchClosingTrial(level, used) {
 }
 // 見えた語の意味。誤答は他の語の説明を使う。長さの揃った説明文が4つ並ぶので、
 // 長い選択肢を選べば当たる、という抜け道が生まれない。
-function catchMeaningTrial(used) {
+function catchMeaningTrial(used, level) {
   const skip = new Set(used || []);
+  level = Math.min(9, Math.max(3, level || 4));
   const collect = (ps) => {
     const out = [];
     for (const p of ps) for (const t of (p.keyTerms || [])) if (t && t.term && t.plain) out.push(t);
@@ -2058,28 +2064,29 @@ function catchMeaningTrial(used) {
   if (uniq.length < 4) return null;
   // 説明文の長さが揃っていないと、いちばん長い選択肢を選ぶだけで当たる。
   // 正解より長い誤答を必ず1つ混ぜ、残りは長さの近いものから取る。
+  // 誤答の数はレベルで増える（4→5→6択）。在庫が足りなければ少ないまま出す。
+  const need = Math.max(3, Math.min(spanOptCount(level), uniq.length) - 1);
   for (const t of shuffled(uniq)) {
     if (skip.has(t.term)) continue;
     const L = [...t.plain].length;
     const rest = uniq.filter(x => x.term !== t.term && x.plain !== t.plain);
     const near = [...rest].sort((a, b) => Math.abs([...a.plain].length - L) - Math.abs([...b.plain].length - L));
     const longer = near.find(x => [...x.plain].length >= L);
-    if (!longer || near.length < 3) continue;
+    if (!longer || near.length < need) continue;
     const chosen = [longer];
-    for (const x of near) { if (chosen.length >= 3) break; if (!chosen.includes(x)) chosen.push(x); }
-    if (chosen.length < 3) continue;
+    for (const x of near) { if (chosen.length >= need) break; if (!chosen.includes(x)) chosen.push(x); }
+    if (chosen.length < need) continue;
     const opts = shuffled([t.plain, ...chosen.map(x => x.plain)]);
     return { kind: "meaning", target: t.term, opts, ans: opts.indexOf(t.plain), key: t.term,
-             level: [...t.term].length, prompt: "いま見えた語の意味はどれ？" };
+             level, termLen: [...t.term].length, prompt: "いま見えた語の意味はどれ？" };
   }
   return null;
 }
 // 同じ的を1セッションで2度出さない。12回まわして同じ語が3回出ていた。
-function catchTrial(level, kind) {
+// 作れないときは null を返して出題を終える。別の形の問いで埋めない。
+function catchTrial(level) {
   const used = (sess && sess.usedCatch) || [];
-  const t = kind === "meaning" ? (catchMeaningTrial(used) || catchClosingTrial(level, used))
-                               : (catchClosingTrial(level, used) || catchMeaningTrial(used));
-  const picked = t || spanTrialSet(level);
+  const picked = catchMeaningTrial(used, level);
   if (picked && sess) (sess.usedCatch = sess.usedCatch || []).push(picked.key || picked.target);
   return picked;
 }
@@ -2087,22 +2094,22 @@ function renderSpanIntro() {
   screen().innerHTML = `
     ${phaseDots(phaseIdx("キャッチ"))}
     <div class="card">
-      <div class="card-title">瞬間キャッチ <span class="tag">現在の視幅 ${state.spanLevel}字</span></div>
-      <div class="card-subtitle up">Flash catch</div><p class="small" style="margin:-6px 0 14px">${SPAN_EXPOSURE}ms呈示 → マスク → 意味を選ぶ</p>
-      <p class="small" style="margin-bottom:12px">中央の<span style="color:var(--acc)">●</span>を凝視。まとまりが一瞬光り、すぐマスクで隠れます。答えるのは<b>見えたものの形ではなく、意味</b>です。どの文の一部だったか、あるいはその語が何を指すかを選びます（全${(sess && sess.spanN) || CATCH_TRIALS}回）。</p>
+      <div class="card-title">瞬間キャッチ <span class="tag">難度 Lv.${state.spanLevel}</span></div>
+      <div class="card-subtitle up">Flash catch</div><p class="small" style="margin:-6px 0 14px">${catchExposure(state.spanLevel)}ms呈示 → マスク → 意味を選ぶ</p>
+      <p class="small" style="margin-bottom:12px">中央の<span style="color:var(--acc)">●</span>を凝視。語が一瞬光り、すぐマスクで隠れます。答えるのは<b>形ではなく意味</b>です。いま見えた語が何を指すかを選びます。正解が続くと呈示が短くなり、選択肢が増えます（全${(sess && sess.spanN) || CATCH_TRIALS}回）。</p>
       <button class="btn" onclick="runSpanTrial(0,0)">スタート</button>
     </div>`;
 }
 function runSpanTrial(idx, score) {
   const NT = (sess && sess.spanN) || CATCH_TRIALS;
   if (idx >= NT) { finishSpan(score); return; }
-  const trial = catchTrial(state.spanLevel, CATCH_KINDS[idx % CATCH_KINDS.length]);
+  const trial = catchTrial(state.spanLevel);
   if (!trial) { finishSpan(score); return; }
   sess.spanTrial = trial;
   screen().innerHTML = `
     ${phaseDots(phaseIdx("キャッチ"))}
     <div class="card">
-      <div class="card-title">瞬間キャッチ ${idx + 1}/${(sess && sess.spanN) || CATCH_TRIALS} <span class="tag">${trial.level}字</span><span class="tag sci" style="margin-left:4px">${trial.kind === "meaning" ? "意味" : "文脈"}</span></div>
+      <div class="card-title">瞬間キャッチ ${idx + 1}/${(sess && sess.spanN) || CATCH_TRIALS} <span class="tag sci">Lv.${trial.level} · ${catchExposure(trial.level)}ms</span></div>
       <div style="height:130px;display:flex;align-items:center;justify-content:center">
         <div id="span-stage" style="font-size:30px;font-weight:800;letter-spacing:.04em"><span style="color:var(--coral)">●</span></div>
       </div>
@@ -2123,7 +2130,7 @@ function runSpanTrial(idx, score) {
         if (box) box.innerHTML = `<p class="muted" style="margin-bottom:8px">${esc(trial.prompt || "いま見えた語はどれ？")}</p>` +
           trial.opts.map((o, i) => `<button class="opt" id="so${i}" onclick="answerSpan(${idx},${score},${i})">${esc(o)}</button>`).join("");
       }, SPAN_MASK);                                       // ③ 選択肢呈示
-    }, SPAN_EXPOSURE);
+    }, catchExposure(trial.level));
   }, 700);
 }
 function answerSpan(idx, score, i) {
@@ -2136,20 +2143,18 @@ function answerSpan(idx, score, i) {
     if (j === trial.ans) el.classList.add("correct");
     else if (j === i) el.classList.add("wrong");
   });
-  const movesLevel = trial.kind !== "meaning";   // 一目量の指標は「文脈」試行だけで動かす
   if (correct) {
-    if (!movesLevel) { saveState(); setTimeout(() => runSpanTrial(idx + 1, score + 1), 700); return; }
     state.spanStreak = (state.spanStreak || 0) + 1;
     if (state.spanStreak >= 3 && state.spanLevel < 9) {
       const old = state.spanLevel;
       state.spanLevel += 1; state.spanStreak = 0; stampField("spanLevel");
-      state.wins.push({ date: today(), ico: "eye", text: `瞬間キャッチの視幅が拡大: ${old}字 → ${state.spanLevel}字（選択肢 ${spanOptCount(old)}→${spanOptCount(state.spanLevel)}択）` });
+      state.wins.push({ date: today(), ico: "eye", text: `瞬間キャッチの難度が上昇: Lv.${old} → Lv.${state.spanLevel}（呈示 ${catchExposure(old)}→${catchExposure(state.spanLevel)}ms・選択肢 ${spanOptCount(old)}→${spanOptCount(state.spanLevel)}択）` });
     } else if (state.spanStreak >= 3) {
       state.spanStreak = 0; // 上限9字では維持
     }
   } else {
     state.spanStreak = 0;
-    if (movesLevel && state.spanLevel > 3) { state.spanLevel -= 1; stampField("spanLevel"); }
+    if (state.spanLevel > 3) { state.spanLevel -= 1; stampField("spanLevel"); }
   }
   saveState();
   setTimeout(() => runSpanTrial(idx + 1, score + (correct ? 1 : 0)), 700);
