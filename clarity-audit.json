@@ -1,18 +1,89 @@
 {
-  "date": "2026-10-15",
+  "date": "2026-10-17",
   "status": "pass",
-  "checked_at": "2026-10-14T18:50:00+0900",
+  "checked_at": "2026-10-16T18:05:51+0900",
   "auditor": "Codex（本文だけを根拠に対象日6問を自力解答）",
   "avgScore": 5,
   "total": 6,
   "rewritten": 0,
   "items": [
-    {"passage": "20261015_wip_china_growth_machines", "q": 1, "type": "Take-away", "stem": "Take-away: 中国の成長を支えた地方政府の役割は何か", "ans": 1, "readable": 5, "unique": 5, "concrete": 5, "score": 5, "note": "地方政府が投資や制度で競うという本文の中心を、他の選択肢と混同せず選べる。"},
-    {"passage": "20261015_wip_china_growth_machines", "q": 2, "type": "Strong evidence", "stem": "Strong evidence: 合肥市の投資が示すことは何か", "ans": 0, "readable": 5, "unique": 5, "concrete": 5, "score": 5, "note": "2008年のBOEへの5億ドル投資が、地域産業の入口になった事実を一意に確認できる。"},
-    {"passage": "20261015_wip_china_growth_machines", "q": 3, "type": "Scenario", "stem": "Scenario: 地域の成長を促す制度設計はどれか", "ans": 1, "readable": 5, "unique": 5, "concrete": 5, "score": 5, "note": "中央が分野を示し、地方が投資や規制で競う本文の仕組みを具体的に応用できる。"},
-    {"passage": "20261015_canary_small_town_coalition", "q": 1, "type": "Take-away", "stem": "Take-away: エンフィールドが作ろうとしたものは何か", "ans": 0, "readable": 5, "unique": 5, "concrete": 5, "score": 5, "note": "小さな町の町長を結ぶ連合という本文の事実を、他の制度案と区別して選べる。"},
-    {"passage": "20261015_canary_small_town_coalition", "q": 2, "type": "Strong evidence", "stem": "Strong evidence: 小さな町が連合を必要とする理由は何か", "ans": 1, "readable": 5, "unique": 5, "concrete": 5, "score": 5, "note": "専門家や資金へ単独では届きにくいという本文の理由が、他の選択肢と明確に分かれる。"},
-    {"passage": "20261015_canary_small_town_coalition", "q": 3, "type": "Scenario", "stem": "Scenario: 小さな自治体の声を大きくする方法はどれか", "ans": 2, "readable": 5, "unique": 5, "concrete": 5, "score": 5, "note": "人口3万人未満の町が連合を作るという本文の考えを、具体的な設計として選べる。"}
+    {
+      "passage": "20261017_wip_porcelain_materials",
+      "q": 1,
+      "type": "Take-away",
+      "stem": "Take-away: デクトンの正体は何だったか",
+      "ans": 1,
+      "readable": 5,
+      "unique": 5,
+      "concrete": 5,
+      "score": 5,
+      "note": "デクトンは高耐熱素材であり、本文はその正体を磁器と明示している。"
+    },
+    {
+      "passage": "20261017_wip_porcelain_materials",
+      "q": 2,
+      "type": "Strong evidence",
+      "stem": "Strong evidence: 磁器が現代の素材につながる理由は何か",
+      "ans": 0,
+      "readable": 5,
+      "unique": 5,
+      "concrete": 5,
+      "score": 5,
+      "note": "約1,200度で結晶が組み替わるという本文の説明だけが、丈夫な性質の根拠になる。"
+    },
+    {
+      "passage": "20261017_wip_porcelain_materials",
+      "q": 3,
+      "type": "Scenario",
+      "stem": "Scenario: 素材の進化を捉える見方はどれか",
+      "ans": 2,
+      "readable": 5,
+      "unique": 5,
+      "concrete": 5,
+      "score": 5,
+      "note": "AIだけでなく壁や床へ入る素材も見るという本文の含意を、一意に適用できる。"
+    },
+    {
+      "passage": "20261017_commoncog_four_seasons_recession",
+      "q": 1,
+      "type": "Take-away",
+      "stem": "Take-away: フォーシーズンズが不況で行った対応は何か",
+      "ans": 0,
+      "readable": 5,
+      "unique": 5,
+      "concrete": 5,
+      "score": 5,
+      "note": "資産を売り、借金を減らして財務を軽くしたという本文の中心を選べる。"
+    },
+    {
+      "passage": "20261017_commoncog_four_seasons_recession",
+      "q": 2,
+      "type": "Strong evidence",
+      "stem": "Strong evidence: 資産売却後も守ったものは何か",
+      "ans": 0,
+      "readable": 5,
+      "unique": 5,
+      "concrete": 5,
+      "score": 5,
+      "note": "資産を売って負債を減らした後も、ホテルの価格と提供内容を守った事実を確認できる。"
+    },
+    {
+      "passage": "20261017_commoncog_four_seasons_recession",
+      "q": 3,
+      "type": "Scenario",
+      "stem": "Scenario: 景気の波に備える事業設計はどれか",
+      "ans": 2,
+      "readable": 5,
+      "unique": 5,
+      "concrete": 5,
+      "score": 5,
+      "note": "危機前に所有と運営を分ける枠を決めるという本文の設計を、一意に適用できる。"
+    }
   ],
-  "rubric": {"one_read": 5, "unique_logic": 5, "concrete_options": 5, "natural_faithful_japanese": 5}
+  "rubric": {
+    "one_read": 5,
+    "unique_logic": 5,
+    "concrete_options": 5,
+    "natural_faithful_japanese": 5
+  }
 }

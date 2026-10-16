@@ -1,9 +1,9 @@
 {
- "date": "2026-10-15",
+ "date": "2026-10-17",
  "status": "pass",
- "checked_at": "2026-10-14T11:38:52.300Z",
- "passed": 277,
- "total": 277,
+ "checked_at": "2026-10-16T09:07:35.645Z",
+ "passed": 280,
+ "total": 280,
  "failures": [],
- "notes": "4.4 + 10-15分の公開"
+ "notes": "daily: 2026-10-17"
 }
