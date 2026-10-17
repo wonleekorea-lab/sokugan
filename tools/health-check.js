@@ -19,6 +19,10 @@ const fs = require("fs");
 const path = require("path");
 const ROOT = path.resolve(__dirname, "..");
 const JSON_OUT = process.argv.includes("--json");
+// --strict は「明日の朝7時に出る分まで仕込めているか」を見る。生成の直後に使う。
+// 朝に走らせる見張りで明日の分を要求すると、生成前なので毎朝かならず落ちる。
+// 誤報が続くと本物の警報が読まれなくなるので、既定では今日の分だけを見る。
+const STRICT = process.argv.includes("--strict");
 const PAGES = "https://wonleekorea-lab.github.io/sokugan/daily-content.json";
 
 function todayJst() {
@@ -126,9 +130,11 @@ async function remoteState() {
       .format(new Date(Date.parse(today + "T12:00:00+09:00") + 86400000));
     const nextIssues = (daily.passages || []).filter(p => p.addedOn === tomorrow).length;
     const nextReviews = (state.personalLibrary || []).filter(p => (p.availableOn || "") === tomorrow).length;
-    if (nextIssues < 2) issues.push(`明日(${tomorrow})の論点が仕込まれていない（${nextIssues}本）`);
-    if (nextReviews < 1) issues.push(`明日(${tomorrow})の復習が仕込まれていない（${nextReviews}本）`);
     if (nextIssues >= 2 && nextReviews >= 1) notes.push(`明日7時に出る分 論点${nextIssues}・復習${nextReviews}`);
+    else if (STRICT) {
+      if (nextIssues < 2) issues.push(`明日(${tomorrow})の論点が仕込まれていない（${nextIssues}本）`);
+      if (nextReviews < 1) issues.push(`明日(${tomorrow})の復習が仕込まれていない（${nextReviews}本）`);
+    } else notes.push(`明日(${tomorrow})の分はまだ（今夜の生成で入る）`);
   }
 
   const out = { date: today, ok: issues.length === 0, issues, notes };

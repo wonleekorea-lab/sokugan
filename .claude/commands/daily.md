@@ -285,7 +285,7 @@ git add -A && git commit -m "daily: $(TZ=Asia/Tokyo date +%F)" && git push origi
 
 ```bash
 set -a; . .sokugan-private.env; set +a
-node tools/health-check.js
+node tools/health-check.js --strict
 ```
 
 **終了コードが0でなければ完了ではない。** 一覧が5枠を埋めているか、復習が並んでいるか、
