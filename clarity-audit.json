@@ -1,89 +1,18 @@
 {
-  "date": "2026-10-18",
+  "date": "2026-10-19",
   "status": "pass",
-  "checked_at": "2026-10-18T15:09:21+0900",
+  "checked_at": "2026-10-18T18:34:32+0900",
   "auditor": "Codex（本文だけを根拠に対象日6問を自力解答）",
   "avgScore": 5,
   "total": 6,
   "rewritten": 0,
   "items": [
-    {
-      "passage": "20261018_nber_urban_immigration_growth",
-      "q": 1,
-      "type": "Take-away",
-      "stem": "Take-away: 移民が米国の成長を押し上げた経路はどれか",
-      "ans": 0,
-      "readable": 5,
-      "unique": 5,
-      "concrete": 5,
-      "score": 5,
-      "note": "移民が発明の多い都市へ集まり、知識を増やしたという本文の中心を一意に選べる。"
-    },
-    {
-      "passage": "20261018_nber_urban_immigration_growth",
-      "q": 2,
-      "type": "Strong evidence",
-      "stem": "Strong evidence: 1940年の1人当たり所得はどうなったか",
-      "ans": 2,
-      "readable": 5,
-      "unique": 5,
-      "concrete": 5,
-      "score": 5,
-      "note": "移民がいなければ8.2%低くなったという本文の具体的な数字を、そのまま根拠として確認できる。"
-    },
-    {
-      "passage": "20261018_nber_urban_immigration_growth",
-      "q": 3,
-      "type": "Scenario",
-      "stem": "Scenario: 人の移動を考える時に見るべき点はどれか",
-      "ans": 1,
-      "readable": 5,
-      "unique": 5,
-      "concrete": 5,
-      "score": 5,
-      "note": "人数だけでなく、知識と技能がどこへ集まるかを見るという含意を一意に適用できる。"
-    },
-    {
-      "passage": "20261018_diff_nonzero_interest_rates",
-      "q": 1,
-      "type": "Take-away",
-      "stem": "Take-away: The Diffが金利を何の値段と説明したか",
-      "ans": 1,
-      "readable": 5,
-      "unique": 5,
-      "concrete": 5,
-      "score": 5,
-      "note": "金利を資本だけでなく、将来の成果を待つ時間の値段と読む本文の中心を選べる。"
-    },
-    {
-      "passage": "20261018_diff_nonzero_interest_rates",
-      "q": 2,
-      "type": "Strong evidence",
-      "stem": "Strong evidence: AI関連の借入が占めた割合はどれか",
-      "ans": 0,
-      "readable": 5,
-      "unique": 5,
-      "concrete": 5,
-      "score": 5,
-      "note": "新規債務発行の40%と借入全体の約6%という、本文の2つの数字を正確に照合できる。"
-    },
-    {
-      "passage": "20261018_diff_nonzero_interest_rates",
-      "q": 3,
-      "type": "Scenario",
-      "stem": "Scenario: 金利が高い時に資本が移りやすい先はどれか",
-      "ans": 3,
-      "readable": 5,
-      "unique": 5,
-      "concrete": 5,
-      "score": 5,
-      "note": "長期研究より、数カ月で回収できる展開や効率化を選ぶという本文の構造を一意に適用できる。"
-    }
+    { "passage": "20261019_owid_ai_energy_concentration", "q": 1, "type": "Take-away", "stem": "Take-away: データセンターの電力問題を捉える時に重要な点はどれか", "ans": 1, "readable": 5, "unique": 5, "concrete": 5, "score": 5, "note": "世界全体の割合ではなく、電力需要が地域へ集中する点を本文から一意に選べる。" },
+    { "passage": "20261019_owid_ai_energy_concentration", "q": 2, "type": "Strong evidence", "stem": "Strong evidence: 2025年のデータセンター電力使用量はどれか", "ans": 0, "readable": 5, "unique": 5, "concrete": 5, "score": 5, "note": "485TWhと世界の電力の約1.5%という具体的な数字を本文で確認できる。" },
+    { "passage": "20261019_owid_ai_energy_concentration", "q": 3, "type": "Scenario", "stem": "Scenario: AIの電力負荷を考える時に並べて見るものはどれか", "ans": 1, "readable": 5, "unique": 5, "concrete": 5, "score": 5, "note": "総量だけでなく、需要が集まる場所と処理効率を合わせて見る含意を一意に適用できる。" },
+    { "passage": "20261019_commoncog_sensemaking_expertise", "q": 1, "type": "Take-away", "stem": "Take-away: 専門家が状況を見た時に作るものとして本文に含まれるのはどれか", "ans": 0, "readable": 5, "unique": 5, "concrete": 5, "score": 5, "note": "手がかり、予想、目的、行動の筋道という本文の4要素を一意に選べる。" },
+    { "passage": "20261019_commoncog_sensemaking_expertise", "q": 2, "type": "Strong evidence", "stem": "Strong evidence: センスメイキングが必要になるのはどんな時か", "ans": 0, "readable": 5, "unique": 5, "concrete": 5, "score": 5, "note": "予想と現実がずれた時に見立てを作り直すという本文の条件を確認できる。" },
+    { "passage": "20261019_commoncog_sensemaking_expertise", "q": 3, "type": "Scenario", "stem": "Scenario: 経営判断の学習に近い方法はどれか", "ans": 1, "readable": 5, "unique": 5, "concrete": 5, "score": 5, "note": "自分の反応を専門家の見立てと比べる方法を、本文の学習手順へ一意に適用できる。" }
   ],
-  "rubric": {
-    "one_read": 5,
-    "unique_logic": 5,
-    "concrete_options": 5,
-    "natural_faithful_japanese": 5
-  }
+  "rubric": { "one_read": 5, "unique_logic": 5, "concrete_options": 5, "natural_faithful_japanese": 5 }
 }
