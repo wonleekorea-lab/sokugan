@@ -1,83 +1,83 @@
 {
-  "date": "2026-10-17",
+  "date": "2026-10-18",
   "status": "pass",
-  "checked_at": "2026-10-16T18:05:51+0900",
+  "checked_at": "2026-10-18T15:09:21+0900",
   "auditor": "Codex（本文だけを根拠に対象日6問を自力解答）",
   "avgScore": 5,
   "total": 6,
   "rewritten": 0,
   "items": [
     {
-      "passage": "20261017_wip_porcelain_materials",
+      "passage": "20261018_nber_urban_immigration_growth",
       "q": 1,
       "type": "Take-away",
-      "stem": "Take-away: デクトンの正体は何だったか",
+      "stem": "Take-away: 移民が米国の成長を押し上げた経路はどれか",
+      "ans": 0,
+      "readable": 5,
+      "unique": 5,
+      "concrete": 5,
+      "score": 5,
+      "note": "移民が発明の多い都市へ集まり、知識を増やしたという本文の中心を一意に選べる。"
+    },
+    {
+      "passage": "20261018_nber_urban_immigration_growth",
+      "q": 2,
+      "type": "Strong evidence",
+      "stem": "Strong evidence: 1940年の1人当たり所得はどうなったか",
+      "ans": 2,
+      "readable": 5,
+      "unique": 5,
+      "concrete": 5,
+      "score": 5,
+      "note": "移民がいなければ8.2%低くなったという本文の具体的な数字を、そのまま根拠として確認できる。"
+    },
+    {
+      "passage": "20261018_nber_urban_immigration_growth",
+      "q": 3,
+      "type": "Scenario",
+      "stem": "Scenario: 人の移動を考える時に見るべき点はどれか",
       "ans": 1,
       "readable": 5,
       "unique": 5,
       "concrete": 5,
       "score": 5,
-      "note": "デクトンは高耐熱素材であり、本文はその正体を磁器と明示している。"
+      "note": "人数だけでなく、知識と技能がどこへ集まるかを見るという含意を一意に適用できる。"
     },
     {
-      "passage": "20261017_wip_porcelain_materials",
-      "q": 2,
-      "type": "Strong evidence",
-      "stem": "Strong evidence: 磁器が現代の素材につながる理由は何か",
-      "ans": 0,
-      "readable": 5,
-      "unique": 5,
-      "concrete": 5,
-      "score": 5,
-      "note": "約1,200度で結晶が組み替わるという本文の説明だけが、丈夫な性質の根拠になる。"
-    },
-    {
-      "passage": "20261017_wip_porcelain_materials",
-      "q": 3,
-      "type": "Scenario",
-      "stem": "Scenario: 素材の進化を捉える見方はどれか",
-      "ans": 2,
-      "readable": 5,
-      "unique": 5,
-      "concrete": 5,
-      "score": 5,
-      "note": "AIだけでなく壁や床へ入る素材も見るという本文の含意を、一意に適用できる。"
-    },
-    {
-      "passage": "20261017_commoncog_four_seasons_recession",
+      "passage": "20261018_diff_nonzero_interest_rates",
       "q": 1,
       "type": "Take-away",
-      "stem": "Take-away: フォーシーズンズが不況で行った対応は何か",
-      "ans": 0,
+      "stem": "Take-away: The Diffが金利を何の値段と説明したか",
+      "ans": 1,
       "readable": 5,
       "unique": 5,
       "concrete": 5,
       "score": 5,
-      "note": "資産を売り、借金を減らして財務を軽くしたという本文の中心を選べる。"
+      "note": "金利を資本だけでなく、将来の成果を待つ時間の値段と読む本文の中心を選べる。"
     },
     {
-      "passage": "20261017_commoncog_four_seasons_recession",
+      "passage": "20261018_diff_nonzero_interest_rates",
       "q": 2,
       "type": "Strong evidence",
-      "stem": "Strong evidence: 資産売却後も守ったものは何か",
+      "stem": "Strong evidence: AI関連の借入が占めた割合はどれか",
       "ans": 0,
       "readable": 5,
       "unique": 5,
       "concrete": 5,
       "score": 5,
-      "note": "資産を売って負債を減らした後も、ホテルの価格と提供内容を守った事実を確認できる。"
+      "note": "新規債務発行の40%と借入全体の約6%という、本文の2つの数字を正確に照合できる。"
     },
     {
-      "passage": "20261017_commoncog_four_seasons_recession",
+      "passage": "20261018_diff_nonzero_interest_rates",
       "q": 3,
       "type": "Scenario",
-      "stem": "Scenario: 景気の波に備える事業設計はどれか",
-      "ans": 2,
+      "stem": "Scenario: 金利が高い時に資本が移りやすい先はどれか",
+      "ans": 3,
       "readable": 5,
       "unique": 5,
       "concrete": 5,
       "score": 5,
-      "note": "危機前に所有と運営を分ける枠を決めるという本文の設計を、一意に適用できる。"
+      "note": "長期研究より、数カ月で回収できる展開や効率化を選ぶという本文の構造を一意に適用できる。"
     }
   ],
   "rubric": {
