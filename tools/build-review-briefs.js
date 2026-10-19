@@ -131,9 +131,13 @@ function parseNote(file) {
   const noteTitle = (text.match(/^#\s+(.+)$/m) || [])[1] || path.basename(file, ".md");
   const body = text.slice(text.indexOf("\n# ") + 1 || 0);
 
-  const overview = (body.match(/^##\s*まず、何の話か\s*\n([\s\S]*?)(?=\n##\s|\n$)/m) || [])[1] || "";
-  const backToQuestion = (body.match(/^##\s*[0-9.]*\s*(?:自分の問いに戻ると|付記[：:].*|明日から.*)\s*\n([\s\S]*?)(?=\n##\s|$)/m) || [])[1] || "";
-  const speakerName = (body.match(/^##\s*[0-9.]*\s*(.+?)の考え\s*$/m) || [])[1] || "";
+  // 2026-10-19 改訂後のレポートは「## 概要」（表＋段落）で始まり、要点は「## 持ち帰る洞察」に出る。
+  // 複数本のときは見出しに「A. 」が付く。旧構成（まず、何の話か／自分の問いに戻ると／Xの考え）も読めるままにする。
+  const SEC = "^##\\s*(?:[A-Z][.．｜]\\s*)?[0-9.]*\\s*";
+  const overviewRaw = (body.match(new RegExp(SEC + "(?:まず、何の話か|概要)\\s*\\n([\\s\\S]*?)(?=\\n##\\s|\\n$)", "m")) || [])[1] || "";
+  const overview = overviewRaw.split("\n").filter(l => !/^\s*\|/.test(l)).join("\n");   // 表の行は落として段落だけ残す
+  const backToQuestion = (body.match(new RegExp(SEC + "(?:自分の問いに戻ると|持ち帰る洞察|全体を通して|付記[：:].*|明日から.*)\\s*\\n([\\s\\S]*?)(?=\\n##\\s|$)", "m")) || [])[1] || "";
+  const speakerFromHeading = (body.match(/^##\s*[0-9.]*\s*(.+?)の考え\s*$/m) || [])[1] || "";
 
   // 発信者と「この人は何者か」を拾う（推測で人名を作らない）。
   // 表の向きがノートによって違うので、落とした候補の表（他に見つかったもの）より前だけを見る。
@@ -154,6 +158,8 @@ function parseNote(file) {
     ((cells[1] || "").match(/^\[([^\]]+)\]/) || [])[1] || ""
   );
   const roleFromRow = rowCell("話者[^|]*");
+  // 新構成の縦表「| 話者 | 名前。肩書 |」は、最初の句点までが名前
+  const speakerName = speakerFromHeading || (roleFromRow ? roleFromRow.split(/[。．.]/)[0].trim() : "");
   // 横並びの表なら最後のセルが「何者か」。数値だけの列は採らない。
   const lastCell = [...cells].reverse().find(c => [...c].length >= 8 && !/^[\d,.万億\s:分秒年前%*]+$/.test(c)) || "";
   const speakerRole = roleFromRow || (cells.length > 2 ? lastCell : "");
