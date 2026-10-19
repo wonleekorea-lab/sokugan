@@ -134,8 +134,9 @@ function parseNote(file) {
   // 2026-10-19 改訂後のレポートは「## 概要」（表＋段落）で始まり、要点は「## 持ち帰る洞察」に出る。
   // 複数本のときは見出しに「A. 」が付く。旧構成（まず、何の話か／自分の問いに戻ると／Xの考え）も読めるままにする。
   const SEC = "^##\\s*(?:[A-Z][.．｜]\\s*)?[0-9.]*\\s*";
-  const overviewRaw = (body.match(new RegExp(SEC + "(?:まず、何の話か|概要)\\s*\\n([\\s\\S]*?)(?=\\n##\\s|\\n$)", "m")) || [])[1] || "";
-  const overview = overviewRaw.split("\n").filter(l => !/^\s*\|/.test(l)).join("\n");   // 表の行は落として段落だけ残す
+  const overviewRaw = (body.match(new RegExp(SEC + "(?:まず、何の話か|概要)\\s*\\n([\\s\\S]*?)(?=\\n##\\s)", "m")) || [])[1] || "";
+  // 新構成は表の後に段落が来るので、節の終わり（次の##）まで取り、表の行を落として段落だけ残す
+  const overview = overviewRaw.split("\n").filter(l => !/^\s*\|/.test(l)).join("\n").replace(/\n{3,}/g, "\n\n").trim();
   const backToQuestion = (body.match(new RegExp(SEC + "(?:自分の問いに戻ると|持ち帰る洞察|全体を通して|付記[：:].*|明日から.*)\\s*\\n([\\s\\S]*?)(?=\\n##\\s|$)", "m")) || [])[1] || "";
   const speakerFromHeading = (body.match(/^##\s*[0-9.]*\s*(.+?)の考え\s*$/m) || [])[1] || "";
 
