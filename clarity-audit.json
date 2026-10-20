@@ -1,84 +1,18 @@
 {
-  "date": "2026-10-20",
+  "date": "2026-10-21",
   "status": "pass",
-  "checked_at": "2026-10-19T18:08:15+0900",
+  "checked_at": "2026-10-20T18:15:00+0900",
   "auditor": "Codex（本文だけを根拠に対象日6問を自力解答）",
   "avgScore": 5,
   "total": 6,
   "rewritten": 0,
   "items": [
-    {
-      "passage": "20261020_nber_ai_accessibility",
-      "q": 1,
-      "type": "Take-away",
-      "stem": "Take-away: 音声AIの導入で何が起きたか",
-      "ans": 0,
-      "readable": 5,
-      "unique": 5,
-      "concrete": 5,
-      "score": 5,
-      "note": "音声AIで障害のある配達員の差が縮まり、注文と利益も増えたという本文の中心を一読で選べる。"
-    },
-    {
-      "passage": "20261020_nber_ai_accessibility",
-      "q": 2,
-      "type": "Strong evidence",
-      "stem": "Strong evidence: 導入後の変化として本文にあるのはどれか",
-      "ans": 1,
-      "readable": 5,
-      "unique": 5,
-      "concrete": 5,
-      "score": 5,
-      "note": "離職21%減と注文11%増という数字を本文で確認でき、他の選択肢と混同しない。"
-    },
-    {
-      "passage": "20261020_nber_ai_accessibility",
-      "q": 3,
-      "type": "Scenario",
-      "stem": "Scenario: 支援技術の効果を見る時に近い考え方はどれか",
-      "ans": 2,
-      "readable": 5,
-      "unique": 5,
-      "concrete": 5,
-      "score": 5,
-      "note": "働きやすさと仕事の成果を同時に測るという本文の含意を、一意に適用できる。"
-    },
-    {
-      "passage": "20261020_nber_debt_service",
-      "q": 1,
-      "type": "Take-away",
-      "stem": "Take-away: 財政の調整とより強く結びついた数字はどれか",
-      "ans": 2,
-      "readable": 5,
-      "unique": 5,
-      "concrete": 5,
-      "score": 5,
-      "note": "債務比率より利払い費の割合が強く結びついたという中心結論を選べる。"
-    },
-    {
-      "passage": "20261020_nber_debt_service",
-      "q": 2,
-      "type": "Strong evidence",
-      "stem": "Strong evidence: 利払いが増えた時の政府の反応はどうだったか",
-      "ans": 0,
-      "readable": 5,
-      "unique": 5,
-      "concrete": 5,
-      "score": 5,
-      "note": "政府が数年かけて増税や支出抑制に動いたという根拠を本文から拾える。"
-    },
-    {
-      "passage": "20261020_nber_debt_service",
-      "q": 3,
-      "type": "Scenario",
-      "stem": "Scenario: 財政の重さを判断する時に見る組合せはどれか",
-      "ans": 1,
-      "readable": 5,
-      "unique": 5,
-      "concrete": 5,
-      "score": 5,
-      "note": "金利と成長率の関係、毎年の利払いを見るという本文の含意を一意に適用できる。"
-    }
+    {"passage":"20261021_owid_living_planet_index","q":1,"type":"Take-away","stem":"Take-away: 73%という数字が直接示すものは何か","ans":1,"readable":5,"unique":5,"concrete":5,"score":5,"note":"平均値が種や絶滅数を示さないことを本文から一読で区別できる。"},
+    {"passage":"20261021_owid_living_planet_index","q":2,"type":"Strong evidence","stem":"Strong evidence: 調査対象の個体群のうち減少した割合はどれか","ans":2,"readable":5,"unique":5,"concrete":5,"score":5,"note":"50%、43%、7%の内訳が本文に明示され、正答を一意に選べる。"},
+    {"passage":"20261021_owid_living_planet_index","q":3,"type":"Scenario","stem":"Scenario: この指標を保全に使う時の読み方に近いものはどれか","ans":3,"readable":5,"unique":5,"concrete":5,"score":5,"note":"平均値を保全対象の優先順位へ読み替える含意を本文から適用できる。"},
+    {"passage":"20261021_brookings_ai_evaluations","q":1,"type":"Take-away","stem":"Take-away: AI評価の点数だけでは分からないものは何か","ans":0,"readable":5,"unique":5,"concrete":5,"score":5,"note":"高い試験点と長い現場の仕事を任せられるかは別だという中心を選べる。"},
+    {"passage":"20261021_brookings_ai_evaluations","q":2,"type":"Strong evidence","stem":"Strong evidence: 4時間超の仕事での成功率はどうなったか","ans":2,"readable":5,"unique":5,"concrete":5,"score":5,"note":"10%未満という本文の具体的な根拠を一意に確認できる。"},
+    {"passage":"20261021_brookings_ai_evaluations","q":3,"type":"Scenario","stem":"Scenario: AI導入前に評価へ加えるべき視点はどれか","ans":3,"readable":5,"unique":5,"concrete":5,"score":5,"note":"固定問題の点数ではなく実際の利用場面を追うという含意を適用できる。"}
   ],
   "rubric": {
     "one_read": 5,
