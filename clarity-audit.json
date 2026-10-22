@@ -1,18 +1,84 @@
 {
-  "date": "2026-10-21",
+  "date": "2026-10-23",
   "status": "pass",
-  "checked_at": "2026-10-20T18:15:00+0900",
+  "checked_at": "2026-10-22T18:15:02+0900",
   "auditor": "Codex（本文だけを根拠に対象日6問を自力解答）",
   "avgScore": 5,
   "total": 6,
   "rewritten": 0,
   "items": [
-    {"passage":"20261021_owid_living_planet_index","q":1,"type":"Take-away","stem":"Take-away: 73%という数字が直接示すものは何か","ans":1,"readable":5,"unique":5,"concrete":5,"score":5,"note":"平均値が種や絶滅数を示さないことを本文から一読で区別できる。"},
-    {"passage":"20261021_owid_living_planet_index","q":2,"type":"Strong evidence","stem":"Strong evidence: 調査対象の個体群のうち減少した割合はどれか","ans":2,"readable":5,"unique":5,"concrete":5,"score":5,"note":"50%、43%、7%の内訳が本文に明示され、正答を一意に選べる。"},
-    {"passage":"20261021_owid_living_planet_index","q":3,"type":"Scenario","stem":"Scenario: この指標を保全に使う時の読み方に近いものはどれか","ans":3,"readable":5,"unique":5,"concrete":5,"score":5,"note":"平均値を保全対象の優先順位へ読み替える含意を本文から適用できる。"},
-    {"passage":"20261021_brookings_ai_evaluations","q":1,"type":"Take-away","stem":"Take-away: AI評価の点数だけでは分からないものは何か","ans":0,"readable":5,"unique":5,"concrete":5,"score":5,"note":"高い試験点と長い現場の仕事を任せられるかは別だという中心を選べる。"},
-    {"passage":"20261021_brookings_ai_evaluations","q":2,"type":"Strong evidence","stem":"Strong evidence: 4時間超の仕事での成功率はどうなったか","ans":2,"readable":5,"unique":5,"concrete":5,"score":5,"note":"10%未満という本文の具体的な根拠を一意に確認できる。"},
-    {"passage":"20261021_brookings_ai_evaluations","q":3,"type":"Scenario","stem":"Scenario: AI導入前に評価へ加えるべき視点はどれか","ans":3,"readable":5,"unique":5,"concrete":5,"score":5,"note":"固定問題の点数ではなく実際の利用場面を追うという含意を適用できる。"}
+    {
+      "passage": "20261023_brookings_formalization",
+      "q": 1,
+      "type": "Take-away",
+      "stem": "Take-away: 登録だけでは成果が増えなかった理由は何か",
+      "ans": 0,
+      "readable": 5,
+      "unique": 5,
+      "concrete": 5,
+      "score": 5,
+      "note": "登録後に資金や取引の道が開かなかったという本文の中心を一読で選べる。"
+    },
+    {
+      "passage": "20261023_brookings_formalization",
+      "q": 2,
+      "type": "Strong evidence",
+      "stem": "Strong evidence: マラウイで支援を組み合わせた結果はどれか",
+      "ans": 2,
+      "readable": 5,
+      "unique": 5,
+      "concrete": 5,
+      "score": 5,
+      "note": "利益約15%、売上約20%という具体的な根拠が本文にあり、他の選択肢と明確に区別できる。"
+    },
+    {
+      "passage": "20261023_brookings_formalization",
+      "q": 3,
+      "type": "Scenario",
+      "stem": "Scenario: 小さな会社が制度を選びやすい設計はどれか",
+      "ans": 1,
+      "readable": 5,
+      "unique": 5,
+      "concrete": 5,
+      "score": 5,
+      "note": "登録と資金や取引の機会を結びつけるという含意を、本文から具体的に適用できる。"
+    },
+    {
+      "passage": "20261023_volts_permitting_reform",
+      "q": 1,
+      "type": "Take-away",
+      "stem": "Take-away: 法案が見直そうとする電力網の問題は何か",
+      "ans": 2,
+      "readable": 5,
+      "unique": 5,
+      "concrete": 5,
+      "score": 5,
+      "note": "接続の順番と費用分担という本文の中心を、他の制度案と取り違えずに選べる。"
+    },
+    {
+      "passage": "20261023_volts_permitting_reform",
+      "q": 2,
+      "type": "Strong evidence",
+      "stem": "Strong evidence: 接続権の入札で使う信号は何か",
+      "ans": 1,
+      "readable": 5,
+      "unique": 5,
+      "concrete": 5,
+      "score": 5,
+      "note": "支払う意思を接続意思の信号にするという本文の説明を、そのまま一意に確認できる。"
+    },
+    {
+      "passage": "20261023_volts_permitting_reform",
+      "q": 3,
+      "type": "Scenario",
+      "stem": "Scenario: データセンターに費用を負わせる案の意味はどれか",
+      "ans": 3,
+      "readable": 5,
+      "unique": 5,
+      "concrete": 5,
+      "score": 5,
+      "note": "追加費用だけでなく網全体の費用も負担させる案を、本文の含意として適用できる。"
+    }
   ],
   "rubric": {
     "one_read": 5,
