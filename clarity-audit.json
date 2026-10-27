@@ -1,83 +1,83 @@
 {
-  "date": "2026-10-27",
+  "date": "2026-10-28",
   "status": "pass",
-  "checked_at": "2026-10-26T18:26:49+0900",
+  "checked_at": "2026-10-27T18:10:00+0900",
   "auditor": "Codex（本文だけを根拠に対象日6問を自力解答）",
   "avgScore": 5,
   "total": 6,
   "rewritten": 0,
   "items": [
     {
-      "passage": "20261027_works_against_supplements",
+      "passage": "20261028_wip_young_prudes",
       "q": 1,
       "type": "Take-away",
-      "stem": "Take-away: サウスウッドが見直した判断は何か",
-      "ans": 1,
-      "readable": 5,
-      "unique": 5,
-      "concrete": 5,
-      "score": 5,
-      "note": "特別な理由がないサプリを勧めないという結論が、研究量や相関を重視する選択肢と明確に区別できる。"
-    },
-    {
-      "passage": "20261027_works_against_supplements",
-      "q": 2,
-      "type": "Strong evidence",
-      "stem": "Strong evidence: 以前の方法に含まれた条件はどれか",
+      "stem": "Take-away: シュレッカーが若者の変化と結びつけた数字は何か",
       "ans": 0,
       "readable": 5,
       "unique": 5,
       "concrete": 5,
       "score": 5,
-      "note": "進化の物語、仕組み、健康との相関という3条件が本文にまとまり、他の健康情報と一意に区別できる。"
+      "note": "20歳の男性104人と18歳の女性100人という本文の数字を、そのまま一意に選べる。"
     },
     {
-      "passage": "20261027_works_against_supplements",
+      "passage": "20261028_wip_young_prudes",
+      "q": 2,
+      "type": "Strong evidence",
+      "stem": "Strong evidence: シュレッカーが理由として見たものは何か",
+      "ans": 1,
+      "readable": 5,
+      "unique": 5,
+      "concrete": 5,
+      "score": 5,
+      "note": "出生数の変化と男女比の移り変わりが本文の第2段落に明示され、他の選択肢と混同しない。"
+    },
+    {
+      "passage": "20261028_wip_young_prudes",
       "q": 3,
       "type": "Scenario",
-      "stem": "Scenario: 本文に沿う研究の読み方はどれか",
+      "stem": "Scenario: 本文を踏まえた読み方はどれか",
       "ans": 2,
       "readable": 5,
       "unique": 5,
       "concrete": 5,
       "score": 5,
-      "note": "論文数の多さではなく、反証や研究の質も確かめるという読み方を、本文の警告から一意に選べる。"
+      "note": "男女比を有力な材料としつつ、インドや日本の例から他の要因も残るという本文の留保を一意に読める。"
     },
     {
-      "passage": "20261027_stratechery_live_value",
+      "passage": "20261028_diff_financial_sin_eaters",
       "q": 1,
       "type": "Take-away",
-      "stem": "Take-away: AI時代にライブが持つ価値は何か",
+      "stem": "Take-away: 富豪の大損が市場で持つ役割は何か",
       "ans": 0,
       "readable": 5,
       "unique": 5,
       "concrete": 5,
       "score": 5,
-      "note": "AIが作品を増やしても、人が同じ場所で時間を共有する価値は残るという中心が一読で分かる。"
+      "note": "未知の事業を試す探索費という含意が、損失を消す選択肢と明確に分かれている。"
     },
     {
-      "passage": "20261027_stratechery_live_value",
+      "passage": "20261028_diff_financial_sin_eaters",
       "q": 2,
       "type": "Strong evidence",
-      "stem": "Strong evidence: エマニュエルの会社が運営する劇場数は何か",
+      "stem": "Strong evidence: オラクル固有のリスクが約62%にとどまる理由は何か",
+      "ans": 2,
+      "readable": 5,
+      "unique": 5,
+      "concrete": 5,
+      "score": 5,
+      "note": "ラリー・エリソンが株式を持つためという因果が本文に明示され、他の金融上の理由と区別できる。"
+    },
+    {
+      "passage": "20261028_diff_financial_sin_eaters",
+      "q": 3,
+      "type": "Scenario",
+      "stem": "Scenario: 本文に沿う制度の見方はどれか",
       "ans": 3,
       "readable": 5,
       "unique": 5,
       "concrete": 5,
       "score": 5,
-      "note": "70劇場という本文の明示数値を、30、50、60劇場の選択肢と一意に区別できる。"
-    },
-    {
-      "passage": "20261027_stratechery_live_value",
-      "q": 3,
-      "type": "Scenario",
-      "stem": "Scenario: 本文に近い事業の見方はどれか",
-      "ans": 1,
-      "readable": 5,
-      "unique": 5,
-      "concrete": 5,
-      "score": 5,
-      "note": "ライブを単発で扱わず、共有される現場を差別化の資産として束ねる含意を一意に適用できる。"
+      "note": "制度は測れる拡大に強く探索資金を作りにくいという構造を、本文にない称賛や禁止と取り違えず選べる。"
     }
   ],
   "rubric": {
