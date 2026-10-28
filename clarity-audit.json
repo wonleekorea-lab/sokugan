@@ -1,83 +1,83 @@
 {
-  "date": "2026-10-28",
+  "date": "2026-10-29",
   "status": "pass",
-  "checked_at": "2026-10-27T18:10:00+0900",
+  "checked_at": "2026-10-28T18:11:55+0900",
   "auditor": "Codex（本文だけを根拠に対象日6問を自力解答）",
   "avgScore": 5,
   "total": 6,
   "rewritten": 0,
   "items": [
     {
-      "passage": "20261028_wip_young_prudes",
+      "passage": "20261029_volts_electric_stack",
       "q": 1,
       "type": "Take-away",
-      "stem": "Take-away: シュレッカーが若者の変化と結びつけた数字は何か",
+      "stem": "Take-away: 電気の積み重ねに起きた変化は何か",
       "ans": 0,
       "readable": 5,
       "unique": 5,
       "concrete": 5,
       "score": 5,
-      "note": "20歳の男性104人と18歳の女性100人という本文の数字を、そのまま一意に選べる。"
+      "note": "4つの部品が1990年から約99%安くなったという本文の数字を、そのまま一意に選べる。"
     },
     {
-      "passage": "20261028_wip_young_prudes",
+      "passage": "20261029_volts_electric_stack",
       "q": 2,
       "type": "Strong evidence",
-      "stem": "Strong evidence: シュレッカーが理由として見たものは何か",
+      "stem": "Strong evidence: 調理器に電池を入れる理由は何か",
       "ans": 1,
       "readable": 5,
       "unique": 5,
       "concrete": 5,
       "score": 5,
-      "note": "出生数の変化と男女比の移り変わりが本文の第2段落に明示され、他の選択肢と混同しない。"
+      "note": "瞬間的な大電力を電池で受けるという因果が第2段落に明示され、他の用途と区別できる。"
     },
     {
-      "passage": "20261028_wip_young_prudes",
+      "passage": "20261029_volts_electric_stack",
       "q": 3,
       "type": "Scenario",
-      "stem": "Scenario: 本文を踏まえた読み方はどれか",
+      "stem": "Scenario: ダミコが中型機器を狙う理由に近いものはどれか",
       "ans": 2,
       "readable": 5,
       "unique": 5,
       "concrete": 5,
       "score": 5,
-      "note": "男女比を有力な材料としつつ、インドや日本の例から他の要因も残るという本文の留保を一意に読める。"
+      "note": "ネットワーク効果と既存大手との競争を避け、1台の良さから始めるという含意を一意に読める。"
     },
     {
-      "passage": "20261028_diff_financial_sin_eaters",
+      "passage": "20261029_noah_internet_breaks",
       "q": 1,
       "type": "Take-away",
-      "stem": "Take-away: 富豪の大損が市場で持つ役割は何か",
+      "stem": "Take-away: スミスが見たネットの変化は何か",
       "ans": 0,
       "readable": 5,
       "unique": 5,
       "concrete": 5,
       "score": 5,
-      "note": "未知の事業を試す探索費という含意が、損失を消す選択肢と明確に分かれている。"
+      "note": "AIが古いコードの弱点を大量に探せるようになったという本文の中心を、他の変化と混同せず選べる。"
     },
     {
-      "passage": "20261028_diff_financial_sin_eaters",
+      "passage": "20261029_noah_internet_breaks",
       "q": 2,
       "type": "Strong evidence",
-      "stem": "Strong evidence: オラクル固有のリスクが約62%にとどまる理由は何か",
+      "stem": "Strong evidence: 大学の記録を盗んだ攻撃者の特徴は何か",
+      "ans": 1,
+      "readable": 5,
+      "unique": 5,
+      "concrete": 5,
+      "score": 5,
+      "note": "AIへの質問で5200件超の記録を盗んだ例が本文にあり、数字と手段が一意に対応する。"
+    },
+    {
+      "passage": "20261029_noah_internet_breaks",
+      "q": 3,
+      "type": "Scenario",
+      "stem": "Scenario: 重要施設の備えとして本文に近いものはどれか",
       "ans": 2,
       "readable": 5,
       "unique": 5,
       "concrete": 5,
       "score": 5,
-      "note": "ラリー・エリソンが株式を持つためという因果が本文に明示され、他の金融上の理由と区別できる。"
-    },
-    {
-      "passage": "20261028_diff_financial_sin_eaters",
-      "q": 3,
-      "type": "Scenario",
-      "stem": "Scenario: 本文に沿う制度の見方はどれか",
-      "ans": 3,
-      "readable": 5,
-      "unique": 5,
-      "concrete": 5,
-      "score": 5,
-      "note": "制度は測れる拡大に強く探索資金を作りにくいという構造を、本文にない称賛や禁止と取り違えず選べる。"
+      "note": "エアギャップや専用衛星網のような別経路を持つという本文の含意を、接続継続や放置と区別できる。"
     }
   ],
   "rubric": {
