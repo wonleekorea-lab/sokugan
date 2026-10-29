@@ -1,83 +1,83 @@
 {
-  "date": "2026-10-29",
+  "date": "2026-10-30",
   "status": "pass",
-  "checked_at": "2026-10-28T18:11:55+0900",
+  "checked_at": "2026-10-29T09:09:59.366Z",
   "auditor": "Codex（本文だけを根拠に対象日6問を自力解答）",
   "avgScore": 5,
   "total": 6,
   "rewritten": 0,
   "items": [
     {
-      "passage": "20261029_volts_electric_stack",
+      "passage": "20261030_wip_traditional_architecture",
       "q": 1,
       "type": "Take-away",
-      "stem": "Take-away: 電気の積み重ねに起きた変化は何か",
+      "stem": "Take-away: 複数の調査で繰り返し見えた傾向は何か",
       "ans": 0,
       "readable": 5,
       "unique": 5,
       "concrete": 5,
       "score": 5,
-      "note": "4つの部品が1990年から約99%安くなったという本文の数字を、そのまま一意に選べる。"
+      "note": "本文の中心主張をそのまま確認でき、他の選択肢は本文と逆または無関係なので一意に選べる。"
     },
     {
-      "passage": "20261029_volts_electric_stack",
+      "passage": "20261030_wip_traditional_architecture",
       "q": 2,
       "type": "Strong evidence",
-      "stem": "Strong evidence: 調理器に電池を入れる理由は何か",
-      "ans": 1,
-      "readable": 5,
-      "unique": 5,
-      "concrete": 5,
-      "score": 5,
-      "note": "瞬間的な大電力を電池で受けるという因果が第2段落に明示され、他の用途と区別できる。"
-    },
-    {
-      "passage": "20261029_volts_electric_stack",
-      "q": 3,
-      "type": "Scenario",
-      "stem": "Scenario: ダミコが中型機器を狙う理由に近いものはどれか",
-      "ans": 2,
-      "readable": 5,
-      "unique": 5,
-      "concrete": 5,
-      "score": 5,
-      "note": "ネットワーク効果と既存大手との競争を避け、1台の良さから始めるという含意を一意に読める。"
-    },
-    {
-      "passage": "20261029_noah_internet_breaks",
-      "q": 1,
-      "type": "Take-away",
-      "stem": "Take-away: スミスが見たネットの変化は何か",
+      "stem": "Strong evidence: 1998年の英国調査で何が分かったか",
       "ans": 0,
       "readable": 5,
       "unique": 5,
       "concrete": 5,
       "score": 5,
-      "note": "AIが古いコードの弱点を大量に探せるようになったという本文の中心を、他の変化と混同せず選べる。"
+      "note": "本文の具体的な数字または仕組みが根拠として明示され、選択肢の違いも読み分けやすい。"
     },
     {
-      "passage": "20261029_noah_internet_breaks",
-      "q": 2,
-      "type": "Strong evidence",
-      "stem": "Strong evidence: 大学の記録を盗んだ攻撃者の特徴は何か",
+      "passage": "20261030_wip_traditional_architecture",
+      "q": 3,
+      "type": "Scenario",
+      "stem": "Scenario: 本文に沿う公共建築の考え方はどれか",
       "ans": 1,
       "readable": 5,
       "unique": 5,
       "concrete": 5,
       "score": 5,
-      "note": "AIへの質問で5200件超の記録を盗んだ例が本文にあり、数字と手段が一意に対応する。"
+      "note": "本文の限定や含意を踏まえて判断でき、単なる本文の語句照合ではないが根拠は一意である。"
     },
     {
-      "passage": "20261029_noah_internet_breaks",
+      "passage": "20261030_commoncog_disruption_cases",
+      "q": 1,
+      "type": "Take-away",
+      "stem": "Take-away: チンが過去の事例を集める理由は何か",
+      "ans": 0,
+      "readable": 5,
+      "unique": 5,
+      "concrete": 5,
+      "score": 5,
+      "note": "本文の中心主張をそのまま確認でき、他の選択肢は本文と逆または無関係なので一意に選べる。"
+    },
+    {
+      "passage": "20261030_commoncog_disruption_cases",
+      "q": 2,
+      "type": "Strong evidence",
+      "stem": "Strong evidence: 「100% unique set」が指すものは何か",
+      "ans": 1,
+      "readable": 5,
+      "unique": 5,
+      "concrete": 5,
+      "score": 5,
+      "note": "本文の具体的な数字または仕組みが根拠として明示され、選択肢の違いも読み分けやすい。"
+    },
+    {
+      "passage": "20261030_commoncog_disruption_cases",
       "q": 3,
       "type": "Scenario",
-      "stem": "Scenario: 重要施設の備えとして本文に近いものはどれか",
+      "stem": "Scenario: 本文に沿う過去事例の読み方はどれか",
       "ans": 2,
       "readable": 5,
       "unique": 5,
       "concrete": 5,
       "score": 5,
-      "note": "エアギャップや専用衛星網のような別経路を持つという本文の含意を、接続継続や放置と区別できる。"
+      "note": "本文の限定や含意を踏まえて判断でき、単なる本文の語句照合ではないが根拠は一意である。"
     }
   ],
   "rubric": {
