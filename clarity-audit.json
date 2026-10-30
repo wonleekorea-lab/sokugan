@@ -1,83 +1,83 @@
 {
-  "date": "2026-10-30",
+  "date": "2026-10-31",
   "status": "pass",
-  "checked_at": "2026-10-29T09:09:59.366Z",
+  "checked_at": "2026-10-30T09:13:53.000Z",
   "auditor": "Codex（本文だけを根拠に対象日6問を自力解答）",
   "avgScore": 5,
   "total": 6,
   "rewritten": 0,
   "items": [
     {
-      "passage": "20261030_wip_traditional_architecture",
+      "passage": "20261031_wip_brazil",
       "q": 1,
       "type": "Take-away",
-      "stem": "Take-away: 複数の調査で繰り返し見えた傾向は何か",
+      "stem": "Take-away: ブラジルの食文化を支えた組み合わせは何か",
       "ans": 0,
       "readable": 5,
       "unique": 5,
       "concrete": 5,
       "score": 5,
-      "note": "本文の中心主張をそのまま確認でき、他の選択肢は本文と逆または無関係なので一意に選べる。"
+      "note": "本文の農地、供給網、移民の説明をまとめた選択肢が一意に中心主張を表す。"
     },
     {
-      "passage": "20261030_wip_traditional_architecture",
+      "passage": "20261031_wip_brazil",
       "q": 2,
       "type": "Strong evidence",
-      "stem": "Strong evidence: 1998年の英国調査で何が分かったか",
-      "ans": 0,
-      "readable": 5,
-      "unique": 5,
-      "concrete": 5,
-      "score": 5,
-      "note": "本文の具体的な数字または仕組みが根拠として明示され、選択肢の違いも読み分けやすい。"
-    },
-    {
-      "passage": "20261030_wip_traditional_architecture",
-      "q": 3,
-      "type": "Scenario",
-      "stem": "Scenario: 本文に沿う公共建築の考え方はどれか",
+      "stem": "Strong evidence: サンパウロの店で何が起きたか",
       "ans": 1,
       "readable": 5,
       "unique": 5,
       "concrete": 5,
       "score": 5,
-      "note": "本文の限定や含意を踏まえて判断でき、単なる本文の語句照合ではないが根拠は一意である。"
+      "note": "8席、15品、110ドルという本文の具体情報をそのまま確認でき、他の選択肢と明確に分かれる。"
     },
     {
-      "passage": "20261030_commoncog_disruption_cases",
-      "q": 1,
-      "type": "Take-away",
-      "stem": "Take-away: チンが過去の事例を集める理由は何か",
-      "ans": 0,
-      "readable": 5,
-      "unique": 5,
-      "concrete": 5,
-      "score": 5,
-      "note": "本文の中心主張をそのまま確認でき、他の選択肢は本文と逆または無関係なので一意に選べる。"
-    },
-    {
-      "passage": "20261030_commoncog_disruption_cases",
-      "q": 2,
-      "type": "Strong evidence",
-      "stem": "Strong evidence: 「100% unique set」が指すものは何か",
-      "ans": 1,
-      "readable": 5,
-      "unique": 5,
-      "concrete": 5,
-      "score": 5,
-      "note": "本文の具体的な数字または仕組みが根拠として明示され、選択肢の違いも読み分けやすい。"
-    },
-    {
-      "passage": "20261030_commoncog_disruption_cases",
+      "passage": "20261031_wip_brazil",
       "q": 3,
       "type": "Scenario",
-      "stem": "Scenario: 本文に沿う過去事例の読み方はどれか",
+      "stem": "Scenario: 本文の見方に近いものはどれか",
       "ans": 2,
       "readable": 5,
       "unique": 5,
       "concrete": 5,
       "score": 5,
-      "note": "本文の限定や含意を踏まえて判断でき、単なる本文の語句照合ではないが根拠は一意である。"
+      "note": "食の強さを所得だけでなく農業、移民、商業の重なりで読むという含意を一意に判断できる。"
+    },
+    {
+      "passage": "20261031_diff_robots_jobs",
+      "q": 1,
+      "type": "Take-away",
+      "stem": "Take-away: ロボットが先に作る仕事とは何か",
+      "ans": 1,
+      "readable": 5,
+      "unique": 5,
+      "concrete": 5,
+      "score": 5,
+      "note": "人が避けて採算が合わなかった作業をロボットが事業に変えるという本文の中心主張を確認できる。"
+    },
+    {
+      "passage": "20261031_diff_robots_jobs",
+      "q": 2,
+      "type": "Strong evidence",
+      "stem": "Strong evidence: 太陽光パネルの掃除で生まれる余地は何か",
+      "ans": 1,
+      "readable": 5,
+      "unique": 5,
+      "concrete": 5,
+      "score": 5,
+      "note": "砂漠の作業員不足と発電収益を結びつけ、掃除ロボットの費用回収を根拠として選べる。"
+    },
+    {
+      "passage": "20261031_diff_robots_jobs",
+      "q": 3,
+      "type": "Scenario",
+      "stem": "Scenario: 本文が示すロボット普及の見方はどれか",
+      "ans": 2,
+      "readable": 5,
+      "unique": 5,
+      "concrete": 5,
+      "score": 5,
+      "note": "人が行けない場所へ経済活動が移るという本文の含意を、安い土地と危険な場所への移動として判断できる。"
     }
   ],
   "rubric": {
