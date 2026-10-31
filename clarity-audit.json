@@ -1,83 +1,83 @@
 {
-  "date": "2026-10-31",
+  "date": "2026-11-01",
   "status": "pass",
-  "checked_at": "2026-10-30T09:13:53.000Z",
+  "checked_at": "2026-10-31T09:06:42.641Z",
   "auditor": "Codex（本文だけを根拠に対象日6問を自力解答）",
   "avgScore": 5,
   "total": 6,
   "rewritten": 0,
   "items": [
     {
-      "passage": "20261031_wip_brazil",
+      "passage": "20261101_wip_roman_love",
       "q": 1,
       "type": "Take-away",
-      "stem": "Take-away: ブラジルの食文化を支えた組み合わせは何か",
+      "stem": "Take-away: ローマの性の自由で見落とされやすい点は何か",
       "ans": 0,
       "readable": 5,
       "unique": 5,
       "concrete": 5,
       "score": 5,
-      "note": "本文の農地、供給網、移民の説明をまとめた選択肢が一意に中心主張を表す。"
+      "note": "ローマの自由が自由な男性に偏り、女性や奴隷には別の規範があったという中心主張を一意に読める。"
     },
     {
-      "passage": "20261031_wip_brazil",
+      "passage": "20261101_wip_roman_love",
       "q": 2,
       "type": "Strong evidence",
-      "stem": "Strong evidence: サンパウロの店で何が起きたか",
+      "stem": "Strong evidence: 自由民の男性を相手にすると何が問題になったか",
       "ans": 1,
       "readable": 5,
       "unique": 5,
       "concrete": 5,
       "score": 5,
-      "note": "8席、15品、110ドルという本文の具体情報をそのまま確認でき、他の選択肢と明確に分かれる。"
+      "note": "自由民の男性を相手にした場合だけ男性の地位が傷つくという本文の具体的な身分差を確認できる。"
     },
     {
-      "passage": "20261031_wip_brazil",
+      "passage": "20261101_wip_roman_love",
       "q": 3,
       "type": "Scenario",
-      "stem": "Scenario: 本文の見方に近いものはどれか",
+      "stem": "Scenario: 道徳の歴史を読む視点として近いものはどれか",
       "ans": 2,
       "readable": 5,
       "unique": 5,
       "concrete": 5,
       "score": 5,
-      "note": "食の強さを所得だけでなく農業、移民、商業の重なりで読むという含意を一意に判断できる。"
+      "note": "許容と抑圧を単純に分けず、誰を守る規則が増えたかを見るという含意が明確。"
     },
     {
-      "passage": "20261031_diff_robots_jobs",
+      "passage": "20261101_asterisk_indian_it",
       "q": 1,
       "type": "Take-away",
-      "stem": "Take-away: ロボットが先に作る仕事とは何か",
-      "ans": 1,
+      "stem": "Take-away: インドITで先に変わり始めたものは何か",
+      "ans": 0,
       "readable": 5,
       "unique": 5,
       "concrete": 5,
       "score": 5,
-      "note": "人が避けて採算が合わなかった作業をロボットが事業に変えるという本文の中心主張を確認できる。"
+      "note": "AIで先に変わるのは売上ではなく、人を増やして成長する雇用モデルだと本文から判断できる。"
     },
     {
-      "passage": "20261031_diff_robots_jobs",
+      "passage": "20261101_asterisk_indian_it",
       "q": 2,
       "type": "Strong evidence",
-      "stem": "Strong evidence: 太陽光パネルの掃除で生まれる余地は何か",
-      "ans": 1,
-      "readable": 5,
-      "unique": 5,
-      "concrete": 5,
-      "score": 5,
-      "note": "砂漠の作業員不足と発電収益を結びつけ、掃除ロボットの費用回収を根拠として選べる。"
-    },
-    {
-      "passage": "20261031_diff_robots_jobs",
-      "q": 3,
-      "type": "Scenario",
-      "stem": "Scenario: 本文が示すロボット普及の見方はどれか",
+      "stem": "Strong evidence: 2025年度のインフォシス営業利益率は何%か",
       "ans": 2,
       "readable": 5,
       "unique": 5,
       "concrete": 5,
       "score": 5,
-      "note": "人が行けない場所へ経済活動が移るという本文の含意を、安い土地と危険な場所への移動として判断できる。"
+      "note": "インフォシスの2025年営業利益率21.1%という本文の数字を他の選択肢と区別できる。"
+    },
+    {
+      "passage": "20261101_asterisk_indian_it",
+      "q": 3,
+      "type": "Scenario",
+      "stem": "Scenario: AI導入後のインドITを見るとき本文に近い視点はどれか",
+      "ans": 0,
+      "readable": 5,
+      "unique": 5,
+      "concrete": 5,
+      "score": 5,
+      "note": "売上と採用を別の動きとして追うという本文の反転を、具体的な経営判断に結びつけられる。"
     }
   ],
   "rubric": {
