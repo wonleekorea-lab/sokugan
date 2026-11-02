@@ -1,83 +1,83 @@
 {
-  "date": "2026-11-01",
+  "date": "2026-11-03",
   "status": "pass",
-  "checked_at": "2026-10-31T09:06:42.641Z",
+  "checked_at": "2026-11-02T00:48:00.000Z",
   "auditor": "Codex（本文だけを根拠に対象日6問を自力解答）",
   "avgScore": 5,
   "total": 6,
   "rewritten": 0,
   "items": [
     {
-      "passage": "20261101_wip_roman_love",
+      "passage": "20261103_nber_overtime",
       "q": 1,
       "type": "Take-away",
-      "stem": "Take-away: ローマの性の自由で見落とされやすい点は何か",
+      "stem": "Take-away: 基準額の引き上げで企業が多く選んだ対応は何か",
       "ans": 0,
       "readable": 5,
       "unique": 5,
       "concrete": 5,
       "score": 5,
-      "note": "ローマの自由が自由な男性に偏り、女性や奴隷には別の規範があったという中心主張を一意に読める。"
+      "note": "企業が給与を新基準の少し上へ押し上げたという本文の中心結果を、他の対応と一意に区別できる。"
     },
     {
-      "passage": "20261101_wip_roman_love",
+      "passage": "20261103_nber_overtime",
       "q": 2,
       "type": "Strong evidence",
-      "stem": "Strong evidence: 自由民の男性を相手にすると何が問題になったか",
+      "stem": "Strong evidence: 旧基準と新基準の間の会社員はどうなったか",
+      "ans": 2,
+      "readable": 5,
+      "unique": 5,
+      "concrete": 5,
+      "score": 5,
+      "note": "旧基準と新基準の間にいた会社員が21%減ったという具体的な結果を本文から確認できる。"
+    },
+    {
+      "passage": "20261103_nber_overtime",
+      "q": 3,
+      "type": "Scenario",
+      "stem": "Scenario: 制度変更の効果を読むとき近い視点はどれか",
       "ans": 1,
       "readable": 5,
       "unique": 5,
       "concrete": 5,
       "score": 5,
-      "note": "自由民の男性を相手にした場合だけ男性の地位が傷つくという本文の具体的な身分差を確認できる。"
+      "note": "法律の狙いだけでなく、企業が境目へどう対応したかを見るという含意が明確。"
     },
     {
-      "passage": "20261101_wip_roman_love",
-      "q": 3,
-      "type": "Scenario",
-      "stem": "Scenario: 道徳の歴史を読む視点として近いものはどれか",
-      "ans": 2,
-      "readable": 5,
-      "unique": 5,
-      "concrete": 5,
-      "score": 5,
-      "note": "許容と抑圧を単純に分けず、誰を守る規則が増えたかを見るという含意が明確。"
-    },
-    {
-      "passage": "20261101_asterisk_indian_it",
+      "passage": "20261103_nber_shipping",
       "q": 1,
       "type": "Take-away",
-      "stem": "Take-away: インドITで先に変わり始めたものは何か",
+      "stem": "Take-away: 研究が物価の原因として加えた視点は何か",
       "ans": 0,
       "readable": 5,
       "unique": 5,
       "concrete": 5,
       "score": 5,
-      "note": "AIで先に変わるのは売上ではなく、人を増やして成長する雇用モデルだと本文から判断できる。"
+      "note": "需要や供給に加えて輸送の詰まりや容量を見るという中心主張を一読で選べる。"
     },
     {
-      "passage": "20261101_asterisk_indian_it",
+      "passage": "20261103_nber_shipping",
       "q": 2,
       "type": "Strong evidence",
-      "stem": "Strong evidence: 2025年度のインフォシス営業利益率は何%か",
+      "stem": "Strong evidence: 2021〜2023年に価格上昇の約13%を生んだものは何か",
+      "ans": 0,
+      "readable": 5,
+      "unique": 5,
+      "concrete": 5,
+      "score": 5,
+      "note": "港のボトルネックが価格上昇の約13%を生んだという本文の数字と因果を確認できる。"
+    },
+    {
+      "passage": "20261103_nber_shipping",
+      "q": 3,
+      "type": "Scenario",
+      "stem": "Scenario: 輸送障害の影響を比べるとき本文に近い見方はどれか",
       "ans": 2,
       "readable": 5,
       "unique": 5,
       "concrete": 5,
       "score": 5,
-      "note": "インフォシスの2025年営業利益率21.1%という本文の数字を他の選択肢と区別できる。"
-    },
-    {
-      "passage": "20261101_asterisk_indian_it",
-      "q": 3,
-      "type": "Scenario",
-      "stem": "Scenario: AI導入後のインドITを見るとき本文に近い視点はどれか",
-      "ans": 0,
-      "readable": 5,
-      "unique": 5,
-      "concrete": 5,
-      "score": 5,
-      "note": "売上と採用を別の動きとして追うという本文の反転を、具体的な経営判断に結びつけられる。"
+      "note": "輸送障害の影響を時期と輸送需要も合わせて見るという本文の比較軸が明確。"
     }
   ],
   "rubric": {
