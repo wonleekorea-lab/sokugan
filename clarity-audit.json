@@ -1,83 +1,83 @@
 {
-  "date": "2026-11-03",
+  "date": "2026-11-04",
   "status": "pass",
-  "checked_at": "2026-11-02T09:03:09.000Z",
-  "auditor": "Codex（既存日次分を本文だけで再解答、対象日6問）",
+  "checked_at": "2026-11-03T09:06:55.000Z",
+  "auditor": "Codex（新規ビッグイシュー2本を本文だけで自力解答、対象日6問）",
   "avgScore": 5,
   "total": 6,
   "rewritten": 0,
   "items": [
     {
-      "passage": "20261103_nber_overtime",
+      "passage": "20261104_brookings_structural",
       "q": 1,
       "type": "Take-away",
-      "stem": "Take-away: 基準額の引き上げで企業が多く選んだ対応は何か",
+      "stem": "Take-away: 調査が示した意外な組み合わせは何か",
       "ans": 0,
       "readable": 5,
       "unique": 5,
       "concrete": 5,
       "score": 5,
-      "note": "企業が給与を新基準の少し上へ押し上げたという本文の中心結果を、他の対応と一意に区別できる。"
+      "note": "寛容な意識と実際の交流の差を、住宅や学校の分離と区別して一読で判断できる。"
     },
     {
-      "passage": "20261103_nber_overtime",
+      "passage": "20261104_brookings_structural",
       "q": 2,
       "type": "Strong evidence",
-      "stem": "Strong evidence: 旧基準と新基準の間の会社員はどうなったか",
+      "stem": "Strong evidence: 友人を選ぶとき人種は重要でないと答えた割合は何%か",
       "ans": 2,
       "readable": 5,
       "unique": 5,
       "concrete": 5,
       "score": 5,
-      "note": "旧基準と新基準の間にいた会社員が21%減ったという具体的な結果を本文から確認できる。"
+      "note": "83%という本文の明示数字を、他の3つの数字と取り違えずに選べる。"
     },
     {
-      "passage": "20261103_nber_overtime",
+      "passage": "20261104_brookings_structural",
       "q": 3,
       "type": "Scenario",
-      "stem": "Scenario: 制度変更の効果を読むとき近い視点はどれか",
+      "stem": "Scenario: 本文に近い不平等の読み方はどれか",
       "ans": 1,
       "readable": 5,
       "unique": 5,
       "concrete": 5,
       "score": 5,
-      "note": "法律の狙いだけでなく、企業が境目へどう対応したかを見るという含意が明確。"
+      "note": "中立に見える学歴や推薦も機会の差を引き継ぐという含意を一意に確認できる。"
     },
     {
-      "passage": "20261103_nber_shipping",
+      "passage": "20261104_canary_ferry",
       "q": 1,
       "type": "Take-away",
-      "stem": "Take-away: 研究が物価の原因として加えた視点は何か",
+      "stem": "Take-away: 電動フェリーがディーゼルで走る理由は何か",
       "ans": 0,
       "readable": 5,
       "unique": 5,
       "concrete": 5,
       "score": 5,
-      "note": "需要や供給に加えて輸送の詰まりや容量を見るという中心主張を一読で選べる。"
+      "note": "船の性能ではなく充電設備の未完成が理由だと、本文の事実から一読で分かる。"
     },
     {
-      "passage": "20261103_nber_shipping",
+      "passage": "20261104_canary_ferry",
       "q": 2,
       "type": "Strong evidence",
-      "stem": "Strong evidence: 2021〜2023年に価格上昇の約13%を生んだものは何か",
-      "ans": 0,
-      "readable": 5,
-      "unique": 5,
-      "concrete": 5,
-      "score": 5,
-      "note": "港のボトルネックが価格上昇の約13%を生んだという本文の数字と因果を確認できる。"
-    },
-    {
-      "passage": "20261103_nber_shipping",
-      "q": 3,
-      "type": "Scenario",
-      "stem": "Scenario: 輸送障害の影響を比べるとき本文に近い見方はどれか",
+      "stem": "Strong evidence: 米国で蓄電池を併設した大規模太陽光の容量は何%だったか",
       "ans": 2,
       "readable": 5,
       "unique": 5,
       "concrete": 5,
       "score": 5,
-      "note": "輸送障害の影響を時期と輸送需要も合わせて見るという本文の比較軸が明確。"
+      "note": "2017年の2%と区別し、今年の16%という本文の具体数字を選べる。"
+    },
+    {
+      "passage": "20261104_canary_ferry",
+      "q": 3,
+      "type": "Scenario",
+      "stem": "Scenario: 新技術の導入を評価するとき本文に近い視点はどれか",
+      "ans": 1,
+      "readable": 5,
+      "unique": 5,
+      "concrete": 5,
+      "score": 5,
+      "note": "装置単体ではなく、送電や充電を含む周辺設備が使える状態まで揃うかを見る設問になっている。"
     }
   ],
   "rubric": {
