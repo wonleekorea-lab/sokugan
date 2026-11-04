@@ -1,83 +1,83 @@
 {
-  "date": "2026-11-04",
+  "date": "2026-11-05",
   "status": "pass",
-  "checked_at": "2026-11-03T09:06:55.000Z",
+  "checked_at": "2026-11-04T18:11:10+09:00",
   "auditor": "Codex（新規ビッグイシュー2本を本文だけで自力解答、対象日6問）",
   "avgScore": 5,
   "total": 6,
   "rewritten": 0,
   "items": [
     {
-      "passage": "20261104_brookings_structural",
+      "passage": "20261105_asterisk_agent_society",
       "q": 1,
       "type": "Take-away",
-      "stem": "Take-away: 調査が示した意外な組み合わせは何か",
+      "stem": "Take-away: AIの集団で起きる記憶の問題は何か",
       "ans": 0,
       "readable": 5,
       "unique": 5,
       "concrete": 5,
       "score": 5,
-      "note": "寛容な意識と実際の交流の差を、住宅や学校の分離と区別して一読で判断できる。"
+      "note": "要約から迷いや不確かさが消え、誤りが後続へ引き継がれる構造を本文だけで一意に判断できる。"
     },
     {
-      "passage": "20261104_brookings_structural",
+      "passage": "20261105_asterisk_agent_society",
       "q": 2,
       "type": "Strong evidence",
-      "stem": "Strong evidence: 友人を選ぶとき人種は重要でないと答えた割合は何%か",
+      "stem": "Strong evidence: AI Villageで1回の要約前に許される行動数は何回か",
       "ans": 2,
       "readable": 5,
       "unique": 5,
       "concrete": 5,
       "score": 5,
-      "note": "83%という本文の明示数字を、他の3つの数字と取り違えずに選べる。"
+      "note": "本文の40回という明示数字を、27体や8時間と混同せずに選べる。"
     },
     {
-      "passage": "20261104_brookings_structural",
+      "passage": "20261105_asterisk_agent_society",
       "q": 3,
       "type": "Scenario",
-      "stem": "Scenario: 本文に近い不平等の読み方はどれか",
+      "stem": "Scenario: AIの記録を組織の知識にする条件はどれか",
       "ans": 1,
       "readable": 5,
       "unique": 5,
       "concrete": 5,
       "score": 5,
-      "note": "中立に見える学歴や推薦も機会の差を引き継ぐという含意を一意に確認できる。"
+      "note": "記録の量ではなく、後続が読み、使い、確かめる経路が必要だという含意を確認できる。"
     },
     {
-      "passage": "20261104_canary_ferry",
+      "passage": "20261105_works_housing_shortage",
       "q": 1,
       "type": "Take-away",
-      "stem": "Take-away: 電動フェリーがディーゼルで走る理由は何か",
+      "stem": "Take-away: 住宅費とホームレスをつなぐものは何か",
       "ans": 0,
       "readable": 5,
       "unique": 5,
       "concrete": 5,
       "score": 5,
-      "note": "船の性能ではなく充電設備の未完成が理由だと、本文の事実から一読で分かる。"
+      "note": "家族や友人の家に残れる余白が、住宅費とホームレスをつなぐ経路だと本文から判断できる。"
     },
     {
-      "passage": "20261104_canary_ferry",
+      "passage": "20261105_works_housing_shortage",
       "q": 2,
       "type": "Strong evidence",
-      "stem": "Strong evidence: 米国で蓄電池を併設した大規模太陽光の容量は何%だったか",
-      "ans": 2,
-      "readable": 5,
-      "unique": 5,
-      "concrete": 5,
-      "score": 5,
-      "note": "2017年の2%と区別し、今年の16%という本文の具体数字を選べる。"
-    },
-    {
-      "passage": "20261104_canary_ferry",
-      "q": 3,
-      "type": "Scenario",
-      "stem": "Scenario: 新技術の導入を評価するとき本文に近い視点はどれか",
+      "stem": "Strong evidence: 単身で住む貧困層のうち親と住む人は何%か",
       "ans": 1,
       "readable": 5,
       "unique": 5,
       "concrete": 5,
       "score": 5,
-      "note": "装置単体ではなく、送電や充電を含む周辺設備が使える状態まで揃うかを見る設問になっている。"
+      "note": "本文の33%という数字を、39%や3%と区別して選べる。"
+    },
+    {
+      "passage": "20261105_works_housing_shortage",
+      "q": 3,
+      "type": "Scenario",
+      "stem": "Scenario: 住宅不足を読むとき本文に近い視点はどれか",
+      "ans": 1,
+      "readable": 5,
+      "unique": 5,
+      "concrete": 5,
+      "score": 5,
+      "note": "屋根だけでなく同居を続けられる余白も住宅の役割だという含意を確認できる。"
     }
   ],
   "rubric": {
