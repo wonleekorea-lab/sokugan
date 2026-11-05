@@ -1,89 +1,18 @@
 {
-  "date": "2026-11-05",
+  "date": "2026-11-06",
   "status": "pass",
-  "checked_at": "2026-11-04T18:11:10+09:00",
+  "checked_at": "2026-11-05T18:27:39+09:00",
   "auditor": "Codex（新規ビッグイシュー2本を本文だけで自力解答、対象日6問）",
   "avgScore": 5,
   "total": 6,
   "rewritten": 0,
   "items": [
-    {
-      "passage": "20261105_asterisk_agent_society",
-      "q": 1,
-      "type": "Take-away",
-      "stem": "Take-away: AIの集団で起きる記憶の問題は何か",
-      "ans": 0,
-      "readable": 5,
-      "unique": 5,
-      "concrete": 5,
-      "score": 5,
-      "note": "要約から迷いや不確かさが消え、誤りが後続へ引き継がれる構造を本文だけで一意に判断できる。"
-    },
-    {
-      "passage": "20261105_asterisk_agent_society",
-      "q": 2,
-      "type": "Strong evidence",
-      "stem": "Strong evidence: AI Villageで1回の要約前に許される行動数は何回か",
-      "ans": 2,
-      "readable": 5,
-      "unique": 5,
-      "concrete": 5,
-      "score": 5,
-      "note": "本文の40回という明示数字を、27体や8時間と混同せずに選べる。"
-    },
-    {
-      "passage": "20261105_asterisk_agent_society",
-      "q": 3,
-      "type": "Scenario",
-      "stem": "Scenario: AIの記録を組織の知識にする条件はどれか",
-      "ans": 1,
-      "readable": 5,
-      "unique": 5,
-      "concrete": 5,
-      "score": 5,
-      "note": "記録の量ではなく、後続が読み、使い、確かめる経路が必要だという含意を確認できる。"
-    },
-    {
-      "passage": "20261105_works_housing_shortage",
-      "q": 1,
-      "type": "Take-away",
-      "stem": "Take-away: 住宅費とホームレスをつなぐものは何か",
-      "ans": 0,
-      "readable": 5,
-      "unique": 5,
-      "concrete": 5,
-      "score": 5,
-      "note": "家族や友人の家に残れる余白が、住宅費とホームレスをつなぐ経路だと本文から判断できる。"
-    },
-    {
-      "passage": "20261105_works_housing_shortage",
-      "q": 2,
-      "type": "Strong evidence",
-      "stem": "Strong evidence: 単身で住む貧困層のうち親と住む人は何%か",
-      "ans": 1,
-      "readable": 5,
-      "unique": 5,
-      "concrete": 5,
-      "score": 5,
-      "note": "本文の33%という数字を、39%や3%と区別して選べる。"
-    },
-    {
-      "passage": "20261105_works_housing_shortage",
-      "q": 3,
-      "type": "Scenario",
-      "stem": "Scenario: 住宅不足を読むとき本文に近い視点はどれか",
-      "ans": 1,
-      "readable": 5,
-      "unique": 5,
-      "concrete": 5,
-      "score": 5,
-      "note": "屋根だけでなく同居を続けられる余白も住宅の役割だという含意を確認できる。"
-    }
+    {"passage":"20261106_canary_vpp_hedge","q":1,"type":"Take-away","stem":"Take-away: 仮想発電所が吸収する不確実性は何か","ans":0,"readable":5,"unique":5,"concrete":5,"score":5,"note":"需要予測が外れたときの建て過ぎを抑える仕組みを、本文の流れだけで一意に選べる。"},
+    {"passage":"20261106_canary_vpp_hedge","q":2,"type":"Strong evidence","stem":"Strong evidence: 2050年の分散型電源の目標容量は何か","ans":2,"readable":5,"unique":5,"concrete":5,"score":5,"note":"2025年の現状、費用削減額、2050年の目標を選択肢の文脈で区別できる。"},
+    {"passage":"20261106_canary_vpp_hedge","q":3,"type":"Scenario","stem":"Scenario: 需要予測が外れるときの投資に近い考え方はどれか","ans":2,"readable":5,"unique":5,"concrete":5,"score":5,"note":"後から小さく足せる選択肢が、需要の不確実性に対する本文の含意として一意に読める。"},
+    {"passage":"20261106_construction_isotopes","q":1,"type":"Take-away","stem":"Take-away: 同位体の供給網が弱い理由は何か","ans":0,"readable":5,"unique":5,"concrete":5,"score":5,"note":"少数の原子炉への依存が、修理停止だけで不足を起こす因果として明確に読める。"},
+    {"passage":"20261106_construction_isotopes","q":2,"type":"Strong evidence","stem":"Strong evidence: 核融合で生まれる中性子の強みは何か","ans":1,"readable":5,"unique":5,"concrete":5,"score":5,"note":"14メガ電子ボルト以上という本文の数値と、他の特徴を一意に区別できる。"},
+    {"passage":"20261106_construction_isotopes","q":3,"type":"Scenario","stem":"Scenario: 技術の価値を測る本文の基準はどれか","ans":2,"readable":5,"unique":5,"concrete":5,"score":5,"note":"最初の成功ではなく、必要量を安く安定して作れるかという本文の基準を選べる。"}
   ],
-  "rubric": {
-    "one_read": 5,
-    "unique_logic": 5,
-    "concrete_options": 5,
-    "natural_faithful_japanese": 5
-  }
+  "rubric": {"one_read":5,"unique_logic":5,"concrete_options":5,"natural_faithful_japanese":5}
 }
