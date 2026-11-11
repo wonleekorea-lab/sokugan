@@ -1,18 +1,89 @@
 {
-  "date": "2026-11-06",
+  "date": "2026-11-12",
   "status": "pass",
-  "checked_at": "2026-11-05T18:27:39+09:00",
+  "checked_at": "2026-11-11T18:34:00+09:00",
   "auditor": "Codex（新規ビッグイシュー2本を本文だけで自力解答、対象日6問）",
   "avgScore": 5,
   "total": 6,
   "rewritten": 0,
   "items": [
-    {"passage":"20261106_canary_vpp_hedge","q":1,"type":"Take-away","stem":"Take-away: 仮想発電所が吸収する不確実性は何か","ans":0,"readable":5,"unique":5,"concrete":5,"score":5,"note":"需要予測が外れたときの建て過ぎを抑える仕組みを、本文の流れだけで一意に選べる。"},
-    {"passage":"20261106_canary_vpp_hedge","q":2,"type":"Strong evidence","stem":"Strong evidence: 2050年の分散型電源の目標容量は何か","ans":2,"readable":5,"unique":5,"concrete":5,"score":5,"note":"2025年の現状、費用削減額、2050年の目標を選択肢の文脈で区別できる。"},
-    {"passage":"20261106_canary_vpp_hedge","q":3,"type":"Scenario","stem":"Scenario: 需要予測が外れるときの投資に近い考え方はどれか","ans":2,"readable":5,"unique":5,"concrete":5,"score":5,"note":"後から小さく足せる選択肢が、需要の不確実性に対する本文の含意として一意に読める。"},
-    {"passage":"20261106_construction_isotopes","q":1,"type":"Take-away","stem":"Take-away: 同位体の供給網が弱い理由は何か","ans":0,"readable":5,"unique":5,"concrete":5,"score":5,"note":"少数の原子炉への依存が、修理停止だけで不足を起こす因果として明確に読める。"},
-    {"passage":"20261106_construction_isotopes","q":2,"type":"Strong evidence","stem":"Strong evidence: 核融合で生まれる中性子の強みは何か","ans":1,"readable":5,"unique":5,"concrete":5,"score":5,"note":"14メガ電子ボルト以上という本文の数値と、他の特徴を一意に区別できる。"},
-    {"passage":"20261106_construction_isotopes","q":3,"type":"Scenario","stem":"Scenario: 技術の価値を測る本文の基準はどれか","ans":2,"readable":5,"unique":5,"concrete":5,"score":5,"note":"最初の成功ではなく、必要量を安く安定して作れるかという本文の基準を選べる。"}
+    {
+      "passage": "20261112_construction_building_codes",
+      "q": 1,
+      "type": "Take-away",
+      "stem": "Take-away: 建築基準の費用増加で目立つ特徴は何か",
+      "ans": 1,
+      "readable": 5,
+      "unique": 5,
+      "concrete": 5,
+      "score": 5,
+      "note": "140項目中16件という本文の数値と、1件に増加分が集中した説明から、正解を一読で選べる。"
+    },
+    {
+      "passage": "20261112_construction_building_codes",
+      "q": 2,
+      "type": "Strong evidence",
+      "stem": "Strong evidence: 2006年以降の建築費増加はどれか",
+      "ans": 0,
+      "readable": 5,
+      "unique": 5,
+      "concrete": 5,
+      "score": 5,
+      "note": "約4万ドルと年0.5%という本文の具体値を、他の数値と混同せずに確認できる。"
+    },
+    {
+      "passage": "20261112_construction_building_codes",
+      "q": 3,
+      "type": "Scenario",
+      "stem": "Scenario: 建築基準を比べるときに必要な視点はどれか",
+      "ans": 3,
+      "readable": 5,
+      "unique": 5,
+      "concrete": 5,
+      "score": 5,
+      "note": "費用だけでなく火災死を防ぐ便益も比べるという本文の含意を、選択肢から一意に選べる。"
+    },
+    {
+      "passage": "20261112_wip_electric_grid",
+      "q": 1,
+      "type": "Take-away",
+      "stem": "Take-away: 1918年のロンドン電力網の弱点は何か",
+      "ans": 1,
+      "readable": 5,
+      "unique": 5,
+      "concrete": 5,
+      "score": 5,
+      "note": "10種類の周波数と24種類の電圧という本文の事実から、規格の分断を一意に選べる。"
+    },
+    {
+      "passage": "20261112_wip_electric_grid",
+      "q": 2,
+      "type": "Strong evidence",
+      "stem": "Strong evidence: 地域網の接続が役立った場面はどれか",
+      "ans": 0,
+      "readable": 5,
+      "unique": 5,
+      "concrete": 5,
+      "score": 5,
+      "note": "空襲で止まった地域を別地域の電気が支えたという本文の事例を、そのまま根拠として選べる。"
+    },
+    {
+      "passage": "20261112_wip_electric_grid",
+      "q": 3,
+      "type": "Scenario",
+      "stem": "Scenario: 分散した設備を強い仕組みに変える鍵はどれか",
+      "ans": 2,
+      "readable": 5,
+      "unique": 5,
+      "concrete": 5,
+      "score": 5,
+      "note": "同期と接続で停止時に支え合えるという本文の構造を、応用選択肢から一意に選べる。"
+    }
   ],
-  "rubric": {"one_read":5,"unique_logic":5,"concrete_options":5,"natural_faithful_japanese":5}
+  "rubric": {
+    "one_read": 5,
+    "unique_logic": 5,
+    "concrete_options": 5,
+    "natural_faithful_japanese": 5
+  }
 }
