@@ -1,83 +1,83 @@
 {
-  "date": "2026-11-13",
+  "date": "2026-11-14",
   "status": "pass",
-  "checked_at": "2026-11-12T18:15:00+09:00",
-  "auditor": "Codex（新規ビッグイシュー2本を本文だけで自力解答、対象日6問）",
+  "checked_at": "2026-11-13T18:13:05+09:00",
+  "auditor": "Codex（本文だけで新規ビッグイシュー6問を自力解答）",
   "avgScore": 5,
   "total": 6,
   "rewritten": 0,
   "items": [
     {
-      "passage": "20261113_wip_lovable_cities",
+      "passage": "20261114_wip_victorian_elites",
       "q": 1,
       "type": "Take-away",
-      "stem": "Take-away: ジッテが広場について逆の考えを示した理由は何か",
-      "ans": 0,
-      "readable": 5,
-      "unique": 5,
-      "concrete": 5,
-      "score": 5,
-      "note": "広場が大きすぎると建物が縮んで見えるという本文の因果を一意に選べる。"
-    },
-    {
-      "passage": "20261113_wip_lovable_cities",
-      "q": 2,
-      "type": "Strong evidence",
-      "stem": "Strong evidence: 建物の大きさを人が感じる基準はどれか",
-      "ans": 2,
-      "readable": 5,
-      "unique": 5,
-      "concrete": 5,
-      "score": 5,
-      "note": "絶対的な大きさではなく周囲との比率で感じるという本文の明示情報から選べる。"
-    },
-    {
-      "passage": "20261113_wip_lovable_cities",
-      "q": 3,
-      "type": "Scenario",
-      "stem": "Scenario: 主役を目立たせたいときに先に決めることは何か",
+      "stem": "Take-away: 英国のエリートを結びつけたものは何か",
       "ans": 1,
       "readable": 5,
       "unique": 5,
       "concrete": 5,
       "score": 5,
-      "note": "近くに置くものと囲み方を決めるという第三段落の含意を具体的に選べる。"
+      "note": "同じ学校と社交の場で共通の関係を作ったという本文の論旨を一読で選べる。"
     },
     {
-      "passage": "20261113_wip_soviet_disunion",
-      "q": 1,
-      "type": "Take-away",
-      "stem": "Take-away: ソ連崩壊の通説に足りなかったものは何か",
+      "passage": "20261114_wip_victorian_elites",
+      "q": 2,
+      "type": "Strong evidence",
+      "stem": "Strong evidence: 19世紀の英国首相でイートン校出身者は何%だったか",
       "ans": 0,
       "readable": 5,
       "unique": 5,
       "concrete": 5,
       "score": 5,
-      "note": "複数の説明はあっても決定打がなかったという本文の論旨を一読で選べる。"
+      "note": "本文の40%という明示数字を他の数字と混同せず選べる。"
     },
     {
-      "passage": "20261113_wip_soviet_disunion",
+      "passage": "20261114_wip_victorian_elites",
+      "q": 3,
+      "type": "Scenario",
+      "stem": "Scenario: 組織の協力を勤務時間だけで測れない理由は何か",
+      "ans": 0,
+      "readable": 5,
+      "unique": 5,
+      "concrete": 5,
+      "score": 5,
+      "note": "社交の場が情報と評判を共有する仕組みになるという含意を具体的に選べる。"
+    },
+    {
+      "passage": "20261114_diff_asset_manager_growth",
+      "q": 1,
+      "type": "Take-away",
+      "stem": "Take-away: 投資会社が隣の戦略へ広がると何が起きるか",
+      "ans": 0,
+      "readable": 5,
+      "unique": 5,
+      "concrete": 5,
+      "score": 5,
+      "note": "専門家との競争と間接費が増え平均収益が下がる可能性を一意に選べる。"
+    },
+    {
+      "passage": "20261114_diff_asset_manager_growth",
       "q": 2,
       "type": "Strong evidence",
-      "stem": "Strong evidence: ソ連の経済が正式に後退した時期はいつか",
+      "stem": "Strong evidence: 記事が示す追加GDP成長の規模はどれか",
+      "ans": 0,
+      "readable": 5,
+      "unique": 5,
+      "concrete": 5,
+      "score": 5,
+      "note": "約4兆ドルという本文の明示情報を選べる。"
+    },
+    {
+      "passage": "20261114_diff_asset_manager_growth",
+      "q": 3,
+      "type": "Scenario",
+      "stem": "Scenario: 新しい戦略を加える前に必要な条件はどれか",
       "ans": 2,
       "readable": 5,
       "unique": 5,
       "concrete": 5,
       "score": 5,
-      "note": "改革後の1990年という本文の時期を、他の年代と混同せずに選べる。"
-    },
-    {
-      "passage": "20261113_wip_soviet_disunion",
-      "q": 3,
-      "type": "Scenario",
-      "stem": "Scenario: 政治改革が制度を壊した理由はどれか",
-      "ans": 3,
-      "readable": 5,
-      "unique": 5,
-      "concrete": 5,
-      "score": 5,
-      "note": "党の独占を保って政治だけ自由にする仕組みがなかったという構造を選べる。"
+      "note": "独自の洞察や相乗効果が必要という本文の条件を具体的に選べる。"
     }
   ],
   "rubric": {
