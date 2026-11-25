@@ -1,89 +1,89 @@
 {
-  "date": "2026-11-17",
+  "date": "2026-11-26",
   "status": "pass",
-  "checked_at": "2026-11-16T18:05:00+09:00",
-  "auditor": "Codex（本文だけで新規ビッグイシュー6問を自力解答）",
+  "checked_at": "2026-11-25T18:16:36+09:00",
+  "auditor": "Codex（本文だけで翌日分ビッグイシュー6問を自力解答）",
   "avgScore": 5,
   "total": 6,
   "rewritten": 0,
   "items": [
     {
-      "passage": "20261117_wip_mosquitoes_regulation",
+      "passage": "20261126_marginal_revolution_gambling_goals",
       "q": 1,
       "type": "Take-away",
-      "stem": "Take-away: 蚊が運ぶ病気の対策を遅らせる要因は何か",
-      "ans": 2,
-      "readable": 5,
-      "unique": 5,
-      "concrete": 5,
-      "score": 5,
-      "note": "病気を減らす技術があっても、審査窓口の迷いで遅れる論旨を一読で選べる。"
-    },
-    {
-      "passage": "20261117_wip_mosquitoes_regulation",
-      "q": 2,
-      "type": "Strong evidence",
-      "stem": "Strong evidence: 米国で2024年に報告されたデング熱は約何件か",
-      "ans": 1,
-      "readable": 5,
-      "unique": 5,
-      "concrete": 5,
-      "score": 5,
-      "note": "本文に明示された約4,000件という数字を、平均830件などの比較値と区別できる。"
-    },
-    {
-      "passage": "20261117_wip_mosquitoes_regulation",
-      "q": 3,
-      "type": "Scenario",
-      "stem": "Scenario: 新しい蚊の技術を広げるために必要な設計はどれか",
-      "ans": 3,
-      "readable": 5,
-      "unique": 5,
-      "concrete": 5,
-      "score": 5,
-      "note": "担当省庁の役割と審査能力を整えるという本文の含意を具体的に選べる。"
-    },
-    {
-      "passage": "20261117_construction_physics_technology_search",
-      "q": 1,
-      "type": "Take-away",
-      "stem": "Take-away: 技術開発を探索と考える理由は何か",
+      "stem": "Take-away: 研究が投機と結びつけたものは何か",
       "ans": 0,
       "readable": 5,
       "unique": 5,
       "concrete": 5,
       "score": 5,
-      "note": "現象や配置の候補から使える組み合わせを探すという本文の定義を一意に選べる。"
+      "note": "届きにくい人生の目標がリスクの取り方を変えるという論旨を一読で選べる。"
     },
     {
-      "passage": "20261117_construction_physics_technology_search",
+      "passage": "20261126_marginal_revolution_gambling_goals",
       "q": 2,
       "type": "Strong evidence",
-      "stem": "Strong evidence: モジュール化した探索の平均試行回数はどれか",
+      "stem": "Strong evidence: 失業中に利用が増えたものは何か",
       "ans": 1,
       "readable": 5,
       "unique": 5,
       "concrete": 5,
       "score": 5,
-      "note": "本文で示された約1,300回という具体的な結果を、10億回などの比較値と区別できる。"
+      "note": "本文に明示された暗号資産アプリという具体情報を他の選択肢と区別できる。"
     },
     {
-      "passage": "20261117_construction_physics_technology_search",
+      "passage": "20261126_marginal_revolution_gambling_goals",
       "q": 3,
       "type": "Scenario",
-      "stem": "Scenario: 複数の性能を同時に上げる設計が難しい理由は何か",
+      "stem": "Scenario: 市場の熱狂を読むとき先に見るものは何か",
       "ans": 2,
       "readable": 5,
       "unique": 5,
       "concrete": 5,
       "score": 5,
-      "note": "性能の軸が増えるほど調整条件が増えるという本文の因果を一意に選べる。"
+      "note": "個人の無謀さではなく遠くなった目標を見るという含意を一意に選べる。"
+    },
+    {
+      "passage": "20261126_asterisk_marginal_grains",
+      "q": 1,
+      "type": "Take-away",
+      "stem": "Take-away: 小麦の改良で同時に生まれたものは何か",
+      "ans": 1,
+      "readable": 5,
+      "unique": 5,
+      "concrete": 5,
+      "score": 5,
+      "note": "収量の上昇と人間への依存が同時に生まれた論旨を一読で選べる。"
+    },
+    {
+      "passage": "20261126_asterisk_marginal_grains",
+      "q": 2,
+      "type": "Strong evidence",
+      "stem": "Strong evidence: 小麦は世界の何を約5分の1供給するか",
+      "ans": 2,
+      "readable": 5,
+      "unique": 5,
+      "concrete": 5,
+      "score": 5,
+      "note": "本文冒頭のカロリーという具体的な数字の対象を他の量と区別できる。"
+    },
+    {
+      "passage": "20261126_asterisk_marginal_grains",
+      "q": 3,
+      "type": "Scenario",
+      "stem": "Scenario: 作物の進歩を見るとき残る問いは何か",
+      "ans": 0,
+      "readable": 5,
+      "unique": 5,
+      "concrete": 5,
+      "score": 5,
+      "note": "改良の成功だけでなく依存関係の変化を見るという含意が具体的に問われている。"
     }
   ],
   "rubric": {
-    "one_read": 5,
-    "unique_logic": 5,
-    "concrete_options": 5,
-    "natural_faithful_japanese": 5
+    "readable": "一読で意味が取れるか",
+    "unique": "正解が一つに決まるか",
+    "concrete": "選択肢が具体的で本文に根拠があるか",
+    "pass": "全項目3以上かつ平均4以上"
   }
 }
