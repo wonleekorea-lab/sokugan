@@ -1,83 +1,83 @@
 {
-  "date": "2026-11-26",
+  "date": "2026-11-27",
   "status": "pass",
-  "checked_at": "2026-11-25T18:16:36+09:00",
+  "checked_at": "2026-11-26T18:24:00+09:00",
   "auditor": "Codex（本文だけで翌日分ビッグイシュー6問を自力解答）",
   "avgScore": 5,
   "total": 6,
   "rewritten": 0,
   "items": [
     {
-      "passage": "20261126_marginal_revolution_gambling_goals",
+      "passage": "20261127_our_world_in_data_global_median_income",
       "q": 1,
       "type": "Take-away",
-      "stem": "Take-away: 研究が投機と結びつけたものは何か",
-      "ans": 0,
-      "readable": 5,
-      "unique": 5,
-      "concrete": 5,
-      "score": 5,
-      "note": "届きにくい人生の目標がリスクの取り方を変えるという論旨を一読で選べる。"
-    },
-    {
-      "passage": "20261126_marginal_revolution_gambling_goals",
-      "q": 2,
-      "type": "Strong evidence",
-      "stem": "Strong evidence: 失業中に利用が増えたものは何か",
+      "stem": "Take-away: 月290ドルが示すものは何か",
       "ans": 1,
       "readable": 5,
       "unique": 5,
       "concrete": 5,
       "score": 5,
-      "note": "本文に明示された暗号資産アプリという具体情報を他の選択肢と区別できる。"
+      "note": "世界の所得の中央値という論旨を、平均や上位層と一読で区別できる。"
     },
     {
-      "passage": "20261126_marginal_revolution_gambling_goals",
-      "q": 3,
-      "type": "Scenario",
-      "stem": "Scenario: 市場の熱狂を読むとき先に見るものは何か",
+      "passage": "20261127_our_world_in_data_global_median_income",
+      "q": 2,
+      "type": "Strong evidence",
+      "stem": "Strong evidence: ブラジルの上位と下位の差は何倍か",
       "ans": 2,
       "readable": 5,
       "unique": 5,
       "concrete": 5,
       "score": 5,
-      "note": "個人の無謀さではなく遠くなった目標を見るという含意を一意に選べる。"
+      "note": "本文に明示された米国、ドイツ、ブラジルの数字を正確に照合できる。"
     },
     {
-      "passage": "20261126_asterisk_marginal_grains",
-      "q": 1,
-      "type": "Take-away",
-      "stem": "Take-away: 小麦の改良で同時に生まれたものは何か",
+      "passage": "20261127_our_world_in_data_global_median_income",
+      "q": 3,
+      "type": "Scenario",
+      "stem": "Scenario: 所得の伸びを見るとき残る問いは何か",
       "ans": 1,
       "readable": 5,
       "unique": 5,
       "concrete": 5,
       "score": 5,
-      "note": "収量の上昇と人間への依存が同時に生まれた論旨を一読で選べる。"
+      "note": "平均の上下ではなく、分布の中で誰の位置が動いたかという含意を選べる。"
     },
     {
-      "passage": "20261126_asterisk_marginal_grains",
+      "passage": "20261127_commoncog_aman_brand_control",
+      "q": 1,
+      "type": "Take-away",
+      "stem": "Take-away: アマンが売ったものは何か",
+      "ans": 1,
+      "readable": 5,
+      "unique": 5,
+      "concrete": 5,
+      "score": 5,
+      "note": "客室数や広告ではなく、静けさと私的な滞在という事業の核を選べる。"
+    },
+    {
+      "passage": "20261127_commoncog_aman_brand_control",
       "q": 2,
       "type": "Strong evidence",
-      "stem": "Strong evidence: 小麦は世界の何を約5分の1供給するか",
+      "stem": "Strong evidence: 2014年のアマンの稼働率は何%か",
+      "ans": 1,
+      "readable": 5,
+      "unique": 5,
+      "concrete": 5,
+      "score": 5,
+      "note": "本文の約30%と業界平均76%を混同せず、問われた対象を特定できる。"
+    },
+    {
+      "passage": "20261127_commoncog_aman_brand_control",
+      "q": 3,
+      "type": "Scenario",
+      "stem": "Scenario: 高い体験を守る拡大で起きる衝突は何か",
       "ans": 2,
       "readable": 5,
       "unique": 5,
       "concrete": 5,
       "score": 5,
-      "note": "本文冒頭のカロリーという具体的な数字の対象を他の量と区別できる。"
-    },
-    {
-      "passage": "20261126_asterisk_marginal_grains",
-      "q": 3,
-      "type": "Scenario",
-      "stem": "Scenario: 作物の進歩を見るとき残る問いは何か",
-      "ans": 0,
-      "readable": 5,
-      "unique": 5,
-      "concrete": 5,
-      "score": 5,
-      "note": "改良の成功だけでなく依存関係の変化を見るという含意が具体的に問われている。"
+      "note": "低い稼働率と長い建設期間から、拡大資金と創業者の支配権の衝突を導ける。"
     }
   ],
   "rubric": {
